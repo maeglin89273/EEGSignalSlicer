@@ -43,6 +43,8 @@ public class MainForm extends JFrame {
     private JSpinner sliceEndSpinner;
     private StreamingPlot streamingPlot;
     private JLabel savedHintLbl;
+    private JButton shadowBtn;
+    private JButton clearShadowBtn;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
@@ -110,6 +112,8 @@ public class MainForm extends JFrame {
                         ((Number) startSpinModel.getValue()).intValue(), ((Number) endSpinModel.getValue()).intValue());
                 if (filename != null) {
                     savedHintLbl.setText(filename + " saved!");
+                } else {
+                    savedHintLbl.setText("<- not saved!");
                 }
             }
         });
@@ -155,6 +159,20 @@ public class MainForm extends JFrame {
             filterBtn.setActionCommand(filterBtn.getText());
             filterBtn.addActionListener(filterBtnListener);
         }
+
+        shadowBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                streamingPlot.wantShadow(true);
+            }
+        });
+
+        clearShadowBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                streamingPlot.wantShadow(false);
+            }
+        });
 
         streamingPlot.setRangeChangedListener(new StreamingPlot.RangeChangedListener() {
             @Override

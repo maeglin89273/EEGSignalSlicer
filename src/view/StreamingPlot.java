@@ -4,11 +4,11 @@ import model.EEGChannels;
 import model.Filter;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by maeglin89273 on 7/21/15.
@@ -31,22 +31,38 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
     private boolean playing;
 
-    private static final int ANIMATION_INTERVAL = 20;
-
-    private SlicerPlugin plugin;
+    private static final int ANIMATION_INIT_INTERVAL = 20;
+    private static final int ANIMATION_SPEED_GAP = 10;
+    private SlicerPlugin slicePlugin;
+    private ShadowPlugin shadowPlugin;
 
     public StreamingPlot(int windowSize, float peakValue) {
 
-        this.animator = new Timer(ANIMATION_INTERVAL, this);
+        this.animator = new Timer(ANIMATION_INIT_INTERVAL, this);
 
         this.playing = false;
         setupUI(windowSize, peakValue);
-        this.plugin = new SlicerPlugin();
-        this.plotView.setPlugin(this.plugin);
+        setupPlugins();
         updatePeakLabels();
         updateBoundLabels();
 
         setupListeners(windowSize, peakValue);
+    }
+
+    public void wantShadow(boolean want) {
+        if (want) {
+            shadowPlugin.makeShadow();
+        } else {
+            shadowPlugin.clear();
+        }
+        plotView.repaint();
+    }
+
+    private void setupPlugins() {
+        this.slicePlugin = new SlicerPlugin();
+        this.shadowPlugin = new ShadowPlugin();
+        this.plotView.addPlugin(this.slicePlugin);
+        this.plotView.addPlugin(this.shadowPlugin);
     }
 
     private void setupListeners(int windowSize, float peakValue) {
@@ -70,11 +86,11 @@ public class StreamingPlot extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
-                    if (animator.getDelay() > 20) {
-                        animator.setDelay(animator.getDelay() - 10);
+                    if (animator.getDelay() > ANIMATION_SPEED_GAP) {
+                        animator.setDelay(animator.getDelay() - ANIMATION_SPEED_GAP);
                     }
                 } else {
-                    moveWindow(50);
+                    moveWindow(2);
                 }
 
             }
@@ -84,9 +100,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
-                    animator.setDelay(animator.getDelay() + 10);
+                    animator.setDelay(animator.getDelay() + ANIMATION_SPEED_GAP);
                 } else {
-                    moveWindow(-50);
+                    moveWindow(-2);
                 }
             }
         });
@@ -132,24 +148,24 @@ public class StreamingPlot extends JPanel implements ActionListener {
     }
 
     public void setRangeChangedListener(RangeChangedListener rangeChangedListener) {
-        this.plugin.setRangeChangeListener(rangeChangedListener);
+        this.slicePlugin.setRangeChangeListener(rangeChangedListener);
     }
 
     public long getSliceStartPosition() {
-        return this.plugin.getStartPosition();
+        return this.slicePlugin.getStartPosition();
     }
 
     public long getSliceEndPosition() {
-        return this.plugin.getEndPosition();
+        return this.slicePlugin.getEndPosition();
     }
 
     public void setRangeStartPosition(long pos) {
-        this.plugin.setStartPosition(pos);
+        this.slicePlugin.setStartPosition(pos);
         this.plotView.repaint();
     }
 
     public void setRangeEndPosition(long pos) {
-        this.plugin.setEndPosition(pos);
+        this.slicePlugin.setEndPosition(pos);
         this.plotView.repaint();
     }
 
@@ -294,11 +310,11 @@ public class StreamingPlot extends JPanel implements ActionListener {
                     moveWindow(delta);
                     break;
                 case DRAG_START_SLICER:
-                    plugin.setStartPosition(moveRecordAmount);
+                    slicePlugin.setStartPosition(moveRecordAmount);
                     plotView.repaint();
                     break;
                 case DRAG_END_SLICER:
-                    plugin.setEndPosition(moveRecordAmount);
+                    slicePlugin.setEndPosition(moveRecordAmount);
                     plotView.repaint();
                     break;
             }
@@ -319,9 +335,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
         @Override
         public void mousePressed(MouseEvent e) {
             this.lastX = e.getX();
-            if (plugin.isOnStartSlicer(e.getX())) {
+            if (slicePlugin.isOnStartSlicer(e.getX())) {
                 this.mouseMode = DRAG_START_SLICER;
-            } else if (plugin.isOnEndSlicer(e.getX())) {
+            } else if (slicePlugin.isOnEndSlicer(e.getX())) {
                 this.mouseMode = DRAG_END_SLICER;
             } else {
                 this.mouseMode = DRAG_PLOT;
@@ -347,7 +363,8 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
     public static abstract class Plugin {
         protected PlotView plot;
-        public abstract void draw(Graphics2D g2);
+        public abstract void drawAfterPlot(Graphics2D g2);
+        public abstract void drawBeforePlot(Graphics2D g2);
         public void setPlot(PlotView plot) {
             this.plot = plot;
         }
@@ -359,6 +376,8 @@ public class StreamingPlot extends JPanel implements ActionListener {
         public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
 
         }
+
+
     }
 
 
@@ -368,7 +387,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
         private final Color[] CHANNEL_COLORS = new Color[] {Color.DARK_GRAY, Color.MAGENTA, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PINK, Color.RED, Color.BLACK};
         private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
-        private SortedSet<Integer> visibleChannelNum;
+        private Collection<Integer> visibleChannelNum;
 
         private float peakValue;
 
@@ -377,9 +396,10 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
         private long startingPtr = 0;
 
-        private Plugin plugin;
+        private List<Plugin> plugins;
 
         public PlotView(int windowSize, float peakValue) {
+            this.plugins = new ArrayList<Plugin>();
             this.addComponentListener(this);
 
 
@@ -388,15 +408,15 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
             this.setPreferredSize(PREFERRED_SIZE);
 
-            this.visibleChannelNum = new TreeSet<Integer>(Collections.reverseOrder());
+            this.visibleChannelNum = new LinkedList<Integer>();
 
             this.setBackground(new Color(-1));
             this.setOpaque(true);
 
         }
 
-        public void setPlugin(Plugin plugin) {
-            this.plugin = plugin;
+        public void addPlugin(Plugin plugin) {
+            this.plugins.add(plugin);
             plugin.setPlot(this);
             this.repaint();
         }
@@ -417,10 +437,21 @@ public class StreamingPlot extends JPanel implements ActionListener {
             } else {
                 this.startingPtr += delta;
             }
-            if (this.plugin != null) {
-                this.plugin.onXRangeChanged(this.getPlotLowerBound(), this.getPlotUpperBound(), this.getWindowSize());
-            }
+            fireOnXRangeChanged();
             this.repaint();
+        }
+
+        private void fireOnXRangeChanged() {
+            for (int i = plugins.size() - 1; i >= 0; i--) {
+                plugins.get(i).onXRangeChanged(this.getPlotLowerBound(), this.getPlotUpperBound(), this.getWindowSize());
+            }
+
+        }
+
+        private void fireOnYRangeChanged() {
+            for (int i = plugins.size() - 1; i >= 0; i--) {
+                plugins.get(i).onYRangeChanged(this.getPeakValue(), -this.getPeakValue());
+            }
         }
 
         @Override
@@ -430,12 +461,26 @@ public class StreamingPlot extends JPanel implements ActionListener {
             g2.clearRect(0, 0, this.getWidth(), this.getHeight());
 
             if (getEegChannels() != null) {
+                drawBackPlugins(g2);
+                g2.setStroke(STROKE);
                 drawStreams(g2);
-                if (plugin != null) {
-                    plugin.draw(g2);
-                }
+                drawFrontPlugins(g2);
+
             }
             g2.dispose();
+        }
+
+        private void drawBackPlugins(Graphics2D g2) {
+            for (int i = plugins.size() - 1; i >= 0; i--) {
+                plugins.get(i).drawBeforePlot(g2);
+            }
+
+        }
+
+        private void drawFrontPlugins(Graphics2D g2) {
+            for (int i = plugins.size() - 1; i >= 0; i--) {
+                plugins.get(i).drawAfterPlot(g2);
+            }
         }
 
         private void drawStreams(Graphics2D g2) {
@@ -446,37 +491,22 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
         private void drawStream(Graphics2D g2, int channelNum) {
             g2.setColor(this.CHANNEL_COLORS[channelNum - 1]);
-            loadYBuffer(channelNum);
+            PlottingUtils.loadYBuffer(2 * this.getPeakValue(), this.getHeight(), eegChannels.getChannel(channelNum), yBuffer, (int)this.getPlotLowerBound());
             g2.drawPolyline(xBuffer, yBuffer, getWindowSize());
 
-        }
-
-        private void loadYBuffer(int channelNum) {
-            double[] data = eegChannels.getChannel(channelNum);
-            for (int i = 0; i < yBuffer.length; i++) {
-                yBuffer[i] = panToPlotCoordinate(scaleIntoWindow(data[i + (int) this.startingPtr]));
-            }
-
-        }
-
-        private int panToPlotCoordinate(double value) {
-            return (int)(-value + this.getHeight() / 2.0);
-        }
-
-        private double scaleIntoWindow(double value) {
-            return this.getHeight() * value / ( 2 * this.peakValue);
         }
 
         private Graphics2D prepareGraphics(Graphics g) {
             if (!(g instanceof Graphics2D)) {
                 return null;
             }
+
             Graphics2D g2=(Graphics2D)g.create();
             g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(java.awt.RenderingHints.KEY_ALPHA_INTERPOLATION, java.awt.RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
             g2.setRenderingHint(java.awt.RenderingHints.KEY_COLOR_RENDERING, java.awt.RenderingHints.VALUE_COLOR_RENDER_QUALITY);
             g2.setRenderingHint(java.awt.RenderingHints.KEY_STROKE_CONTROL, java.awt.RenderingHints.VALUE_STROKE_PURE);
-            g2.setStroke(STROKE);
+
             return g2;
         }
 
@@ -489,11 +519,13 @@ public class StreamingPlot extends JPanel implements ActionListener {
             this.repaint();
         }
 
+        public Collection<Integer> getVisibleChannels() {
+            return this.visibleChannelNum;
+        }
+
         public void setPeakValue(float peakValue) {
             this.peakValue = peakValue;
-            if (this.plugin != null) {
-                this.plugin.onYRangeChanged(this.getPeakValue(), -this.getPeakValue());
-            }
+            fireOnYRangeChanged();
             this.repaint();
 
         }
@@ -505,10 +537,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
         public void setWindowSize(int windowSize) {
             this.xBuffer = new int[windowSize];
             this.yBuffer = new int[windowSize];
+
             updateXBuffer();
-            if (this.plugin != null) {
-                this.plugin.onXRangeChanged(this.getPlotLowerBound(), this.getPlotUpperBound(), this.getWindowSize());
-            }
+            fireOnXRangeChanged();
             this.repaint();
         }
 
@@ -517,11 +548,13 @@ public class StreamingPlot extends JPanel implements ActionListener {
         }
 
         private void updateXBuffer() {
-            double interval = this.getWidth() / (double)this.getWindowSize();
-            for (int i = 0; i < this.xBuffer.length; i++) {
-                this.xBuffer[i] = (int)(i * interval);
-            }
+            PlottingUtils.loadXBuffer(this.getWindowSize(), this.getWidth(), this.xBuffer);
         }
+
+        public int[] getXPoints() {
+            return this.xBuffer;
+        }
+
 
         @Override
         public void componentResized(ComponentEvent e) {
@@ -546,6 +579,29 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
     }
 
+    public static final class PlottingUtils {
+        public static void loadXBuffer(double coordinateWidth, int plotWidth, int[] xBuffer) {
+            double interval = plotWidth / coordinateWidth;
+            for (int i = 0; i < xBuffer.length; i++) {
+                xBuffer[i] = (int)Math.round(i * interval);
+            }
+
+        }
+
+        public static void loadYBuffer(double coordinateHeight, int plotHeight, double[] data, int[] yBuffer, int startIndex) {
+            for (int i = 0; i < yBuffer.length; i++) {
+                yBuffer[i] = panToPlotCoordinate(plotHeight, scaleIntoWindow(coordinateHeight, plotHeight, data[i + (int) startIndex]));
+            }
+        }
+
+        public static int panToPlotCoordinate(int plotHeight, double value) {
+            return (int)Math.round(-value + plotHeight / 2.0);
+        }
+
+        public static double scaleIntoWindow(double coordinateHeight, int plotHeight, double value) {
+            return plotHeight * value / (coordinateHeight);
+        }
+    }
 
     public interface RangeChangedListener {
         public void onStartChanged(long lowerBound, long value, long upperBound);
@@ -557,7 +613,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
         private double relativeStartPos;
         private long endPos;
         private double relativeEndPos;
-        private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+        private final Stroke STROKE = new BasicStroke(1.2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
         private RangeChangedListener listener;
 
@@ -575,7 +631,8 @@ public class StreamingPlot extends JPanel implements ActionListener {
         }
 
         @Override
-        public void draw(Graphics2D g2) {
+        public void drawAfterPlot(Graphics2D g2) {
+            g2.setStroke(STROKE);
             g2.setColor(Color.CYAN);
 
             int startKnifeX = (int)(plot.getWidth() * this.relativeStartPos);
@@ -583,6 +640,11 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
             g2.drawLine(startKnifeX, 0, startKnifeX, plot.getHeight());
             g2.drawLine(endKnifeX, 0, endKnifeX, plot.getHeight());
+        }
+
+        @Override
+        public void drawBeforePlot(Graphics2D g2) {
+
         }
 
         public long getStartPosition() {
@@ -641,6 +703,60 @@ public class StreamingPlot extends JPanel implements ActionListener {
         public boolean isOnEndSlicer(int pos) {
             return Math.abs(pos - (this.plot.getWidth() * this.relativeEndPos)) <= SLICER_TOUCH_RANGE;
         }
+    }
 
+    private class ShadowPlugin extends Plugin {
+        private final Stroke STROKE = new BasicStroke(3f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+        private final Color SHADOW_COLOR = new Color(0, 0, 0, 0.35f);
+
+        private long startingPtr;
+        private int[] yBuffer = null;
+        private boolean shadowing;
+
+        @Override
+        public void drawAfterPlot(Graphics2D g2) {
+            if (!this.shadowing) {
+                return;
+            }
+            g2.setStroke(STROKE);
+            g2.setColor(SHADOW_COLOR);
+            for (Integer channelNum: plot.getVisibleChannels()) {
+                PlottingUtils.loadYBuffer(2 * plot.getPeakValue(), plot.getHeight(), eegChannels.getChannel(channelNum), yBuffer, (int) this.startingPtr);
+                g2.drawPolyline(this.plot.getXPoints(), yBuffer, yBuffer.length);
+            }
+        }
+
+        @Override
+        public void drawBeforePlot(Graphics2D g2) {
+
+        }
+
+        public void makeShadow() {
+            int windowSize = plot.getWindowSize();
+            this.startingPtr = plot.getPlotLowerBound();
+            adjustBuffers(windowSize);
+            this.shadowing = true;
+        }
+
+        public void clear() {
+            this.shadowing = false;
+        }
+
+        @Override
+        public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
+            if (this.shadowing) {
+                adjustBuffers(windowSize);
+            }
+        }
+
+        private void adjustBuffers(int size) {
+            if (this.shouldResizeBuffer(size)) {
+                this.yBuffer = new int[size];
+            }
+        }
+
+        private boolean shouldResizeBuffer(int size) {
+            return this.yBuffer == null || this.yBuffer.length != size;
+        }
     }
 }
