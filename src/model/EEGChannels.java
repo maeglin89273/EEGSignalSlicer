@@ -1,65 +1,43 @@
 package model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by maeglin89273 on 7/21/15.
  */
-public class EEGChannels {
-    private final double[][] originalRawData;
-    private double[][] presentedData;
-    private double[][] cachedDataSpace;
-
-    private Filter notchFilter;
-    private Filter bandpassFilter;
+public class EEGChannels extends StreamingDataSource {
 
     public EEGChannels(double[][] originalRawData) {
-        this.originalRawData = originalRawData;
-        System.out.println(this.originalRawData[0].length + " data loaded");
-        this.cachedDataSpace = new double[8][originalRawData[0].length];
-        this.presentedData = new double[8][];
-        this.notchFilter = Filter.NOTCH_60HZ;
-        this.bandpassFilter = Filter.BANDPASS_1_50HZ;
+        super(convertToMap(originalRawData));
+        System.out.println(this.getMaxStreamLength() + " presentedData loaded");
+
+        this.addFilter(BandpassFilter.NOTCH_60HZ);
+        this.addFilter(BandpassFilter.BANDPASS_1_50HZ);
+
     }
 
-    public long getDataLength() {
-        return this.originalRawData[0].length;
-    }
-
-
-    public double[] getChannel(int channelNum) {
-        channelNum--;
-        if (presentedData[channelNum] == null) {
-            presentedData[channelNum] = filterChannel(channelNum);
+    private static Map<String, double[]> convertToMap(double[][] originalRawData) {
+        Map<String, double[]> dataMap = new HashMap<String, double[]>(originalRawData.length);
+        for (int i = 1; i <= originalRawData.length; i++) {
+            dataMap.put(Integer.toString(i), originalRawData[i - 1]);
         }
-        return presentedData[channelNum];
-
+        return dataMap;
     }
 
-    public double[][] getOriginalRawData() {
-        return this.originalRawData;
+    public void setNotchFilter(BandpassFilter filter) {
+        this.replaceFilter(0, filter);
     }
 
-    public void setNotchFilter(Filter filter) {
-        clearPresentedData();
-        this.notchFilter = filter;
+    public void setBandpassFilter(BandpassFilter filter) {
+        this.replaceFilter(1, filter);
     }
 
-    public void setBandpassFilter(Filter filter) {
-        clearPresentedData();
-        this.bandpassFilter = filter;
-    }
-
-    private double[] filterChannel(int channelIndex) {
-        double[] filteredData = this.notchFilter.filter(this.originalRawData[channelIndex], claimCachedChannel(channelIndex));
-        return this.bandpassFilter.filter(filteredData, filteredData);
-    }
-
-    private void clearPresentedData() {
-        for (int i = 0; i < this.presentedData.length; i++) {
-            this.presentedData[i] = null;
+    public double[][] getOriginalRawDataInArray() {
+        double[][] dataArray = new double[this.originalData.size()][];
+        for (int i = 1; i <= dataArray.length; i++) {
+            dataArray[i - 1] = this.originalData.get(Integer.toString(i));
         }
-    }
-
-    private double[] claimCachedChannel(int i) {
-        return this.cachedDataSpace[i];
+        return dataArray;
     }
 }

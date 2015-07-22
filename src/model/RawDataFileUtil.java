@@ -66,7 +66,7 @@ public class RawDataFileUtil {
         try {
             newFlie.createNewFile();
             BufferedWriter writer = new BufferedWriter(new FileWriter(newFlie));
-            double[][] originalRawData = data.getOriginalRawData();
+            double[][] originalRawData = data.getOriginalRawDataInArray();
             String[] dataStrInRow = new String[originalRawData.length];
             for (int i = start; i <= end; i++) {
                 for (int j = 0; j < originalRawData.length; j++) {

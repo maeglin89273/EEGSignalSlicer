@@ -1,7 +1,9 @@
 package view;
 
-import model.Filter;
+import model.BandpassFilter;
+import model.EEGChannels;
 import model.RawDataFileUtil;
+import view.component.StreamingPlot;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -51,6 +53,8 @@ public class MainForm extends JFrame {
     private SpinnerNumberModel startSpinModel;
     private SpinnerNumberModel endSpinModel;
 
+    private EEGChannels data;
+
 
     public MainForm() {
         super("EEG Channel Slicer");
@@ -62,7 +66,7 @@ public class MainForm extends JFrame {
 
         this.setupOthers();
         this.setupListeners();
-        streamingPlot.setChannelVisible(3, true);
+        streamingPlot.setStreamVisible("3", true);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
@@ -79,8 +83,8 @@ public class MainForm extends JFrame {
                 fileChooser.setFileFilter(filter);
                 fileChooser.setMultiSelectionEnabled(false);
                 if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
-
-                    streamingPlot.setEEGChannels(RawDataFileUtil.getInstance().load(fileChooser.getSelectedFile()));
+                    data = RawDataFileUtil.getInstance().load(fileChooser.getSelectedFile());
+                    streamingPlot.setDataSource(data);
                 }
             }
         });
@@ -108,7 +112,7 @@ public class MainForm extends JFrame {
         this.sliceButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String filename = RawDataFileUtil.getInstance().saveSlice(tagField.getText(), streamingPlot.getEegChannels(),
+                String filename = RawDataFileUtil.getInstance().saveSlice(tagField.getText(), (EEGChannels) streamingPlot.getDataSource(),
                         ((Number) startSpinModel.getValue()).intValue(), ((Number) endSpinModel.getValue()).intValue());
                 if (filename != null) {
                     savedHintLbl.setText(filename + " saved!");
@@ -122,29 +126,29 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JCheckBox channelCheckBox = (JCheckBox) e.getSource();
-                streamingPlot.setChannelVisible(Integer.parseInt(channelCheckBox.getActionCommand()), channelCheckBox.isSelected());
+                streamingPlot.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
             }
         };
 
         for (int i = 0; i < this.channelCheckBoxArray.length; i++) {
             this.channelCheckBoxArray[i].addActionListener(checkBoxListener);
-            this.channelCheckBoxArray[i].setActionCommand(Integer.toString(i + 1));
         }
 
         ActionListener filterBtnListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                streamingPlot.setBandpassFilter(mapFilter(filterChoiceGroup.getSelection().getActionCommand()));
+                data.setBandpassFilter(mapFilter(filterChoiceGroup.getSelection().getActionCommand()));
+                streamingPlot.refreshPlot();
             }
 
-            private Filter mapFilter(String actionCommand) {
+            private BandpassFilter mapFilter(String actionCommand) {
                 switch (actionCommand) {
                     case "1~50Hz":
-                        return Filter.BANDPASS_1_50HZ;
+                        return BandpassFilter.BANDPASS_1_50HZ;
                     case "7~13Hz":
-                        return Filter.BANDPASS_7_13HZ;
+                        return BandpassFilter.BANDPASS_7_13HZ;
                     case "15~50Hz":
-                        return Filter.BANDPASS_15_50HZ;
+                        return BandpassFilter.BANDPASS_15_50HZ;
                 }
 
                 return null;
@@ -250,75 +254,90 @@ public class MainForm extends JFrame {
         sliceLbl.setText("Slicer");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(sliceLbl, gbc);
         final JLabel label1 = new JLabel();
         label1.setText("~");
         gbc = new GridBagConstraints();
         gbc.gridx = 3;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weighty = 1.0;
         slicerPanel.add(label1, gbc);
-        sliceButton = new JButton();
-        sliceButton.setText("Slice!");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 2;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        slicerPanel.add(sliceButton, gbc);
         loadBtn = new JButton();
         loadBtn.setText("Load EEG Raw Data...");
         gbc = new GridBagConstraints();
         gbc.gridx = 6;
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.EAST;
         slicerPanel.add(loadBtn, gbc);
         tagLbl = new JLabel();
         tagLbl.setText("Tag:");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(tagLbl, gbc);
         sliceStartSpinner = new JSpinner();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(sliceStartSpinner, gbc);
-        sliceEndSpinner = new JSpinner();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 2;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        slicerPanel.add(sliceEndSpinner, gbc);
         tagField = new JTextField();
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(tagField, gbc);
         final JPanel spacer1 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 6;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 2.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(spacer1, gbc);
         savedHintLbl = new JLabel();
         savedHintLbl.setText("");
         gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 1;
+        gbc.gridx = 5;
+        gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(savedHintLbl, gbc);
+        shadowBtn = new JButton();
+        shadowBtn.setText("Make Shadow");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        slicerPanel.add(shadowBtn, gbc);
+        sliceButton = new JButton();
+        sliceButton.setText("Slice!");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 3;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        slicerPanel.add(sliceButton, gbc);
+        sliceEndSpinner = new JSpinner();
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 3;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        slicerPanel.add(sliceEndSpinner, gbc);
+        clearShadowBtn = new JButton();
+        clearShadowBtn.setText("Clear Shadow");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        slicerPanel.add(clearShadowBtn, gbc);
         channelPanel = new JPanel();
         channelPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
