@@ -16,7 +16,7 @@ import java.util.TreeSet;
 public class StreamingPlot extends JPanel implements ActionListener {
     private JLabel startLbl;
     private JLabel endLbl;
-    private LivePlot livePlot;
+    private PlotView plotView;
     private JButton playBtn;
     private JButton backBtn;
     private JButton forthBtn;
@@ -42,7 +42,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
         this.playing = false;
         setupUI(windowSize, peakValue);
         this.plugin = new SlicerPlugin();
-        this.livePlot.setPlugin(this.plugin);
+        this.plotView.setPlugin(this.plugin);
         updatePeakLabels();
         updateBoundLabels();
 
@@ -51,9 +51,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
     private void setupListeners(int windowSize, float peakValue) {
         MouseInteractionHandler mouseHandler = new MouseInteractionHandler(windowSize, peakValue);
-        this.livePlot.addMouseListener(mouseHandler);
-        this.livePlot.addMouseWheelListener(mouseHandler);
-        this.livePlot.addMouseMotionListener(mouseHandler);
+        this.plotView.addMouseListener(mouseHandler);
+        this.plotView.addMouseWheelListener(mouseHandler);
+        this.plotView.addMouseMotionListener(mouseHandler);
 
         this.playBtn.addActionListener(new ActionListener() {
             @Override
@@ -95,7 +95,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
     public void setEEGChannels(EEGChannels eegChannels) {
         this.eegChannels = eegChannels;
         this.playBtn.setEnabled(true);
-        this.livePlot.repaint();
+        this.plotView.repaint();
     }
 
     public EEGChannels getEegChannels() {
@@ -104,7 +104,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
     public void setBandpassFilter(Filter filter) {
         this.eegChannels.setBandpassFilter(filter);
-        livePlot.repaint();
+        plotView.repaint();
     }
 
     public boolean isPlaying() {
@@ -128,7 +128,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
     }
 
     public void setChannelVisible(int channelNum, boolean isVisible) {
-        this.livePlot.setChannelVisible(channelNum, isVisible);
+        this.plotView.setChannelVisible(channelNum, isVisible);
     }
 
     public void setRangeChangedListener(RangeChangedListener rangeChangedListener) {
@@ -145,12 +145,12 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
     public void setRangeStartPosition(long pos) {
         this.plugin.setStartPosition(pos);
-        this.livePlot.repaint();
+        this.plotView.repaint();
     }
 
     public void setRangeEndPosition(long pos) {
         this.plugin.setEndPosition(pos);
-        this.livePlot.repaint();
+        this.plotView.repaint();
     }
 
     private void setupUI(int windowSize, float peakValue) {
@@ -174,9 +174,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.EAST;
         this.add(endLbl, gbc);
-        livePlot = new LivePlot(windowSize, peakValue); // new
-        livePlot.setLayout(new GridBagLayout());
-        livePlot.setBackground(new Color(-1));
+        plotView = new PlotView(windowSize, peakValue); // new
+        plotView.setLayout(new GridBagLayout());
+        plotView.setBackground(new Color(-1));
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -185,7 +185,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        this.add(livePlot, gbc);
+        this.add(plotView, gbc);
         playBtn = new JButton();
         playBtn.setEnabled(false);
         playBtn.setText("Play");
@@ -230,26 +230,26 @@ public class StreamingPlot extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         moveWindow(4);
-        if (this.livePlot.getPlotUpperBound() == this.eegChannels.getDataLength() - 1) {
+        if (this.plotView.getPlotUpperBound() == this.eegChannels.getDataLength() - 1) {
             this.pause();
         }
 
     }
 
     private void moveWindow(int delta) {
-        this.livePlot.movePlot(delta);
+        this.plotView.movePlot(delta);
         this.updateBoundLabels();
 
     }
 
     private void updateBoundLabels() {
-        this.startLbl.setText(Long.toString(this.livePlot.getPlotLowerBound()));
-        this.endLbl.setText(Long.toString(this.livePlot.getPlotUpperBound()));
+        this.startLbl.setText(Long.toString(this.plotView.getPlotLowerBound()));
+        this.endLbl.setText(Long.toString(this.plotView.getPlotUpperBound()));
     }
 
     private void updatePeakLabels() {
-        this.posPeakLbl.setText("+" + String.format("%.1f", this.livePlot.getPeakValue()));
-        this.negPeakLbl.setText("-" + String.format("%.1f", this.livePlot.getPeakValue()));
+        this.posPeakLbl.setText("+" + String.format("%.1f", this.plotView.getPeakValue()));
+        this.negPeakLbl.setText("-" + String.format("%.1f", this.plotView.getPeakValue()));
     }
 
     private class MouseInteractionHandler implements MouseWheelListener, MouseMotionListener, MouseListener {
@@ -278,9 +278,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
             if (Math.abs(scalingLevel + e.getWheelRotation()) <= MAX_SCALING_LEVEL) {
                 scalingLevel += e.getWheelRotation();
                 double scale = Math.pow(SCALING_FACTOR, scalingLevel);
-                livePlot.setPeakValue((float) (originalPeakValue * scale));
+                plotView.setPeakValue((float) (originalPeakValue * scale));
                 updatePeakLabels();
-                livePlot.setWindowSize((int) (originalWindowSize * scale));
+                plotView.setWindowSize((int) (originalWindowSize * scale));
                 updateBoundLabels();
             }
         }
@@ -288,18 +288,18 @@ public class StreamingPlot extends JPanel implements ActionListener {
         @Override
         public void mouseDragged(MouseEvent e) {
             int delta = this.lastX - e.getX();
-            long moveRecordAmount = livePlot.getPlotLowerBound() + (int)(livePlot.getWindowSize() * e.getX() / (double)livePlot.getWidth());
+            long moveRecordAmount = plotView.getPlotLowerBound() + (int)(plotView.getWindowSize() * e.getX() / (double) plotView.getWidth());
             switch (this.mouseMode) {
                 case DRAG_PLOT:
                     moveWindow(delta);
                     break;
                 case DRAG_START_SLICER:
                     plugin.setStartPosition(moveRecordAmount);
-                    livePlot.repaint();
+                    plotView.repaint();
                     break;
                 case DRAG_END_SLICER:
                     plugin.setEndPosition(moveRecordAmount);
-                    livePlot.repaint();
+                    plotView.repaint();
                     break;
             }
             this.lastX = e.getX();
@@ -346,9 +346,9 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
 
     public static abstract class Plugin {
-        protected LivePlot plot;
+        protected PlotView plot;
         public abstract void draw(Graphics2D g2);
-        public void setPlot(LivePlot plot) {
+        public void setPlot(PlotView plot) {
             this.plot = plot;
         }
 
@@ -362,7 +362,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
     }
 
 
-    private class LivePlot extends JComponent implements ComponentListener {
+    private class PlotView extends JComponent implements ComponentListener {
         private final Dimension PREFERRED_SIZE = new Dimension(750, 250);
 
         private final Color[] CHANNEL_COLORS = new Color[] {Color.DARK_GRAY, Color.MAGENTA, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PINK, Color.RED, Color.BLACK};
@@ -379,7 +379,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
 
         private Plugin plugin;
 
-        public LivePlot(int windowSize, float peakValue) {
+        public PlotView(int windowSize, float peakValue) {
             this.addComponentListener(this);
 
 
@@ -566,7 +566,7 @@ public class StreamingPlot extends JPanel implements ActionListener {
         }
 
         @Override
-        public void setPlot(LivePlot plot) {
+        public void setPlot(PlotView plot) {
             super.setPlot(plot);
             // careful the start bound
             this.endPos = plot.getPlotUpperBound();
