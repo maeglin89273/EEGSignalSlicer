@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="EEGSignalSlicer">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/out/artifacts/EEGChannelSlicer_jar/EEGChannelSlicer.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
