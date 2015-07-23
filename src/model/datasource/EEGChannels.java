@@ -1,4 +1,6 @@
-package model;
+package model.datasource;
+
+import model.filter.BandpassFilter;
 
 import java.util.HashMap;
 import java.util.Map;

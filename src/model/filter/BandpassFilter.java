@@ -1,4 +1,4 @@
-package model;
+package model.filter;
 
 /**
  * Created by maeglin89273 on 7/21/15.

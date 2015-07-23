@@ -1,6 +1,6 @@
 package view.component;
 
-import model.StreamingDataSource;
+import model.datasource.StreamingDataSource;
 import view.component.plugin.NavigationPlugin;
 import view.component.plugin.PlotPlugin;
 
@@ -15,6 +15,8 @@ import java.awt.event.*;
  * Created by maeglin89273 on 7/21/15.
  */
 public class PlotControl extends JPanel implements ActionListener {
+    private static final int SPEEED_FACTOR = 2
+            ;
     private JLabel startLbl;
     private JLabel endLbl;
     private PlotView plot;
@@ -31,8 +33,9 @@ public class PlotControl extends JPanel implements ActionListener {
 
     private boolean playing;
 
-    private static final int ANIMATION_INIT_INTERVAL = 20;
-    private static final int ANIMATION_SPEED_GAP = 10;
+    private static final int ANIMATION_INTERVAL = 17;
+    private int plotSlidingSpeed = 5;
+
 
     public PlotControl(int windowSize, float peakValue) {
         this(new PlotView(windowSize, peakValue));
@@ -40,7 +43,7 @@ public class PlotControl extends JPanel implements ActionListener {
 
 
     public PlotControl(PlotView plot) {
-        this.animator = new Timer(ANIMATION_INIT_INTERVAL, this);
+        this.animator = new Timer(ANIMATION_INTERVAL, this);
 
         this.playing = false;
         setupUI(plot);
@@ -86,9 +89,7 @@ public class PlotControl extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
-                    if (animator.getDelay() > ANIMATION_SPEED_GAP) {
-                        animator.setDelay(animator.getDelay() - ANIMATION_SPEED_GAP);
-                    }
+                    plotSlidingSpeed += (plotSlidingSpeed == -1? 2: 1);
                 } else {
                     plot.moveX(2);
                 }
@@ -100,7 +101,8 @@ public class PlotControl extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
-                    animator.setDelay(animator.getDelay() + ANIMATION_SPEED_GAP);
+                    plotSlidingSpeed -= (plotSlidingSpeed == 1? 2: 1);
+
                 } else {
                     plot.moveX(-2);
                 }
@@ -253,8 +255,9 @@ public class PlotControl extends JPanel implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        this.plot.moveX(4);
-        if (this.playbackSlider.getValue() == this.playbackSlider.getMaximum()) {
+        this.plot.moveX(plotSlidingSpeed * SPEEED_FACTOR);
+        if (this.playbackSlider.getValue() == this.playbackSlider.getMaximum() ||
+            this.plot.getPlotLowerBound() == 0) {
             this.pause();
         }
 

@@ -1,6 +1,6 @@
 package view.component;
 
-import model.StreamingDataSource;
+import model.datasource.StreamingDataSource;
 import view.component.plugin.PlotPlugin;
 
 import javax.swing.*;

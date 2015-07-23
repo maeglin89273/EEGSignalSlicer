@@ -1,5 +1,7 @@
 package model;
 
+import model.datasource.EEGChannels;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -9,17 +11,17 @@ import java.util.Map;
 /**
  * Created by maeglin89273 on 7/21/15.
  */
-public class RawDataFileUtil {
+public class RawDataFileUtils {
     private static final int COMMENTS_LINE_NUM = 5;
     private File saveDir;
     private Map<String, Integer> sliceRecord;
-    private static RawDataFileUtil instance = new RawDataFileUtil();
+    private static RawDataFileUtils instance = new RawDataFileUtils();
 
-    public static RawDataFileUtil getInstance() {
+    public static RawDataFileUtils getInstance() {
         return instance;
     }
 
-    private RawDataFileUtil() {
+    private RawDataFileUtils() {
         this.sliceRecord = new HashMap<String, Integer>();
     }
 

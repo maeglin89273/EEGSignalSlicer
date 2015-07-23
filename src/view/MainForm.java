@@ -1,8 +1,8 @@
 package view;
 
-import model.BandpassFilter;
-import model.EEGChannels;
-import model.RawDataFileUtil;
+import model.filter.BandpassFilter;
+import model.datasource.EEGChannels;
+import model.RawDataFileUtils;
 import view.component.PlotControl;
 import view.component.plugin.ShadowPlugin;
 import view.component.plugin.SlicerPlugin;
@@ -88,7 +88,7 @@ public class MainForm extends JFrame {
                 fileChooser.setFileFilter(filter);
                 fileChooser.setMultiSelectionEnabled(false);
                 if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
-                    data = RawDataFileUtil.getInstance().load(fileChooser.getSelectedFile());
+                    data = RawDataFileUtils.getInstance().load(fileChooser.getSelectedFile());
                     plotControl.setDataSource(data);
                 }
             }
@@ -118,7 +118,7 @@ public class MainForm extends JFrame {
         this.sliceButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String filename = RawDataFileUtil.getInstance().saveSlice(tagField.getText(), data,
+                String filename = RawDataFileUtils.getInstance().saveSlice(tagField.getText(), data,
                         ((Number) startSpinModel.getValue()).intValue(), ((Number) endSpinModel.getValue()).intValue());
                 if (filename != null) {
                     savedHintLbl.setText(filename + " saved!");
@@ -329,7 +329,7 @@ public class MainForm extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(shadowBtn, gbc);
         sliceButton = new JButton();
-        sliceButton.setText("Slice!");
+        sliceButton.setText("Slice");
         gbc = new GridBagConstraints();
         gbc.gridx = 5;
         gbc.gridy = 3;
