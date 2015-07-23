@@ -7,7 +7,7 @@ import java.awt.*;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class ShadowPlugin extends PlotPlugin {
+public class ShadowPlugin extends EmptyPlotPlugin {
     private final Stroke STROKE = new BasicStroke(3f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
     private final Color SHADOW_COLOR = new Color(0, 0, 0, 0.25f);
 

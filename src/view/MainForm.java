@@ -329,7 +329,7 @@ public class MainForm extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(shadowBtn, gbc);
         sliceButton = new JButton();
-        sliceButton.setText("Slice");
+        sliceButton.setText("Slice!");
         gbc = new GridBagConstraints();
         gbc.gridx = 5;
         gbc.gridy = 3;

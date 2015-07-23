@@ -15,8 +15,9 @@ import java.awt.event.*;
  * Created by maeglin89273 on 7/21/15.
  */
 public class PlotControl extends JPanel implements ActionListener {
-    private static final int SPEEED_FACTOR = 2
-            ;
+    private static final int SPEEED_FACTOR = 2;
+    private static final int DEFAULT_SLIDING_SPEED = 3;
+
     private JLabel startLbl;
     private JLabel endLbl;
     private PlotView plot;
@@ -33,12 +34,12 @@ public class PlotControl extends JPanel implements ActionListener {
 
     private boolean playing;
 
-    private static final int ANIMATION_INTERVAL = 17;
-    private int plotSlidingSpeed = 5;
+    private static final int ANIMATION_INTERVAL = 20;
+    private int plotSlidingSpeed = DEFAULT_SLIDING_SPEED;
 
 
     public PlotControl(int windowSize, float peakValue) {
-        this(new PlotView(windowSize, peakValue));
+        this(new InteractivePlotView(windowSize, peakValue));
     }
 
 
@@ -50,7 +51,7 @@ public class PlotControl extends JPanel implements ActionListener {
 
         addPluginToPlot(new NavigationPlugin());
 
-        setEnableButtons(false);
+        setEnableControls(false);
         updateYDisplays(plot.getPeakValue(), -plot.getPeakValue());
         updateXDisplays(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
 
@@ -89,7 +90,7 @@ public class PlotControl extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
-                    plotSlidingSpeed += (plotSlidingSpeed == -1? 2: 1);
+                    plotSlidingSpeed += (plotSlidingSpeed == -1 ? 2 : 1);
                 } else {
                     plot.moveX(2);
                 }
@@ -101,7 +102,7 @@ public class PlotControl extends JPanel implements ActionListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
-                    plotSlidingSpeed -= (plotSlidingSpeed == 1? 2: 1);
+                    plotSlidingSpeed -= (plotSlidingSpeed == 1 ? 2 : 1);
 
                 } else {
                     plot.moveX(-2);
@@ -124,12 +125,13 @@ public class PlotControl extends JPanel implements ActionListener {
         this.plot.setDataSource(dataSource);
 
         this.playbackSlider.setMaximum((int) dataSource.getMaxStreamLength() - 1);
-        this.playbackSlider.setMinimum(plot.getWindowSize() - 1);
-        this.setEnableButtons(true);
+        updateXDisplays(this.plot.getPlotLowerBound(), this.plot.getPlotUpperBound(), this.plot.getWindowSize());
+
+        this.setEnableControls(true);
         this.refreshPlot();
     }
 
-    private void setEnableButtons(boolean enabled) {
+    private void setEnableControls(boolean enabled) {
         this.playBtn.setEnabled(enabled);
         this.forthBtn.setEnabled(enabled);
         this.backBtn.setEnabled(enabled);
@@ -259,22 +261,22 @@ public class PlotControl extends JPanel implements ActionListener {
         if (this.playbackSlider.getValue() == this.playbackSlider.getMaximum() ||
             this.plot.getPlotLowerBound() == 0) {
             this.pause();
+            this.plotSlidingSpeed = DEFAULT_SLIDING_SPEED;
         }
 
     }
 
     private void updateXDisplays(long plotLowerBound, long plotUpperBound, int windowSize) {
-        long lower = this.plot.getPlotLowerBound();
-        long upper = this.plot.getPlotUpperBound();
-        this.startLbl.setText(Long.toString(lower));
-        this.endLbl.setText(Long.toString(upper));
-        this.progressLbl.setText(String.format("%.1f%%", 100 * upper / (double) this.playbackSlider.getMaximum()));
 
+        this.startLbl.setText(Long.toString(plotLowerBound));
+        this.endLbl.setText(Long.toString(plotUpperBound));
+
+        this.playbackSlider.setValue((int) plotUpperBound);
         if (this.playbackSlider.getMinimum() != plot.getWindowSize() - 1) {
             this.playbackSlider.setMinimum(plot.getWindowSize() - 1);
         }
-        this.playbackSlider.setValue((int) plot.getPlotUpperBound());
 
+        this.progressLbl.setText(String.format("%.1f%%", 100 * plotUpperBound / (double) this.playbackSlider.getMaximum()));
     }
 
     private void updateYDisplays(float topPeakValue, float bottomPeakValue) {

@@ -1,17 +1,60 @@
 package view.component.plugin;
 
+import view.component.PlotView;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by maeglin89273 on 7/23/15.
  */
-public class NavigationPlugin extends PlotPlugin {
+public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MouseInteractionPlugin {
+    private Set<String> interestedActions;
+    private MouseInteractionHandler mouseHandler;
+    public NavigationPlugin() {
+
+        this.interestedActions = new HashSet<String>();
+        this.interestedActions.add("mouseWheelMoved");
+        this.interestedActions.add("mouseDragged");
+        this.interestedActions.add("mousePressed");
+    }
+
+    @Override
+    public void setPlot(PlotView plot) {
+        super.setPlot(plot);
+        this.mouseHandler = new MouseInteractionHandler(plot.getWindowSize(), plot.getPeakValue());
+    }
+
+    @Override
+    public boolean onMouseEvent(String action, MouseEvent event) {
+        switch (action) {
+            case "mouseWheelMoved":
+                this.mouseHandler.mouseWheelMoved((MouseWheelEvent) event);
+                break;
+
+            case "mouseDragged":
+                this.mouseHandler.mouseDragged(event);
+                break;
+
+            case "mousePressed":
+                this.mouseHandler.mousePressed(event);
+
+        }
+        return false;
+    }
+
+    @Override
+    public Set<String> getInterestedActions() {
+        return this.interestedActions;
+    }
 
     private class MouseInteractionHandler extends MouseAdapter {
         private static final float SCALING_FACTOR = 1.2f;
         private static final int MAX_SCALING_LEVEL = 4;
+        private static final int MIN_SCALING_LEVEL = -5;
 
         private int scalingLevel = 0;
 
@@ -20,18 +63,19 @@ public class NavigationPlugin extends PlotPlugin {
 
         private int lastX = 0;
 
-        public MouseInteractionHandler(int originalWindowSize, float originalPeakValue) {
-            this.originalPeakValue = originalPeakValue;
-            this.originalWindowSize = originalWindowSize;
+        public MouseInteractionHandler(int initWindowSize, float initPeakValue) {
+            this.originalPeakValue = initPeakValue;
+            this.originalWindowSize = initWindowSize;
         }
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
-            if (Math.abs(scalingLevel + e.getWheelRotation()) <= MAX_SCALING_LEVEL) {
-                scalingLevel += e.getWheelRotation();
-                double scale = Math.pow(SCALING_FACTOR, scalingLevel);
-                plot.setPeakValue((float) (originalPeakValue * scale));
-                plot.setWindowSize((int) (originalWindowSize * scale));
+            int newScaleLevel = this.scalingLevel + e.getWheelRotation();
+            if (newScaleLevel >= MIN_SCALING_LEVEL && newScaleLevel <= MAX_SCALING_LEVEL) {
+                this.scalingLevel = newScaleLevel;
+                double scale = Math.pow(SCALING_FACTOR, this.scalingLevel);
+                plot.setPeakValue((float) (this.originalPeakValue * scale));
+                plot.setWindowSize((int) (this.originalWindowSize * scale));
             }
         }
 
