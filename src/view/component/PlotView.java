@@ -1,18 +1,19 @@
 package view.component;
 
 import model.StreamingDataSource;
+import sun.reflect.generics.factory.CoreReflectionFactory;
+import view.component.plugin.PlotPlugin;
 
-import javax.rmi.CORBA.StubDelegate;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-class PlotView extends JComponent implements ComponentListener {
+public class PlotView extends JComponent {
     private final Dimension PREFERRED_SIZE = new Dimension(750, 250);
 
     private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
@@ -27,12 +28,15 @@ class PlotView extends JComponent implements ComponentListener {
 
     private long startingPtr = 0;
 
-    private java.util.List<Plugin> plugins;
+    private List<PlotPlugin> plugins;
+    private List<CoordinatesRangeChangedListener> rangeListeners;
     private StreamingDataSource dataSource;
+
 
     public PlotView(int windowSize, float peakValue) {
 
-        this.plugins = new ArrayList<Plugin>();
+        this.plugins = new ArrayList<PlotPlugin>();
+        this.rangeListeners = new ArrayList<CoordinatesRangeChangedListener>();
         this.colorMapping = new HashMap<String, Color>();
         this.visibleStreamTags = new LinkedList<String>();
 
@@ -41,12 +45,21 @@ class PlotView extends JComponent implements ComponentListener {
         this.setWindowSize(windowSize);
         this.setPeakValue(peakValue);
 
-        this.addComponentListener(this);
-
+        this.setAdapters();
 
         this.setBackground(new Color(-1));
         this.setOpaque(true);
 
+    }
+
+    private void setAdapters() {
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateXBuffer();
+                refresh();
+            }
+        });
     }
 
     public void setDataSource(StreamingDataSource dataSource) {
@@ -57,15 +70,21 @@ class PlotView extends JComponent implements ComponentListener {
         return this.dataSource;
     }
 
-    public boolean isDataSet() {
+    public boolean isDataSourceSet() {
         return this.dataSource != null;
     }
 
-    public void addPlugin(Plugin plugin) {
+    public void addPlugin(PlotPlugin plugin) {
         this.plugins.add(plugin);
+        this.rangeListeners.add(plugin);
         plugin.setPlot(this);
-        this.repaint();
+        this.refresh();
     }
+
+    public void addCoordinatesRangeChangedListener(CoordinatesRangeChangedListener listener) {
+        this.rangeListeners.add(listener);
+    }
+
 
     public long getPlotLowerBound() {
         return this.startingPtr;
@@ -76,15 +95,7 @@ class PlotView extends JComponent implements ComponentListener {
     }
 
     public void movePlot(int delta) {
-        if (delta + this.startingPtr < 0) {
-            this.startingPtr = 0;
-        } else if (delta + this.getPlotUpperBound() >= dataSource.getMaxStreamLength()) {
-            this.startingPtr = dataSource.getMaxStreamLength() - this.getWindowSize();
-        } else {
-            this.startingPtr += delta;
-        }
-        fireOnXRangeChanged();
-        this.repaint();
+        this.setPlotTo(delta + this.startingPtr);
     }
 
     public void setPlotTo(long startingPoint) {
@@ -95,19 +106,19 @@ class PlotView extends JComponent implements ComponentListener {
         }
         this.startingPtr = startingPoint;
         fireOnXRangeChanged();
-        this.repaint();
+        this.refresh();
     }
 
     private void fireOnXRangeChanged() {
-        for (int i = plugins.size() - 1; i >= 0; i--) {
-            plugins.get(i).onXRangeChanged(this.getPlotLowerBound(), this.getPlotUpperBound(), this.getWindowSize());
+        for (int i = rangeListeners.size() - 1; i >= 0; i--) {
+            rangeListeners.get(i).onXRangeChanged(this.getPlotLowerBound(), this.getPlotUpperBound(), this.getWindowSize());
         }
 
     }
 
     private void fireOnYRangeChanged() {
-        for (int i = plugins.size() - 1; i >= 0; i--) {
-            plugins.get(i).onYRangeChanged(this.getPeakValue(), -this.getPeakValue());
+        for (int i = rangeListeners.size() - 1; i >= 0; i--) {
+            rangeListeners.get(i).onYRangeChanged(this.getPeakValue(), -this.getPeakValue());
         }
     }
 
@@ -117,7 +128,7 @@ class PlotView extends JComponent implements ComponentListener {
         g2.setBackground(this.getBackground());
         g2.clearRect(0, 0, this.getWidth(), this.getHeight());
 
-        if (this.isDataSet()) {
+        if (this.isDataSourceSet()) {
             drawBackPlugins(g2);
             g2.setStroke(STROKE);
             drawStreams(g2);
@@ -150,7 +161,6 @@ class PlotView extends JComponent implements ComponentListener {
         g2.setColor(hashStringToColor(tag));
         PlottingUtils.loadYBuffer(2 * this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), yBuffer, (int) this.getPlotLowerBound());
         g2.drawPolyline(xBuffer, yBuffer, getWindowSize());
-
     }
 
     private Color hashStringToColor(String string) {
@@ -178,8 +188,6 @@ class PlotView extends JComponent implements ComponentListener {
         }
 
         return sb.toString();
-
-
     }
 
 
@@ -203,7 +211,7 @@ class PlotView extends JComponent implements ComponentListener {
         } else {
             this.visibleStreamTags.remove(tag);
         }
-        this.repaint();
+        this.refresh();
     }
 
     public Collection<String> getVisibleStreams() {
@@ -213,7 +221,7 @@ class PlotView extends JComponent implements ComponentListener {
     public void setPeakValue(float peakValue) {
         this.peakValue = peakValue;
         fireOnYRangeChanged();
-        this.repaint();
+        this.refresh();
 
     }
 
@@ -227,7 +235,7 @@ class PlotView extends JComponent implements ComponentListener {
 
         updateXBuffer();
         fireOnXRangeChanged();
-        this.repaint();
+        this.refresh();
     }
 
     public int getWindowSize() {
@@ -242,25 +250,12 @@ class PlotView extends JComponent implements ComponentListener {
         return this.xBuffer;
     }
 
-
-    @Override
-    public void componentResized(ComponentEvent e) {
-        this.updateXBuffer();
+    public void refresh() {
         this.repaint();
     }
 
-    @Override
-    public void componentMoved(ComponentEvent e) {
-
-    }
-
-    @Override
-    public void componentShown(ComponentEvent e) {
-
-    }
-
-    @Override
-    public void componentHidden(ComponentEvent e) {
-
+    public interface CoordinatesRangeChangedListener {
+        public void onYRangeChanged(float topPeakValue, float bottomPeakValue);
+        public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize);
     }
 }

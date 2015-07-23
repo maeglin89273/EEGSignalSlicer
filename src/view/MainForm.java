@@ -3,7 +3,9 @@ package view;
 import model.BandpassFilter;
 import model.EEGChannels;
 import model.RawDataFileUtil;
-import view.component.StreamingPlot;
+import view.component.PlotControl;
+import view.component.plugin.ShadowPlugin;
+import view.component.plugin.SlicerPlugin;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,7 +45,7 @@ public class MainForm extends JFrame {
     private JLabel tagLbl;
     private JSpinner sliceStartSpinner;
     private JSpinner sliceEndSpinner;
-    private StreamingPlot streamingPlot;
+    private PlotControl plotControl;
     private JLabel savedHintLbl;
     private JButton shadowBtn;
     private JButton clearShadowBtn;
@@ -54,6 +56,8 @@ public class MainForm extends JFrame {
     private SpinnerNumberModel endSpinModel;
 
     private EEGChannels data;
+    private SlicerPlugin slicePlugin;
+    private ShadowPlugin shadowPlugin;
 
 
     public MainForm() {
@@ -64,9 +68,10 @@ public class MainForm extends JFrame {
         this.pack();
         this.setMinimumSize(this.getSize());
 
+        this.setupPlugins();
         this.setupOthers();
         this.setupListeners();
-        streamingPlot.setStreamVisible("3", true);
+        plotControl.setStreamVisible("3", true);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
@@ -84,7 +89,7 @@ public class MainForm extends JFrame {
                 fileChooser.setMultiSelectionEnabled(false);
                 if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
                     data = RawDataFileUtil.getInstance().load(fileChooser.getSelectedFile());
-                    streamingPlot.setDataSource(data);
+                    plotControl.setDataSource(data);
                 }
             }
         });
@@ -93,8 +98,8 @@ public class MainForm extends JFrame {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int value = ((Number) startSpinModel.getValue()).intValue();
-                if (value != streamingPlot.getSliceStartPosition()) {
-                    streamingPlot.setRangeStartPosition(value);
+                if (value != slicePlugin.getStartPosition()) {
+                    slicePlugin.setStartPosition(value);
                 }
             }
         });
@@ -103,8 +108,9 @@ public class MainForm extends JFrame {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int value = ((Number) endSpinModel.getValue()).intValue();
-                if (value != streamingPlot.getSliceEndPosition()) {
-                    streamingPlot.setRangeEndPosition(value);
+                if (value != slicePlugin.getEndPosition()) {
+                    slicePlugin.setEndPosition(value);
+
                 }
             }
         });
@@ -112,7 +118,7 @@ public class MainForm extends JFrame {
         this.sliceButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String filename = RawDataFileUtil.getInstance().saveSlice(tagField.getText(), (EEGChannels) streamingPlot.getDataSource(),
+                String filename = RawDataFileUtil.getInstance().saveSlice(tagField.getText(), data,
                         ((Number) startSpinModel.getValue()).intValue(), ((Number) endSpinModel.getValue()).intValue());
                 if (filename != null) {
                     savedHintLbl.setText(filename + " saved!");
@@ -126,7 +132,7 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JCheckBox channelCheckBox = (JCheckBox) e.getSource();
-                streamingPlot.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
+                plotControl.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
             }
         };
 
@@ -138,7 +144,7 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 data.setBandpassFilter(mapFilter(filterChoiceGroup.getSelection().getActionCommand()));
-                streamingPlot.refreshPlot();
+                plotControl.refreshPlot();
             }
 
             private BandpassFilter mapFilter(String actionCommand) {
@@ -167,18 +173,18 @@ public class MainForm extends JFrame {
         shadowBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                streamingPlot.wantShadow(true);
+                shadowPlugin.makeShadow();
             }
         });
 
         clearShadowBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                streamingPlot.wantShadow(false);
+                shadowPlugin.clear();
             }
         });
 
-        streamingPlot.setRangeChangedListener(new StreamingPlot.RangeChangedListener() {
+        slicePlugin.setRangeChangedListener(new SlicerPlugin.RangeChangedListener() {
             @Override
             public void onStartChanged(long lowerBound, long value, long upperBound) {
                 this.setValues(startSpinModel, lowerBound, value, upperBound);
@@ -210,13 +216,20 @@ public class MainForm extends JFrame {
         filterChoiceGroup.add(a713HzRadioButton);
         filterChoiceGroup.add(a1550HzRadioButton);
 
-        this.startSpinModel.setValue((int) this.streamingPlot.getSliceStartPosition());
-        this.endSpinModel.setValue((int) this.streamingPlot.getSliceEndPosition());
+        this.startSpinModel.setValue((int) this.slicePlugin.getStartPosition());
+        this.endSpinModel.setValue((int) this.slicePlugin.getEndPosition());
+
     }
 
+    private void setupPlugins() {
+        this.slicePlugin = new SlicerPlugin();
+        this.shadowPlugin = new ShadowPlugin();
+        this.plotControl.addPluginToPlot(this.slicePlugin);
+        this.plotControl.addPluginToPlot(this.shadowPlugin);
+    }
 
     private void createUIComponents() {
-        streamingPlot = new StreamingPlot(600, 50);
+        plotControl = new PlotControl(600, 50);
     }
 
     /**
@@ -470,7 +483,7 @@ public class MainForm extends JFrame {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(streamingPlot, gbc);
+        mainPanel.add(plotControl, gbc);
     }
 
     /**

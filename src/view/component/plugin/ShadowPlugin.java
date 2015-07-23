@@ -1,11 +1,13 @@
-package view.component;
+package view.component.plugin;
+
+import view.component.PlottingUtils;
 
 import java.awt.*;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-class ShadowPlugin extends Plugin {
+public class ShadowPlugin extends PlotPlugin {
     private final Stroke STROKE = new BasicStroke(3f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
     private final Color SHADOW_COLOR = new Color(0, 0, 0, 0.25f);
 
@@ -31,10 +33,12 @@ class ShadowPlugin extends Plugin {
         this.startingPtr = plot.getPlotLowerBound();
         adjustBuffers(windowSize);
         this.shadowing = true;
+        this.plot.refresh();
     }
 
     public void clear() {
         this.shadowing = false;
+        this.plot.refresh();
     }
 
     @Override

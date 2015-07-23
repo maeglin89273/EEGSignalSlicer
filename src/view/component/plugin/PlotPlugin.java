@@ -1,11 +1,13 @@
-package view.component;
+package view.component.plugin;
+
+import view.component.PlotView;
 
 import java.awt.*;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public abstract class Plugin {
+public abstract class PlotPlugin implements PlotView.CoordinatesRangeChangedListener {
     protected PlotView plot;
 
     public void drawAfterPlot(Graphics2D g2) {

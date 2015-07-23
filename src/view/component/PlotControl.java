@@ -1,0 +1,296 @@
+package view.component;
+
+import model.StreamingDataSource;
+import view.component.plugin.NavigationPlugin;
+import view.component.plugin.PlotPlugin;
+
+import javax.swing.*;
+import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.*;
+
+/**
+ * Created by maeglin89273 on 7/21/15.
+ */
+public class PlotControl extends JPanel implements ActionListener {
+    private JLabel startLbl;
+    private JLabel endLbl;
+    private PlotView plot;
+    private JButton playBtn;
+    private JButton backBtn;
+    private JButton forthBtn;
+
+    private JLabel negPeakLbl;
+    private JLabel posPeakLbl;
+    private JLabel progressLbl;
+    private JSlider playbackSlider;
+
+    private Timer animator;
+
+    private boolean playing;
+
+    private static final int ANIMATION_INIT_INTERVAL = 20;
+    private static final int ANIMATION_SPEED_GAP = 10;
+
+    public PlotControl(int windowSize, float peakValue) {
+        this(new PlotView(windowSize, peakValue));
+    }
+
+
+    public PlotControl(PlotView plot) {
+        this.animator = new Timer(ANIMATION_INIT_INTERVAL, this);
+
+        this.playing = false;
+        setupUI(plot);
+
+        addPluginToPlot(new NavigationPlugin());
+
+        setEnableButtons(false);
+        updateYDisplays(plot.getPeakValue(), -plot.getPeakValue());
+        updateXDisplays(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
+
+        setupListeners(plot.getWindowSize(), plot.getPeakValue());
+    }
+
+    public void addPluginToPlot(PlotPlugin plugin) {
+        this.plot.addPlugin(plugin);
+    }
+
+
+    private void setupListeners(int windowSize, float peakValue) {
+        this.plot.addCoordinatesRangeChangedListener(new PlotView.CoordinatesRangeChangedListener() {
+            @Override
+            public void onYRangeChanged(float topPeakValue, float bottomPeakValue) {
+                updateYDisplays(topPeakValue, bottomPeakValue);
+            }
+
+            @Override
+            public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
+                updateXDisplays(plotLowerBound, plotUpperBound, windowSize);
+            }
+        });
+        this.playBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (isPlaying()) {
+                    pause();
+                } else {
+                    play();
+                }
+            }
+        });
+
+        this.forthBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (isPlaying()) {
+                    if (animator.getDelay() > ANIMATION_SPEED_GAP) {
+                        animator.setDelay(animator.getDelay() - ANIMATION_SPEED_GAP);
+                    }
+                } else {
+                    moveWindow(2);
+                }
+
+            }
+        });
+
+        this.backBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (isPlaying()) {
+                    animator.setDelay(animator.getDelay() + ANIMATION_SPEED_GAP);
+                } else {
+                    moveWindow(-2);
+                }
+            }
+        });
+
+        this.playbackSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int value = playbackSlider.getValue();
+                if (plot.getPlotUpperBound() != value) {
+                    setWindow(value - plot.getWindowSize() + 1);
+                }
+            }
+        });
+    }
+
+    public void setDataSource(StreamingDataSource dataSource) {
+        this.plot.setDataSource(dataSource);
+
+        this.playbackSlider.setMaximum((int) dataSource.getMaxStreamLength() - 1);
+        this.playbackSlider.setMinimum(plot.getWindowSize() - 1);
+        this.setEnableButtons(true);
+        this.refreshPlot();
+    }
+
+    private void setEnableButtons(boolean enabled) {
+        this.playBtn.setEnabled(enabled);
+        this.forthBtn.setEnabled(enabled);
+        this.backBtn.setEnabled(enabled);
+        this.playbackSlider.setEnabled(enabled);
+    }
+
+    public boolean isPlaying() {
+        return this.playing;
+    }
+
+    public void play() {
+        if (!this.isPlaying()) {
+            this.animator.start();
+            this.playing = true;
+            this.playBtn.setText("Pause");
+        }
+    }
+
+    public void pause() {
+        if (this.isPlaying()) {
+            this.animator.stop();
+            this.playing = false;
+            this.playBtn.setText("Play");
+        }
+    }
+
+    public void setStreamVisible(String tag, boolean isVisible) {
+        this.plot.setStreamVisible(tag, isVisible);
+    }
+
+    private void setupUI(PlotView plot) {
+
+        this.setLayout(new GridBagLayout());
+        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), null));
+        startLbl = new JLabel();
+        startLbl.setText("0");
+        GridBagConstraints gbc;
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        this.add(startLbl, gbc);
+        endLbl = new JLabel();
+        endLbl.setText("250");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.EAST;
+        this.add(endLbl, gbc);
+        this.plot = plot;
+        this.plot.setLayout(new GridBagLayout());
+        this.plot.setBackground(new Color(-1));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 5;
+        gbc.gridheight = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        this.add(this.plot, gbc);
+        playBtn = new JButton();
+        playBtn.setEnabled(false);
+        playBtn.setText("Play");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(playBtn, gbc);
+        backBtn = new JButton();
+        backBtn.setLabel("<<");
+        backBtn.setText("<<");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(backBtn, gbc);
+        forthBtn = new JButton();
+        forthBtn.setLabel(">>");
+        forthBtn.setText(">>");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(forthBtn, gbc);
+        negPeakLbl = new JLabel();
+        negPeakLbl.setText("-Vp");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.SOUTHWEST;
+        this.add(negPeakLbl, gbc);
+        posPeakLbl = new JLabel();
+        posPeakLbl.setText("+Vp");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        this.add(posPeakLbl, gbc);
+        progressLbl = new JLabel();
+        progressLbl.setEnabled(true);
+        progressLbl.setHorizontalAlignment(0);
+        progressLbl.setHorizontalTextPosition(0);
+        progressLbl.setText("0%");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(progressLbl, gbc);
+        playbackSlider = new JSlider();
+        playbackSlider.setValue(0);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.gridwidth = 5;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(playbackSlider, gbc);
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        moveWindow(4);
+        if (this.playbackSlider.getValue() == this.playbackSlider.getMaximum()) {
+            this.pause();
+        }
+
+    }
+
+    private void setWindow(int startingPos) {
+        this.plot.setPlotTo(startingPos);
+
+    }
+
+    private void moveWindow(int delta) {
+        this.plot.movePlot(delta);
+
+    }
+
+    private void updateXDisplays(long plotLowerBound, long plotUpperBound, int windowSize) {
+        long lower = this.plot.getPlotLowerBound();
+        long upper = this.plot.getPlotUpperBound();
+        this.startLbl.setText(Long.toString(lower));
+        this.endLbl.setText(Long.toString(upper));
+        this.progressLbl.setText(String.format("%.1f%%", 100 * upper / (double) this.playbackSlider.getMaximum()));
+
+        if (this.playbackSlider.getMinimum() != plot.getWindowSize() - 1) {
+            this.playbackSlider.setMinimum(plot.getWindowSize() - 1);
+        }
+        this.playbackSlider.setValue((int) plot.getPlotUpperBound());
+
+    }
+
+    private void updateYDisplays(float topPeakValue, float bottomPeakValue) {
+        this.posPeakLbl.setText(String.format("%.1f", topPeakValue));
+        this.negPeakLbl.setText(String.format("%.1f", bottomPeakValue));
+    }
+    
+    public void refreshPlot() {
+        this.plot.refresh();
+    }
+
+}

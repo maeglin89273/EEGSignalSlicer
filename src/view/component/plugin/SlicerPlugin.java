@@ -1,20 +1,24 @@
-package view.component;
+package view.component.plugin;
+
+import view.component.PlotView;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class SlicerPlugin extends Plugin {
+public class SlicerPlugin extends PlotPlugin implements MouseMotionListener {
     private long startPos;
     private double relativeStartPos;
     private long endPos;
     private double relativeEndPos;
     private final Stroke STROKE = new BasicStroke(1.2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
-    private StreamingPlot.RangeChangedListener listener;
+    private RangeChangedListener listener;
 
-    public void setRangeChangeListener(StreamingPlot.RangeChangedListener listener) {
+    public void setRangeChangedListener(RangeChangedListener listener) {
         this.listener = listener;
     }
 
@@ -25,6 +29,8 @@ public class SlicerPlugin extends Plugin {
         this.endPos = plot.getPlotUpperBound();
         this.setStartPosition(plot.getPlotLowerBound());
         this.setEndPosition(plot.getPlotUpperBound());
+        this.plot.addMouseMotionListener(this);
+
     }
 
     @Override
@@ -59,6 +65,7 @@ public class SlicerPlugin extends Plugin {
         if (this.listener != null) {
             this.listener.onStartChanged(plot.getPlotLowerBound(), this.getStartPosition(), this.getEndPosition());
         }
+        this.plot.refresh();
     }
 
     public void setEndPosition(long endPosition) {
@@ -73,6 +80,7 @@ public class SlicerPlugin extends Plugin {
         if (this.listener != null) {
             this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
         }
+        this.plot.refresh();
     }
 
     @Override
@@ -88,11 +96,34 @@ public class SlicerPlugin extends Plugin {
 
     private final float SLICER_TOUCH_RANGE = 7f;
 
-    public boolean isOnStartSlicer(int pos) {
+    private boolean isOnStartSlicer(int pos) {
         return Math.abs(pos - (this.plot.getWidth() * this.relativeStartPos)) <= SLICER_TOUCH_RANGE;
     }
 
-    public boolean isOnEndSlicer(int pos) {
+    private boolean isOnEndSlicer(int pos) {
         return Math.abs(pos - (this.plot.getWidth() * this.relativeEndPos)) <= SLICER_TOUCH_RANGE;
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        long moveKnifeToHere = this.plot.getPlotLowerBound() + (int)(this.plot.getWindowSize() * e.getX() / (double) this.plot.getWidth());
+        if (isOnStartSlicer(e.getX())) {
+            this.setStartPosition(moveKnifeToHere);
+            e.consume();
+        } else if (isOnEndSlicer(e.getY())) {
+            this.setEndPosition(moveKnifeToHere);
+            e.consume();
+        }
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+
+    }
+
+    public interface RangeChangedListener {
+        public void onStartChanged(long lowerBound, long value, long upperBound);
+        public void onEndChanged(long lowerBound, long value, long upperBound);
     }
 }
