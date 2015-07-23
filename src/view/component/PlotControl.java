@@ -90,7 +90,7 @@ public class PlotControl extends JPanel implements ActionListener {
                         animator.setDelay(animator.getDelay() - ANIMATION_SPEED_GAP);
                     }
                 } else {
-                    moveWindow(2);
+                    plot.moveX(2);
                 }
 
             }
@@ -102,7 +102,7 @@ public class PlotControl extends JPanel implements ActionListener {
                 if (isPlaying()) {
                     animator.setDelay(animator.getDelay() + ANIMATION_SPEED_GAP);
                 } else {
-                    moveWindow(-2);
+                    plot.moveX(-2);
                 }
             }
         });
@@ -112,7 +112,7 @@ public class PlotControl extends JPanel implements ActionListener {
             public void stateChanged(ChangeEvent e) {
                 int value = playbackSlider.getValue();
                 if (plot.getPlotUpperBound() != value) {
-                    setWindow(value - plot.getWindowSize() + 1);
+                    plot.setXTo(value - plot.getWindowSize() + 1);
                 }
             }
         });
@@ -253,20 +253,10 @@ public class PlotControl extends JPanel implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        moveWindow(4);
+        this.plot.moveX(4);
         if (this.playbackSlider.getValue() == this.playbackSlider.getMaximum()) {
             this.pause();
         }
-
-    }
-
-    private void setWindow(int startingPos) {
-        this.plot.setPlotTo(startingPos);
-
-    }
-
-    private void moveWindow(int delta) {
-        this.plot.movePlot(delta);
 
     }
 

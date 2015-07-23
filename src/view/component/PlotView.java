@@ -1,7 +1,6 @@
 package view.component;
 
 import model.StreamingDataSource;
-import sun.reflect.generics.factory.CoreReflectionFactory;
 import view.component.plugin.PlotPlugin;
 
 import javax.swing.*;
@@ -94,11 +93,11 @@ public class PlotView extends JComponent {
         return this.startingPtr + getWindowSize() - 1;
     }
 
-    public void movePlot(int delta) {
-        this.setPlotTo(delta + this.startingPtr);
+    public void moveX(int delta) {
+        this.setXTo(delta + this.startingPtr);
     }
 
-    public void setPlotTo(long startingPoint) {
+    public void setXTo(long startingPoint) {
         if (startingPoint < 0) {
             startingPoint = 0;
         } else if (startingPoint + this.getWindowSize() - 1 >= dataSource.getMaxStreamLength()) {

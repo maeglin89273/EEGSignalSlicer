@@ -37,7 +37,7 @@ public class NavigationPlugin extends PlotPlugin {
 
         @Override
         public void mouseDragged(MouseEvent e) {
-            plot.movePlot(this.lastX - e.getX());
+            plot.moveX(this.lastX - e.getX());
             this.lastX = e.getX();
         }
 
