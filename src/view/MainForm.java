@@ -1,8 +1,10 @@
 package view;
 
-import model.filter.BandpassFilter;
+import model.filter.ButterworthFilter;
 import model.datasource.EEGChannels;
 import model.RawDataFileUtils;
+import model.filter.EEGFilter;
+import model.filter.Filter;
 import view.component.PlotControl;
 import view.component.plugin.DTWPlugin;
 import view.component.plugin.SlicerPlugin;
@@ -15,6 +17,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by maeglin89273 on 7/20/15.
@@ -32,9 +36,9 @@ public class MainForm extends JFrame {
     private JCheckBox channel8CheckBox;
     private JLabel filterLbl;
     private JLabel channelLbl;
-    private JRadioButton a150HzRadioButton;
-    private JRadioButton a713HzRadioButton;
-    private JRadioButton a1550HzRadioButton;
+    private JRadioButton alphaFilterRadioBtn;
+    private JRadioButton betaFilterRadioBtn;
+    private JRadioButton gammaFilterRadioBtn;
     private JPanel controlPanel;
     private JPanel slicerPanel;
     private JPanel channelPanel;
@@ -53,6 +57,8 @@ public class MainForm extends JFrame {
     private JLabel dtwDistanceLbl;
     private JLabel dtwValueLbl;
     private JPanel dtwPanel;
+    private JRadioButton thetaFilterRadioBtn;
+    private JRadioButton a1to50HzFilterRadioBtn;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
@@ -62,6 +68,7 @@ public class MainForm extends JFrame {
     private EEGChannels data;
 
     private DTWPlugin dtwPlugin;
+    private Map<String, Filter> filterTable;
 
 
     public MainForm() {
@@ -148,22 +155,11 @@ public class MainForm extends JFrame {
         ActionListener filterBtnListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                data.setBandpassFilter(mapFilter(filterChoiceGroup.getSelection().getActionCommand()));
+                data.setBandpassFilter(filterTable.get(filterChoiceGroup.getSelection().getActionCommand()));
                 dtwPlugin.updateDTW();
             }
 
-            private BandpassFilter mapFilter(String actionCommand) {
-                switch (actionCommand) {
-                    case "1~50Hz":
-                        return BandpassFilter.BANDPASS_1_50HZ;
-                    case "7~13Hz":
-                        return BandpassFilter.BANDPASS_7_13HZ;
-                    case "15~50Hz":
-                        return BandpassFilter.BANDPASS_15_50HZ;
-                }
 
-                return null;
-            }
         };
 
         Enumeration<AbstractButton> filterBtns = this.filterChoiceGroup.getElements();
@@ -241,9 +237,13 @@ public class MainForm extends JFrame {
 
 
         filterChoiceGroup = new ButtonGroup();
-        filterChoiceGroup.add(a150HzRadioButton);
-        filterChoiceGroup.add(a713HzRadioButton);
-        filterChoiceGroup.add(a1550HzRadioButton);
+        filterChoiceGroup.add(thetaFilterRadioBtn);
+        filterChoiceGroup.add(alphaFilterRadioBtn);
+        filterChoiceGroup.add(betaFilterRadioBtn);
+        filterChoiceGroup.add(gammaFilterRadioBtn);
+        filterChoiceGroup.add(a1to50HzFilterRadioBtn);
+        this.filterTable = new HashMap<String, Filter>(EEGFilter.EEG_BANDPASS_FILTER_TABLE);
+        this.filterTable.put(a1to50HzFilterRadioBtn.getText(), ButterworthFilter.BANDPASS_1_50HZ);
 
         this.startSpinModel.setValue((int) this.dtwPlugin.getStartPosition());
         this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
@@ -429,28 +429,28 @@ public class MainForm extends JFrame {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         controlPanel.add(filterPanel, gbc);
-        a150HzRadioButton = new JRadioButton();
-        a150HzRadioButton.setSelected(true);
-        a150HzRadioButton.setText("1~50Hz");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(a150HzRadioButton, gbc);
-        a713HzRadioButton = new JRadioButton();
-        a713HzRadioButton.setText("7~13Hz");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(a713HzRadioButton, gbc);
-        a1550HzRadioButton = new JRadioButton();
-        a1550HzRadioButton.setText("15~50Hz");
+        alphaFilterRadioBtn = new JRadioButton();
+        alphaFilterRadioBtn.setSelected(false);
+        alphaFilterRadioBtn.setText("Alpha");
         gbc = new GridBagConstraints();
         gbc.gridx = 3;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(a1550HzRadioButton, gbc);
+        filterPanel.add(alphaFilterRadioBtn, gbc);
+        betaFilterRadioBtn = new JRadioButton();
+        betaFilterRadioBtn.setText("Beta");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(betaFilterRadioBtn, gbc);
+        gammaFilterRadioBtn = new JRadioButton();
+        gammaFilterRadioBtn.setText("Gamma");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(gammaFilterRadioBtn, gbc);
         filterLbl = new JLabel();
         filterLbl.setText("Filter");
         gbc = new GridBagConstraints();
@@ -460,11 +460,27 @@ public class MainForm extends JFrame {
         filterPanel.add(filterLbl, gbc);
         final JPanel spacer3 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 4;
+        gbc.gridx = 6;
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         filterPanel.add(spacer3, gbc);
+        thetaFilterRadioBtn = new JRadioButton();
+        thetaFilterRadioBtn.setSelected(false);
+        thetaFilterRadioBtn.setText("Theta");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(thetaFilterRadioBtn, gbc);
+        a1to50HzFilterRadioBtn = new JRadioButton();
+        a1to50HzFilterRadioBtn.setSelected(true);
+        a1to50HzFilterRadioBtn.setText("1~50Hz");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(a1to50HzFilterRadioBtn, gbc);
         channelPanel = new JPanel();
         channelPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();

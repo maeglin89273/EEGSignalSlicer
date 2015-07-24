@@ -180,32 +180,32 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="92341" class="javax.swing.JRadioButton" binding="a150HzRadioButton" default-binding="true">
-                <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <selected value="true"/>
-                  <text value="1~50Hz"/>
-                </properties>
-              </component>
-              <component id="8f926" class="javax.swing.JRadioButton" binding="a713HzRadioButton" default-binding="true">
-                <constraints>
-                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <text value="7~13Hz"/>
-                </properties>
-              </component>
-              <component id="b81c9" class="javax.swing.JRadioButton" binding="a1550HzRadioButton" default-binding="true">
+              <component id="92341" class="javax.swing.JRadioButton" binding="alphaFilterRadioBtn">
                 <constraints>
                   <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
-                  <text value="15~50Hz"/>
+                  <selected value="false"/>
+                  <text value="Alpha"/>
+                </properties>
+              </component>
+              <component id="8f926" class="javax.swing.JRadioButton" binding="betaFilterRadioBtn">
+                <constraints>
+                  <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="Beta"/>
+                </properties>
+              </component>
+              <component id="b81c9" class="javax.swing.JRadioButton" binding="gammaFilterRadioBtn">
+                <constraints>
+                  <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="Gamma"/>
                 </properties>
               </component>
               <component id="6e73c" class="javax.swing.JLabel" binding="filterLbl">
@@ -219,10 +219,30 @@
               </component>
               <hspacer id="3e49b">
                 <constraints>
-                  <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="0.0"/>
                 </constraints>
               </hspacer>
+              <component id="7a583" class="javax.swing.JRadioButton" binding="thetaFilterRadioBtn">
+                <constraints>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <selected value="false"/>
+                  <text value="Theta"/>
+                </properties>
+              </component>
+              <component id="beb61" class="javax.swing.JRadioButton" binding="a1to50HzFilterRadioBtn">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <selected value="true"/>
+                  <text value="1~50Hz"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <grid id="df145" binding="channelPanel" layout-manager="GridBagLayout">

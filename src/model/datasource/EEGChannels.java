@@ -1,6 +1,7 @@
 package model.datasource;
 
-import model.filter.BandpassFilter;
+import model.filter.ButterworthFilter;
+import model.filter.Filter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +15,8 @@ public class EEGChannels extends StreamingDataSource {
         super(convertToMap(originalRawData));
         System.out.println(this.getMaxStreamLength() + " presentedData loaded");
 
-        this.addFilter(BandpassFilter.NOTCH_60HZ);
-        this.addFilter(BandpassFilter.BANDPASS_1_50HZ);
+        this.addFilter(ButterworthFilter.NOTCH_60HZ);
+        this.addFilter(ButterworthFilter.BANDPASS_1_50HZ);
 
     }
 
@@ -27,11 +28,11 @@ public class EEGChannels extends StreamingDataSource {
         return dataMap;
     }
 
-    public void setNotchFilter(BandpassFilter filter) {
+    public void setNotchFilter(Filter filter) {
         this.replaceFilter(0, filter);
     }
 
-    public void setBandpassFilter(BandpassFilter filter) {
+    public void setBandpassFilter(Filter filter) {
         this.replaceFilter(1, filter);
     }
 
