@@ -216,11 +216,35 @@ public class MainForm extends JFrame {
 
         dtwPlugin.setDTWDistanceListener(new DTWPlugin.DTWDistanceListener() {
 
+
+            private double dtwPlugin;
+
+            public static final float MAGENTA_DISTANCE = 0.35f * DTWPlugin.ACCEPTABLE_DTW_DISTANCE_UPPERBOUND;
+            private static final float BLUE_DISTANCE = 0.55f * DTWPlugin.ACCEPTABLE_DTW_DISTANCE_UPPERBOUND;
+            private static final float GREEN_DISTANCE = 0.05f * DTWPlugin.ACCEPTABLE_DTW_DISTANCE_UPPERBOUND;
+            public static final float RED_DISTANCE = 0.1f * DTWPlugin.ACCEPTABLE_DTW_DISTANCE_UPPERBOUND;
+
+            public void setLevelColor(double distance) {
+                if (distance <= GREEN_DISTANCE) {
+                    dtwValueLbl.setForeground(Color.GREEN);
+                } else if (distance <= RED_DISTANCE) {
+                    dtwValueLbl.setForeground(Color.RED);
+                } else if (distance <= MAGENTA_DISTANCE) {
+                    dtwValueLbl.setForeground(Color.MAGENTA);
+                } else if (distance <= BLUE_DISTANCE) {
+                    dtwValueLbl.setForeground(Color.BLUE);
+                } else {
+                    dtwValueLbl.setForeground(Color.BLACK);
+                }
+            }
+
             @Override
             public void onDistanceChanged(double distance) {
                 if (distance >= 0) {
+                    setLevelColor(distance);
                     dtwValueLbl.setText(String.format("%.2f", distance));
                 } else {
+                    dtwValueLbl.setForeground(Color.BLACK);
                     dtwValueLbl.setText(String.format("> %.1f", DTWPlugin.ACCEPTABLE_DTW_DISTANCE_UPPERBOUND));
                 }
 
@@ -260,7 +284,7 @@ public class MainForm extends JFrame {
     }
 
     private void createUIComponents() {
-        plotControl = new PlotControl(600, 50);
+        plotControl = new PlotControl(600, 60);
     }
 
     /**
@@ -324,6 +348,7 @@ public class MainForm extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         dtwPanel.add(moveShadowCheckBox, gbc);
         dtwValueLbl = new JLabel();
+        dtwValueLbl.setFont(new Font(dtwValueLbl.getFont().getName(), Font.BOLD, dtwValueLbl.getFont().getSize()));
         dtwValueLbl.setText("");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;

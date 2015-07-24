@@ -146,19 +146,22 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         return (int)(this.getEndPosition() - this.getStartPosition()) + 1;
     }
 
-    private enum SliceMode {
-        NOT_SLICING, START_SLICER, END_SLICER
+    private enum OperatingMode {
+        NOT_SLICING, START_SLICER, END_SLICER, MOVE_RANGE
     }
 
-    private SliceMode sliceMode;
+    private OperatingMode operatingMode;
+    private long tmpX;
+    private long tmpStartX;
+    private long tmpEndY;
     private static final double SLICER_TOUCH_RANGE = 7f;
 
-    private boolean isOnStartSlicer(int pos) {
-        return Math.abs(pos - (this.plot.getWidth() * this.relativeStartPos)) <= SLICER_TOUCH_RANGE;
+    private boolean isOnSlicer(int pos, double slicerX) {
+        return Math.abs(pos - slicerX) <= SLICER_TOUCH_RANGE;
     }
 
-    private boolean isOnEndSlicer(int pos) {
-        return Math.abs(pos - (this.plot.getWidth() * this.relativeEndPos)) <= SLICER_TOUCH_RANGE;
+    private boolean isOnWindow(int pos, double startX, double endX) {
+        return startX < pos && pos < endX;
     }
 
     @Override
@@ -173,30 +176,49 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     private boolean handleMousePressed(MouseEvent event) {
-        if (isOnStartSlicer(event.getX())) {
-            this.sliceMode = SliceMode.START_SLICER;
+        int mouseX = event.getX();
+        double startX = this.plot.getWidth() * this.relativeStartPos;
+        double endX = this.plot.getWidth() * this.relativeEndPos;
+        if (isOnSlicer(mouseX, startX)) {
+            this.operatingMode = OperatingMode.START_SLICER;
             return false;
-        } else if (isOnEndSlicer(event.getX())) {
-            this.sliceMode = SliceMode.END_SLICER;
+        } else if (isOnSlicer(mouseX, endX)) {
+            this.operatingMode = OperatingMode.END_SLICER;
+            return false;
+        } else if (this.renderBg && this.isOnWindow(mouseX, startX, endX)) {
+            this.operatingMode = OperatingMode.MOVE_RANGE;
+            tmpX = this.projectMouseXToDataXIndex(mouseX);
+            tmpStartX = this.getStartPosition();
+            tmpEndY = this.getEndPosition();
             return false;
         }
-        this.sliceMode = SliceMode.NOT_SLICING;
+        this.operatingMode = OperatingMode.NOT_SLICING;
         return true;
     }
 
+    private long projectMouseXToDataXIndex(int mouseX) {
+        return this.plot.getPlotLowerBound() + (int)(this.plot.getWindowSize() * mouseX / (double) this.plot.getWidth());
+    }
+
     private boolean handleMouseDragged(MouseEvent event) {
-        if (sliceMode == SliceMode.NOT_SLICING) {
+        if (operatingMode == OperatingMode.NOT_SLICING) {
             return true;
         }
 
-        long moveKnifeToHere = this.plot.getPlotLowerBound() + (int)(this.plot.getWindowSize() * event.getX() / (double) this.plot.getWidth());
-        switch (sliceMode) {
+        long moveKnifeToHere = this.projectMouseXToDataXIndex(event.getX());
+        switch (operatingMode) {
             case START_SLICER:
                 this.setStartPosition(moveKnifeToHere);
                 break;
 
             case END_SLICER:
                 this.setEndPosition(moveKnifeToHere);
+                break;
+
+            case MOVE_RANGE:
+                int delta = (int)(moveKnifeToHere - this.tmpX);
+                this.setStartPosition(this.tmpStartX + delta);
+                this.setEndPosition(this.tmpEndY + delta);
 
         }
         return false;

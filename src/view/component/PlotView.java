@@ -13,7 +13,7 @@ import java.util.List;
  * Created by maeglin89273 on 7/22/15.
  */
 public class PlotView extends JComponent implements StreamingDataSource.PresentedDataChangedListener {
-    private final Dimension PREFERRED_SIZE = new Dimension(750, 250);
+    private final Dimension PREFERRED_SIZE = new Dimension(750, 300);
 
     private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
