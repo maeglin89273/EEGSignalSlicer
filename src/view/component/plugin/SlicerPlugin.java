@@ -18,6 +18,7 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     private double relativeEndPos;
     private static final Stroke STROKE = new BasicStroke(1.2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
     private final Color knifeColor;
+    private final int bgAlpha = 17;
     private final Color bgColor;
 
     private boolean renderBg = false;
@@ -32,7 +33,7 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     public SlicerPlugin(Color knifeColor) {
         this.knifeColor = knifeColor;
-        this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), 20);
+        this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), bgAlpha);
     }
 
     public void setRangeChangedListener(RangeChangedListener listener) {
@@ -54,8 +55,8 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         super.setPlot(plot);
         // careful the start bound
         this.endPos = plot.getPlotUpperBound();
-        this.setStartPosition(plot.getPlotLowerBound());
-        this.setEndPosition(plot.getPlotUpperBound());
+        this.setStartPosition(plot.getPlotLowerBound() + 50);
+        this.setEndPosition(plot.getPlotUpperBound() - 50);
     }
 
     @Override

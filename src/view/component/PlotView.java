@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class PlotView extends JComponent {
+public class PlotView extends JComponent implements StreamingDataSource.PresentedDataChangedListener {
     private final Dimension PREFERRED_SIZE = new Dimension(750, 250);
 
     private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
@@ -63,6 +63,7 @@ public class PlotView extends JComponent {
 
     public void setDataSource(StreamingDataSource dataSource) {
         this.dataSource = dataSource;
+        this.dataSource.addPresentedDataChangedListener(this);
         this.refresh();
     }
 
@@ -251,6 +252,11 @@ public class PlotView extends JComponent {
 
     public void refresh() {
         this.repaint();
+    }
+
+    @Override
+    public void onDataChanged() {
+        this.refresh();
     }
 
     public interface CoordinatesRangeChangedListener {

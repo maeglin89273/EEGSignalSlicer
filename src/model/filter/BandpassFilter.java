@@ -22,7 +22,7 @@ public class BandpassFilter implements Filter {
 
     private double[] a;
     private double[] b;
-    private BandpassFilter(double[] a, double[] b) {
+    protected BandpassFilter(double[] a, double[] b) {
         this.a = a;
         this.b = b;
     }

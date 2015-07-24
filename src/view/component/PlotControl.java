@@ -15,7 +15,7 @@ import java.awt.event.*;
  * Created by maeglin89273 on 7/21/15.
  */
 public class PlotControl extends JPanel implements ActionListener {
-    private static final int SPEEED_FACTOR = 2;
+    private static final int SPEEED_FACTOR = 1;
     private static final int DEFAULT_SLIDING_SPEED = 3;
 
     private JLabel startLbl;

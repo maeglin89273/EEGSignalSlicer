@@ -2,10 +2,7 @@ package model.datasource;
 
 import model.filter.Filter;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by maeglin89273 on 7/22/15.
@@ -18,6 +15,8 @@ public abstract class StreamingDataSource {
 
     private long maxStreamLength;
 
+    private List<PresentedDataChangedListener> listeners;
+
     protected StreamingDataSource(Map<String, double[]> originalData) {
         this.originalData = originalData;
         this.presentedData = new HashMap<String, double[]>();
@@ -25,6 +24,7 @@ public abstract class StreamingDataSource {
         this.filters = new LinkedList<Filter>();
 
         this.maxStreamLength = fillCachedDataSpaceAndFindMaxLength(this.originalData);
+        this.listeners = new ArrayList<PresentedDataChangedListener>();
     }
 
     private long fillCachedDataSpaceAndFindMaxLength(Map<String, double[]> originalData) {
@@ -40,18 +40,18 @@ public abstract class StreamingDataSource {
     }
 
     public void addFilter(Filter filter) {
-        this.clearPresentedData();
         this.filters.add(filter);
+        this.clearPresentedData();
     }
 
     public void removeFilter(Filter filter) {
-        this.clearPresentedData();
         this.filters.remove(filter);
+        this.clearPresentedData();
     }
 
     public void replaceFilter(int i, Filter filter) {
-        this.clearPresentedData();
         this.filters.set(i, filter);
+        this.clearPresentedData();
     }
 
     public long getMaxStreamLength() {
@@ -89,6 +89,22 @@ public abstract class StreamingDataSource {
     }
 
     private void clearPresentedData() {
-        presentedData.clear();
+        this.presentedData.clear();
+        this.firePresentedDataChanged();
     }
+
+    public void addPresentedDataChangedListener (PresentedDataChangedListener listener) {
+        this.listeners.add(listener);
+    }
+
+    private void firePresentedDataChanged() {
+        for (int i = this.listeners.size() - 1; i >= 0; i--) {
+            this.listeners.get(i).onDataChanged();
+        }
+    }
+
+    public interface PresentedDataChangedListener {
+        public void onDataChanged();
+    }
+
 }

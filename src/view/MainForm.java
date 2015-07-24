@@ -137,6 +137,7 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 JCheckBox channelCheckBox = (JCheckBox) e.getSource();
                 plotControl.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
+                dtwPlugin.updateDTW();
             }
         };
 
@@ -149,7 +150,6 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 data.setBandpassFilter(mapFilter(filterChoiceGroup.getSelection().getActionCommand()));
                 dtwPlugin.updateDTW();
-                plotControl.refreshPlot();
             }
 
             private BandpassFilter mapFilter(String actionCommand) {

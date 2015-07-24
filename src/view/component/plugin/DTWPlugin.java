@@ -10,11 +10,11 @@ import java.awt.event.MouseEvent;
  * Created by maeglin89273 on 7/24/15.
  */
 public class DTWPlugin extends SlicerPlugin {
-    private static final Stroke STROKE = new BasicStroke(0.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    private static final Stroke STROKE = new BasicStroke(0.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final Color KNIFE_COLOR = Color.RED;
-    private static final Color STROKE_COLOR = new Color(255, 0, 0, 45);
-    private static final int DTW_COMPUTABLE_RANGE = 300;
-    public static final float ACCEPTABLE_DTW_DISTANCE_UPPERBOUND = 45;
+    private static final Color STROKE_COLOR = new Color(255, 0, 0, 80);
+    private static final int DTW_COMPUTABLE_RANGE = 350;
+    public static final float ACCEPTABLE_DTW_DISTANCE_UPPERBOUND = 100;
 
     private final double[] dtwSourceBufferFront;
     private final double[] dtwSourceBufferBack;
@@ -45,6 +45,7 @@ public class DTWPlugin extends SlicerPlugin {
         }
 
         super.drawBeforePlot(g2);
+        this.shadow.drawAfterPlot(g2);
         this.drawDTW(g2);
     }
 
@@ -53,7 +54,7 @@ public class DTWPlugin extends SlicerPlugin {
         if (!this.isDTWOn()) {
             return;
         }
-        this.shadow.drawAfterPlot(g2);
+
         super.drawAfterPlot(g2);
     }
 
@@ -68,10 +69,10 @@ public class DTWPlugin extends SlicerPlugin {
             float cHeight = 2 * this.plot.getPeakValue();
             int pHeight = this.plot.getHeight();
             for (int[] pointMapping: dtwWarpingPath) {
-                startX = xBuffer[xOffset + pointMapping[0]];
-                endX = xBuffer[xOffset + pointMapping[1]];
-                startY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferBack[pointMapping[0]]);
-                endY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferFront[pointMapping[1]]);
+                startX = xBuffer[xOffset + pointMapping[1]];
+                endX = xBuffer[xOffset + pointMapping[0]];
+                startY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferBack[pointMapping[1]]);
+                endY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferFront[pointMapping[0]]);
                 g2.drawLine(startX, startY, endX, endY);
             }
         }
@@ -116,7 +117,7 @@ public class DTWPlugin extends SlicerPlugin {
             System.arraycopy(visibleStream, (int) projectSliceToShadow(), this.dtwSourceBufferBack, 0, computingSize);
             System.arraycopy(visibleStream, (int)this.getStartPosition(), this.dtwSourceBufferFront, 0, computingSize);
 
-            DTWAlgorithm dtw = new DTWAlgorithm(this.dtwSourceBufferBack, computingSize, this.dtwSourceBufferFront, computingSize);
+            DTWAlgorithm dtw = new DTWAlgorithm(this.dtwSourceBufferFront, computingSize, this.dtwSourceBufferBack, computingSize);
             if (dtw.getDistance() <= ACCEPTABLE_DTW_DISTANCE_UPPERBOUND) {
                 this.dtwWarpingDistance = dtw.getDistance();
                 this.dtwWarpingPath = dtw.getWarpingPath();
