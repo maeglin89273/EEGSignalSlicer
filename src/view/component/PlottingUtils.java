@@ -11,10 +11,18 @@ public final class PlottingUtils {
         }
     }
 
-    public static void loadYBuffer(double coordinateHeight, int plotHeight, double[] data, int[] yBuffer, int startIndex) {
+    public static void loadYBuffer(double coordinateHeight, int plotHeight, double[] data, int startIndex, int[] yBuffer, int length) {
         for (int i = 0; i < yBuffer.length; i++) {
-            yBuffer[i] = panToPlotCoordinate(plotHeight, scaleIntoWindow(coordinateHeight, plotHeight, data[i + (int) startIndex]));
+            yBuffer[i] = mapY(coordinateHeight, plotHeight, data[i + (int) startIndex]);
         }
+    }
+
+    public static void loadYBuffer(double coordinateHeight, int plotHeight, double[] data, int startIndex, int[] yBuffer) {
+        loadYBuffer(coordinateHeight, plotHeight, data, startIndex, yBuffer, yBuffer.length);
+    }
+
+    public static int mapY(double coordinateHeight, int plotHeight, double value) {
+        return panToPlotCoordinate(plotHeight, scaleIntoWindow(coordinateHeight, plotHeight, value));
     }
 
     public static int panToPlotCoordinate(int plotHeight, double value) {

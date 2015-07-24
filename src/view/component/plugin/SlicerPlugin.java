@@ -32,7 +32,7 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     public SlicerPlugin(Color knifeColor) {
         this.knifeColor = knifeColor;
-        this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), 25);
+        this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), 20);
     }
 
     public void setRangeChangedListener(RangeChangedListener listener) {
@@ -43,7 +43,10 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     public void setRenderRangeBackground(boolean wantRender) {
-        this.renderBg = wantRender;
+        if (this.renderBg != wantRender) {
+            this.renderBg = wantRender;
+            this.plot.refresh();
+        }
     }
 
     @Override
@@ -119,6 +122,14 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         this.plot.refresh();
     }
 
+    protected double getRelativeStartPosition() {
+        return this.relativeStartPos;
+    }
+
+    protected double getRelativeEndPosition() {
+        return this.relativeEndPos;
+    }
+
     @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
         this.startPos = (int) (this.relativeStartPos * windowSize) + plotLowerBound;
@@ -128,6 +139,10 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
             this.listener.onStartChanged(plot.getPlotLowerBound(), this.getStartPosition(), this.getEndPosition());
             this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
         }
+    }
+
+    public int getSliceSize() {
+        return (int)(this.getEndPosition() - this.getStartPosition()) + 1;
     }
 
     private enum SliceMode {

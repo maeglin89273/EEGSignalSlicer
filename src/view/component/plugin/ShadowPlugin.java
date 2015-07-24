@@ -45,7 +45,7 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         g2.setStroke(stroke);
         g2.setColor(SHADOW_COLOR);
         for (String tag : plot.getVisibleStreams()) {
-            PlottingUtils.loadYBuffer(2 * plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), yBuffer, (int) this.startingPtr);
+            PlottingUtils.loadYBuffer(2 * plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), (int) this.startingPtr, yBuffer);
             g2.drawPolyline(this.plot.getXPoints(), yBuffer, yBuffer.length);
         }
     }
@@ -56,6 +56,10 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         adjustBuffers(windowSize);
         this.shadowing = true;
         this.plot.refresh();
+    }
+
+    public boolean isShadowing() {
+        return this.shadowing;
     }
 
     public void clear() {
@@ -86,6 +90,10 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
         this.plot.refresh();
 
+    }
+
+    public long getStartingPosition() {
+        return this.startingPtr;
     }
 
     @Override

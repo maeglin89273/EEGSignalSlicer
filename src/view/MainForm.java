@@ -4,7 +4,7 @@ import model.filter.BandpassFilter;
 import model.datasource.EEGChannels;
 import model.RawDataFileUtils;
 import view.component.PlotControl;
-import view.component.plugin.ShadowPlugin;
+import view.component.plugin.DTWPlugin;
 import view.component.plugin.SlicerPlugin;
 
 import javax.swing.*;
@@ -47,9 +47,12 @@ public class MainForm extends JFrame {
     private JSpinner sliceEndSpinner;
     private PlotControl plotControl;
     private JLabel savedHintLbl;
-    private JButton shadowBtn;
-    private JButton clearShadowBtn;
+    private JButton dtwBtn;
+    private JButton clearDtwBtn;
     private JCheckBox moveShadowCheckBox;
+    private JLabel dtwDistanceLbl;
+    private JLabel dtwValueLbl;
+    private JPanel dtwPanel;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
@@ -57,8 +60,8 @@ public class MainForm extends JFrame {
     private SpinnerNumberModel endSpinModel;
 
     private EEGChannels data;
-    private SlicerPlugin slicePlugin;
-    private ShadowPlugin shadowPlugin;
+
+    private DTWPlugin dtwPlugin;
 
 
     public MainForm() {
@@ -99,8 +102,8 @@ public class MainForm extends JFrame {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int value = ((Number) startSpinModel.getValue()).intValue();
-                if (value != slicePlugin.getStartPosition()) {
-                    slicePlugin.setStartPosition(value);
+                if (value != dtwPlugin.getStartPosition()) {
+                    dtwPlugin.setStartPosition(value);
                 }
             }
         });
@@ -109,8 +112,8 @@ public class MainForm extends JFrame {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int value = ((Number) endSpinModel.getValue()).intValue();
-                if (value != slicePlugin.getEndPosition()) {
-                    slicePlugin.setEndPosition(value);
+                if (value != dtwPlugin.getEndPosition()) {
+                    dtwPlugin.setEndPosition(value);
 
                 }
             }
@@ -145,6 +148,7 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 data.setBandpassFilter(mapFilter(filterChoiceGroup.getSelection().getActionCommand()));
+                dtwPlugin.updateDTW();
                 plotControl.refreshPlot();
             }
 
@@ -171,25 +175,25 @@ public class MainForm extends JFrame {
             filterBtn.addActionListener(filterBtnListener);
         }
 
-        shadowBtn.addActionListener(new ActionListener() {
+        dtwBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                shadowPlugin.makeShadow();
+                dtwPlugin.startDTW();
 
                 moveShadowCheckBox.setEnabled(true);
-                shadowPlugin.setMouseInteractionEnabled(moveShadowCheckBox.isSelected());
+                dtwPlugin.setBackStreamControl(moveShadowCheckBox.isSelected());
             }
         });
 
-        clearShadowBtn.addActionListener(new ActionListener() {
+        clearDtwBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                shadowPlugin.clear();
+                dtwPlugin.closeDTW();
                 moveShadowCheckBox.setEnabled(false);
             }
         });
 
-        slicePlugin.setRangeChangedListener(new SlicerPlugin.RangeChangedListener() {
+        dtwPlugin.setRangeChangedListener(new SlicerPlugin.RangeChangedListener() {
             @Override
             public void onStartChanged(long lowerBound, long value, long upperBound) {
                 this.setValues(startSpinModel, lowerBound, value, upperBound);
@@ -210,7 +214,20 @@ public class MainForm extends JFrame {
         moveShadowCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                shadowPlugin.setMouseInteractionEnabled(moveShadowCheckBox.isSelected());
+                dtwPlugin.setBackStreamControl(moveShadowCheckBox.isSelected());
+            }
+        });
+
+        dtwPlugin.setDTWDistanceListener(new DTWPlugin.DTWDistanceListener() {
+
+            @Override
+            public void onDistanceChanged(double distance) {
+                if (distance >= 0) {
+                    dtwValueLbl.setText(String.format("%.2f", distance));
+                } else {
+                    dtwValueLbl.setText(String.format("> %.1f", DTWPlugin.ACCEPTABLE_DTW_DISTANCE_UPPERBOUND));
+                }
+
             }
         });
     }
@@ -228,16 +245,18 @@ public class MainForm extends JFrame {
         filterChoiceGroup.add(a713HzRadioButton);
         filterChoiceGroup.add(a1550HzRadioButton);
 
-        this.startSpinModel.setValue((int) this.slicePlugin.getStartPosition());
-        this.endSpinModel.setValue((int) this.slicePlugin.getEndPosition());
+        this.startSpinModel.setValue((int) this.dtwPlugin.getStartPosition());
+        this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
 
     }
 
     private void setupPlugins() {
-        this.slicePlugin = new SlicerPlugin();
-        this.shadowPlugin = new ShadowPlugin();
-        this.plotControl.addPluginToPlot(this.shadowPlugin);
-        this.plotControl.addPluginToPlot(this.slicePlugin);
+        this.dtwPlugin = new DTWPlugin();
+        this.dtwPlugin = dtwPlugin;
+//        this.shadowPlugin = new ShadowPlugin();
+//        this.plotControl.addPluginToPlot(this.shadowPlugin);
+//        this.plotControl.addPluginToPlot(this.dtwPlugin);
+        this.plotControl.addPluginToPlot(this.dtwPlugin);
     }
 
     private void createUIComponents() {
@@ -266,48 +285,86 @@ public class MainForm extends JFrame {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(controlPanel, gbc);
-        slicerPanel = new JPanel();
-        slicerPanel.setLayout(new GridBagLayout());
+        dtwPanel = new JPanel();
+        dtwPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        controlPanel.add(slicerPanel, gbc);
-        sliceLbl = new JLabel();
-        sliceLbl.setText("Slicer");
+        controlPanel.add(dtwPanel, gbc);
+        clearDtwBtn = new JButton();
+        clearDtwBtn.setText("Clear DTW");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        dtwPanel.add(clearDtwBtn, gbc);
+        dtwDistanceLbl = new JLabel();
+        dtwDistanceLbl.setText("DTW distance:");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.EAST;
+        dtwPanel.add(dtwDistanceLbl, gbc);
+        dtwBtn = new JButton();
+        dtwBtn.setText("DTW Analysis");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        dtwPanel.add(dtwBtn, gbc);
+        moveShadowCheckBox = new JCheckBox();
+        moveShadowCheckBox.setEnabled(false);
+        moveShadowCheckBox.setText("move shadow");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
-        slicerPanel.add(sliceLbl, gbc);
+        dtwPanel.add(moveShadowCheckBox, gbc);
+        dtwValueLbl = new JLabel();
+        dtwValueLbl.setText("");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        dtwPanel.add(dtwValueLbl, gbc);
+        final JPanel spacer1 = new JPanel();
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        dtwPanel.add(spacer1, gbc);
+        slicerPanel = new JPanel();
+        slicerPanel.setLayout(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        controlPanel.add(slicerPanel, gbc);
         final JLabel label1 = new JLabel();
         label1.setText("~");
         gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 4;
+        gbc.gridx = 5;
+        gbc.gridy = 2;
         gbc.weighty = 1.0;
         slicerPanel.add(label1, gbc);
-        loadBtn = new JButton();
-        loadBtn.setText("Load EEG Raw Data...");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 7;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.EAST;
-        slicerPanel.add(loadBtn, gbc);
         tagLbl = new JLabel();
         tagLbl.setText("Tag:");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(tagLbl, gbc);
         sliceStartSpinner = new JSpinner();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.gridwidth = 3;
+        gbc.gridy = 2;
+        gbc.gridwidth = 4;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -315,69 +372,104 @@ public class MainForm extends JFrame {
         tagField = new JTextField();
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
+        gbc.gridy = 1;
+        gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(tagField, gbc);
-        final JPanel spacer1 = new JPanel();
+        final JPanel spacer2 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 7;
-        gbc.gridy = 4;
+        gbc.gridx = 8;
+        gbc.gridy = 2;
         gbc.weightx = 2.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        slicerPanel.add(spacer1, gbc);
+        slicerPanel.add(spacer2, gbc);
         savedHintLbl = new JLabel();
         savedHintLbl.setText("");
         gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 3;
+        gbc.gridx = 7;
+        gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(savedHintLbl, gbc);
-        shadowBtn = new JButton();
-        shadowBtn.setText("Make Shadow");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        slicerPanel.add(shadowBtn, gbc);
         sliceButton = new JButton();
         sliceButton.setText("Slice!");
         gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 4;
+        gbc.gridx = 7;
+        gbc.gridy = 2;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(sliceButton, gbc);
         sliceEndSpinner = new JSpinner();
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 4;
+        gbc.gridx = 6;
+        gbc.gridy = 2;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(sliceEndSpinner, gbc);
-        clearShadowBtn = new JButton();
-        clearShadowBtn.setText("Clear Shadow");
+        loadBtn = new JButton();
+        loadBtn.setText("Load EEG Raw Data...");
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
+        gbc.gridx = 8;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        slicerPanel.add(loadBtn, gbc);
+        sliceLbl = new JLabel();
+        sliceLbl.setText("Slicer");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        slicerPanel.add(clearShadowBtn, gbc);
-        moveShadowCheckBox = new JCheckBox();
-        moveShadowCheckBox.setEnabled(false);
-        moveShadowCheckBox.setText("move shadow");
+        slicerPanel.add(sliceLbl, gbc);
+        filterPanel = new JPanel();
+        filterPanel.setLayout(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        controlPanel.add(filterPanel, gbc);
+        a150HzRadioButton = new JRadioButton();
+        a150HzRadioButton.setSelected(true);
+        a150HzRadioButton.setText("1~50Hz");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 1;
-        gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
-        slicerPanel.add(moveShadowCheckBox, gbc);
+        filterPanel.add(a150HzRadioButton, gbc);
+        a713HzRadioButton = new JRadioButton();
+        a713HzRadioButton.setText("7~13Hz");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(a713HzRadioButton, gbc);
+        a1550HzRadioButton = new JRadioButton();
+        a1550HzRadioButton.setText("15~50Hz");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(a1550HzRadioButton, gbc);
+        filterLbl = new JLabel();
+        filterLbl.setText("Filter");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(filterLbl, gbc);
+        final JPanel spacer3 = new JPanel();
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        filterPanel.add(spacer3, gbc);
         channelPanel = new JPanel();
         channelPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
@@ -447,58 +539,13 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         channelPanel.add(channel8CheckBox, gbc);
-        final JPanel spacer2 = new JPanel();
+        final JPanel spacer4 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        channelPanel.add(spacer2, gbc);
-        filterPanel = new JPanel();
-        filterPanel.setLayout(new GridBagLayout());
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        controlPanel.add(filterPanel, gbc);
-        a150HzRadioButton = new JRadioButton();
-        a150HzRadioButton.setSelected(true);
-        a150HzRadioButton.setText("1~50Hz");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(a150HzRadioButton, gbc);
-        a713HzRadioButton = new JRadioButton();
-        a713HzRadioButton.setText("7~13Hz");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(a713HzRadioButton, gbc);
-        a1550HzRadioButton = new JRadioButton();
-        a1550HzRadioButton.setText("15~50Hz");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(a1550HzRadioButton, gbc);
-        filterLbl = new JLabel();
-        filterLbl.setText("Filter");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        filterPanel.add(filterLbl, gbc);
-        final JPanel spacer3 = new JPanel();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        filterPanel.add(spacer3, gbc);
+        channelPanel.add(spacer4, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;

@@ -14,7 +14,7 @@ package view.component.plugin;
  * @author		Cheol-Woo Jung (cjung@gatech.edu)
  * @version	1.0
  */
-public class DTW {
+public class DTWAlgorithm {
 
     protected double[] seq1;
     protected double[] seq2;
@@ -30,14 +30,14 @@ public class DTW {
      * Constructor
      *
      * @param query
-     * @param templete
+     * @param template
      */
-    public DTW(double[] sample, double[] templete) {
+    public DTWAlgorithm(double[] sample, int validSampleLength, double[] template, int validTemplateLength) {
         seq1 = sample;
-        seq2 = templete;
+        seq2 = template;
 
-        n = seq1.length;
-        m = seq2.length;
+        n = validSampleLength;
+        m = validTemplateLength;
         K = 1;
 
         warpingPath = new int[n + m][2];	// max(n, m) <= K < n + m

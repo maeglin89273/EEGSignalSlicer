@@ -17,7 +17,7 @@ public class PlotView extends JComponent {
 
     private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
-    private Collection<String> visibleStreamTags;
+    private List<String> visibleStreamTags;
     private Map<String, Color> colorMapping;
 
     private float peakValue;
@@ -182,7 +182,7 @@ public class PlotView extends JComponent {
 
     private void drawStream(Graphics2D g2, String tag) {
         g2.setColor(hashStringToColor(tag));
-        PlottingUtils.loadYBuffer(2 * this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), yBuffer, (int) this.getPlotLowerBound());
+        PlottingUtils.loadYBuffer(2 * this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), (int) this.getPlotLowerBound(), yBuffer);
         g2.drawPolyline(xBuffer, yBuffer, getWindowSize());
     }
 
@@ -237,7 +237,7 @@ public class PlotView extends JComponent {
         this.refresh();
     }
 
-    public Collection<String> getVisibleStreams() {
+    public List<String> getVisibleStreams() {
         return this.visibleStreamTags;
     }
 
