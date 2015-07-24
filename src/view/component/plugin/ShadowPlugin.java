@@ -21,7 +21,7 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     private boolean shadowing;
 
     private Set<String> interestedActions;
-    private boolean isMoivingShadow;
+    private boolean movingShadow;
     private int lastX;
 
 
@@ -66,7 +66,8 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     public void setMouseInteractionEnabled(boolean enabled) {
-        this.isMoivingShadow = enabled;
+        this.movingShadow = this.shadowing ? enabled : false;
+
     }
 
     public void moveShadow(int delta) {
@@ -106,7 +107,7 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
-        if (!this.isMoivingShadow) {
+        if (!this.movingShadow) {
             return true;
         }
 

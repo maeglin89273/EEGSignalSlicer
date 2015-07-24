@@ -175,6 +175,9 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 shadowPlugin.makeShadow();
+
+                moveShadowCheckBox.setEnabled(true);
+                shadowPlugin.setMouseInteractionEnabled(moveShadowCheckBox.isSelected());
             }
         });
 
@@ -182,7 +185,7 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 shadowPlugin.clear();
-                moveShadowCheckBox.setSelected(false);
+                moveShadowCheckBox.setEnabled(false);
             }
         });
 
@@ -233,8 +236,8 @@ public class MainForm extends JFrame {
     private void setupPlugins() {
         this.slicePlugin = new SlicerPlugin();
         this.shadowPlugin = new ShadowPlugin();
-        this.plotControl.addPluginToPlot(this.slicePlugin);
         this.plotControl.addPluginToPlot(this.shadowPlugin);
+        this.plotControl.addPluginToPlot(this.slicePlugin);
     }
 
     private void createUIComponents() {
@@ -362,6 +365,7 @@ public class MainForm extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(clearShadowBtn, gbc);
         moveShadowCheckBox = new JCheckBox();
+        moveShadowCheckBox.setEnabled(false);
         moveShadowCheckBox.setText("move shadow");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;

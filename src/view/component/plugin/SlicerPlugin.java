@@ -16,16 +16,34 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     private double relativeStartPos;
     private long endPos;
     private double relativeEndPos;
-    private final Stroke STROKE = new BasicStroke(1.2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+    private static final Stroke STROKE = new BasicStroke(1.2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+    private final Color knifeColor;
+    private final Color bgColor;
+
+    private boolean renderBg = false;
 
     private RangeChangedListener listener;
     private Set<String> interestedActions;
+
+    public SlicerPlugin() {
+        this(Color.CYAN);
+        this.setRenderRangeBackground(true);
+    }
+
+    public SlicerPlugin(Color knifeColor) {
+        this.knifeColor = knifeColor;
+        this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), 25);
+    }
 
     public void setRangeChangedListener(RangeChangedListener listener) {
         this.listener = listener;
         this.interestedActions = new HashSet<String>(1);
         this.interestedActions.add("mouseDragged");
         this.interestedActions.add("mousePressed");
+    }
+
+    public void setRenderRangeBackground(boolean wantRender) {
+        this.renderBg = wantRender;
     }
 
     @Override
@@ -38,9 +56,19 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     @Override
+    public void drawBeforePlot(Graphics2D g2) {
+        if (this.renderBg) {
+            int startX = (int) (plot.getWidth() * this.relativeStartPos);
+            int endX = (int) (plot.getWidth() * this.relativeEndPos);
+            g2.setColor(this.bgColor);
+            g2.fillRect(startX, 0, endX - startX, this.plot.getHeight());
+        }
+    }
+
+    @Override
     public void drawAfterPlot(Graphics2D g2) {
         g2.setStroke(STROKE);
-        g2.setColor(Color.CYAN);
+        g2.setColor(this.knifeColor);
 
         int startKnifeX = (int) (plot.getWidth() * this.relativeStartPos);
         int endKnifeX = (int) (plot.getWidth() * this.relativeEndPos);
