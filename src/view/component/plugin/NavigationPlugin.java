@@ -11,11 +11,11 @@ import java.util.Set;
 /**
  * Created by maeglin89273 on 7/23/15.
  */
-public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MouseInteractionPlugin {
+public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
     private Set<String> interestedActions;
     private MouseInteractionHandler mouseHandler;
-    public NavigationPlugin() {
 
+    public NavigationPlugin() {
         this.interestedActions = new HashSet<String>();
         this.interestedActions.add("mouseWheelMoved");
         this.interestedActions.add("mouseDragged");
@@ -52,11 +52,11 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
     }
 
     private class MouseInteractionHandler extends MouseAdapter {
-        private static final float SCALING_FACTOR = 1.2f;
-        private static final int MAX_SCALING_LEVEL = 4;
-        private static final int MIN_SCALING_LEVEL = -5;
+        private static final float SCALING_FACTOR = 1.1f;
+        private static final int MAX_SCALING_LEVEL = 10;
+        private static final int MIN_SCALING_LEVEL = -9;
 
-        private int scalingLevel = 0;
+        private int scalingLevel = 1;
 
         private final float originalPeakValue;
         private final int originalWindowSize;

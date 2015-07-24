@@ -49,6 +49,7 @@ public class MainForm extends JFrame {
     private JLabel savedHintLbl;
     private JButton shadowBtn;
     private JButton clearShadowBtn;
+    private JCheckBox moveShadowCheckBox;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
@@ -181,6 +182,7 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 shadowPlugin.clear();
+                moveShadowCheckBox.setSelected(false);
             }
         });
 
@@ -199,6 +201,13 @@ public class MainForm extends JFrame {
                 model.setMinimum((int) lowerBound);
                 model.setMaximum((int) upperBound);
                 model.setValue((int) value);
+            }
+        });
+
+        moveShadowCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shadowPlugin.setMouseInteractionEnabled(moveShadowCheckBox.isSelected());
             }
         });
     }
@@ -267,35 +276,35 @@ public class MainForm extends JFrame {
         sliceLbl.setText("Slicer");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(sliceLbl, gbc);
         final JLabel label1 = new JLabel();
         label1.setText("~");
         gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 3;
+        gbc.gridx = 4;
+        gbc.gridy = 4;
         gbc.weighty = 1.0;
         slicerPanel.add(label1, gbc);
         loadBtn = new JButton();
         loadBtn.setText("Load EEG Raw Data...");
         gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 1;
+        gbc.gridx = 7;
+        gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.EAST;
         slicerPanel.add(loadBtn, gbc);
         tagLbl = new JLabel();
         tagLbl.setText("Tag:");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(tagLbl, gbc);
         sliceStartSpinner = new JSpinner();
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
+        gbc.gridy = 4;
+        gbc.gridwidth = 3;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -303,21 +312,22 @@ public class MainForm extends JFrame {
         tagField = new JTextField();
         gbc = new GridBagConstraints();
         gbc.gridx = 2;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(tagField, gbc);
         final JPanel spacer1 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 3;
+        gbc.gridx = 7;
+        gbc.gridy = 4;
         gbc.weightx = 2.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(spacer1, gbc);
         savedHintLbl = new JLabel();
         savedHintLbl.setText("");
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 2;
+        gbc.gridx = 6;
+        gbc.gridy = 3;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(savedHintLbl, gbc);
         shadowBtn = new JButton();
@@ -331,15 +341,15 @@ public class MainForm extends JFrame {
         sliceButton = new JButton();
         sliceButton.setText("Slice!");
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 3;
+        gbc.gridx = 6;
+        gbc.gridy = 4;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         slicerPanel.add(sliceButton, gbc);
         sliceEndSpinner = new JSpinner();
         gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 3;
+        gbc.gridx = 5;
+        gbc.gridy = 4;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -347,10 +357,18 @@ public class MainForm extends JFrame {
         clearShadowBtn = new JButton();
         clearShadowBtn.setText("Clear Shadow");
         gbc = new GridBagConstraints();
-        gbc.gridx = 4;
+        gbc.gridx = 5;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         slicerPanel.add(clearShadowBtn, gbc);
+        moveShadowCheckBox = new JCheckBox();
+        moveShadowCheckBox.setText("move shadow");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        slicerPanel.add(moveShadowCheckBox, gbc);
         channelPanel = new JPanel();
         channelPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();

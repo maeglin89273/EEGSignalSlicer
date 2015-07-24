@@ -9,7 +9,7 @@ import java.util.Set;
 public interface InteractivePlotPlugin extends PlotPlugin {
     public Set<String> getInterestedActions();
 
-    public interface MouseInteractionPlugin extends InteractivePlotPlugin {
+    public interface MousePlugin extends InteractivePlotPlugin {
         public boolean onMouseEvent(String action, MouseEvent event);
     }
 }

@@ -42,7 +42,6 @@ public class PlotControl extends JPanel implements ActionListener {
         this(new InteractivePlotView(windowSize, peakValue));
     }
 
-
     public PlotControl(PlotView plot) {
         this.animator = new Timer(ANIMATION_INTERVAL, this);
 
@@ -61,7 +60,6 @@ public class PlotControl extends JPanel implements ActionListener {
     public void addPluginToPlot(PlotPlugin plugin) {
         this.plot.addPlugin(plugin);
     }
-
 
     private void setupListeners(int windowSize, float peakValue) {
         this.plot.addCoordinatesRangeChangedListener(new PlotView.CoordinatesRangeChangedListener() {
@@ -92,7 +90,7 @@ public class PlotControl extends JPanel implements ActionListener {
                 if (isPlaying()) {
                     plotSlidingSpeed += (plotSlidingSpeed == -1 ? 2 : 1);
                 } else {
-                    plot.moveX(2);
+                    plot.moveX(-2);
                 }
 
             }
@@ -105,7 +103,7 @@ public class PlotControl extends JPanel implements ActionListener {
                     plotSlidingSpeed -= (plotSlidingSpeed == 1 ? 2 : 1);
 
                 } else {
-                    plot.moveX(-2);
+                    plot.moveX(2);
                 }
             }
         });
@@ -128,7 +126,6 @@ public class PlotControl extends JPanel implements ActionListener {
         updateXDisplays(this.plot.getPlotLowerBound(), this.plot.getPlotUpperBound(), this.plot.getWindowSize());
 
         this.setEnableControls(true);
-        this.refreshPlot();
     }
 
     private void setEnableControls(boolean enabled) {
@@ -263,7 +260,6 @@ public class PlotControl extends JPanel implements ActionListener {
             this.pause();
             this.plotSlidingSpeed = DEFAULT_SLIDING_SPEED;
         }
-
     }
 
     private void updateXDisplays(long plotLowerBound, long plotUpperBound, int windowSize) {

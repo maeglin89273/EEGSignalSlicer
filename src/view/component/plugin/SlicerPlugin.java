@@ -4,14 +4,13 @@ import view.component.PlotView;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MouseInteractionPlugin {
+public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
 
     private long startPos;
     private double relativeStartPos;
@@ -36,7 +35,6 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         this.endPos = plot.getPlotUpperBound();
         this.setStartPosition(plot.getPlotLowerBound());
         this.setEndPosition(plot.getPlotUpperBound());
-
     }
 
     @Override
@@ -67,7 +65,9 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         } else {
             this.startPos = startPosition;
         }
+
         this.relativeStartPos = (this.startPos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
+
         if (this.listener != null) {
             this.listener.onStartChanged(plot.getPlotLowerBound(), this.getStartPosition(), this.getEndPosition());
         }
@@ -82,7 +82,9 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         } else {
             this.endPos = endPosition;
         }
+
         this.relativeEndPos = (this.endPos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
+
         if (this.listener != null) {
             this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
         }
@@ -151,7 +153,7 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
             case END_SLICER:
                 this.setEndPosition(moveKnifeToHere);
-                break;
+
         }
         return false;
     }

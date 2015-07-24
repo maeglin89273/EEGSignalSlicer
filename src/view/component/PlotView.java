@@ -63,6 +63,7 @@ public class PlotView extends JComponent {
 
     public void setDataSource(StreamingDataSource dataSource) {
         this.dataSource = dataSource;
+        this.refresh();
     }
 
     public StreamingDataSource getDataSource() {
@@ -84,13 +85,21 @@ public class PlotView extends JComponent {
         this.rangeListeners.add(listener);
     }
 
-
     public long getPlotLowerBound() {
         return this.startingPtr;
     }
 
     public long getPlotUpperBound() {
         return this.startingPtr + getWindowSize() - 1;
+    }
+
+    public void setWindowSize(int windowSize) {
+        this.xBuffer = new int[windowSize];
+        this.yBuffer = new int[windowSize];
+
+        updateXBuffer();
+        fireOnXRangeChanged();
+        this.refresh();
     }
 
     public void moveX(int delta) {
@@ -106,6 +115,21 @@ public class PlotView extends JComponent {
         this.startingPtr = startingPoint;
         fireOnXRangeChanged();
         this.refresh();
+    }
+
+    public float getPeakValue() {
+        return this.peakValue;
+    }
+
+    public void setPeakValue(float peakValue) {
+        this.peakValue = peakValue;
+        fireOnYRangeChanged();
+        this.refresh();
+    }
+
+
+    public int getWindowSize() {
+        return this.xBuffer.length;
     }
 
     private void fireOnXRangeChanged() {
@@ -215,30 +239,6 @@ public class PlotView extends JComponent {
 
     public Collection<String> getVisibleStreams() {
         return this.visibleStreamTags;
-    }
-
-    public void setPeakValue(float peakValue) {
-        this.peakValue = peakValue;
-        fireOnYRangeChanged();
-        this.refresh();
-
-    }
-
-    public float getPeakValue() {
-        return this.peakValue;
-    }
-
-    public void setWindowSize(int windowSize) {
-        this.xBuffer = new int[windowSize];
-        this.yBuffer = new int[windowSize];
-
-        updateXBuffer();
-        fireOnXRangeChanged();
-        this.refresh();
-    }
-
-    public int getWindowSize() {
-        return this.xBuffer.length;
     }
 
     private void updateXBuffer() {

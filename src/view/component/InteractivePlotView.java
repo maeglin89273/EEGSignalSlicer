@@ -11,7 +11,7 @@ import java.util.List;
  * Created by maeglin89273 on 7/23/15.
  */
 public class InteractivePlotView extends PlotView {
-    private List<InteractivePlotPlugin.MouseInteractionPlugin> mousePlugins;
+    private List<InteractivePlotPlugin.MousePlugin> mousePlugins;
     private MouseEventHandler mouseHandler;
 
     public InteractivePlotView(int windowSize, float peakValue) {
@@ -20,7 +20,7 @@ public class InteractivePlotView extends PlotView {
     }
 
     private void prepareInteraction() {
-        this.mousePlugins = new ArrayList<InteractivePlotPlugin.MouseInteractionPlugin>();
+        this.mousePlugins = new ArrayList<InteractivePlotPlugin.MousePlugin>();
         this.mouseHandler = new MouseEventHandler();
         this.addMouseListener(this.mouseHandler);
         this.addMouseMotionListener(this.mouseHandler);
@@ -36,15 +36,15 @@ public class InteractivePlotView extends PlotView {
     }
 
     private void addIneractivePlugin(InteractivePlotPlugin iPlugin) {
-        if (iPlugin instanceof InteractivePlotPlugin.MouseInteractionPlugin) {
-            this.mousePlugins.add((InteractivePlotPlugin.MouseInteractionPlugin) iPlugin);
+        if (iPlugin instanceof InteractivePlotPlugin.MousePlugin) {
+            this.mousePlugins.add((InteractivePlotPlugin.MousePlugin) iPlugin);
         }
     }
 
     private void fireMouseAction(String action, MouseEvent e) {
         boolean wantPropagateAction;
         for (int i = this.mousePlugins.size() - 1; i >= 0; i--) {
-            InteractivePlotPlugin.MouseInteractionPlugin plugin = this.mousePlugins.get(i);
+            InteractivePlotPlugin.MousePlugin plugin = this.mousePlugins.get(i);
             if (plugin.getInterestedActions().contains(action)) {
                 wantPropagateAction = plugin.onMouseEvent(action, e);
                 if (!wantPropagateAction) {
