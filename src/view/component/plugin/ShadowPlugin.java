@@ -7,6 +7,8 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+import static view.component.plugin.NavigationPlugin.projectXDeltaToDataAmount;
+
 /**
  * Created by maeglin89273 on 7/22/15.
  */
@@ -18,7 +20,6 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     private long startingPtr;
     private int[] yBuffer = null;
-    private boolean shadowing;
 
     private Set<String> interestedActions;
     private boolean movingShadow;
@@ -39,9 +40,6 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public void drawAfterPlot(Graphics2D g2) {
-        if (!this.shadowing) {
-            return;
-        }
         g2.setStroke(stroke);
         g2.setColor(SHADOW_COLOR);
         for (String tag : plot.getVisibleStreams()) {
@@ -50,35 +48,31 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         }
     }
 
-    public void makeShadow() {
-        int windowSize = plot.getWindowSize();
-        this.startingPtr = plot.getPlotLowerBound();
-        adjustBuffers(windowSize);
-        this.shadowing = true;
-        this.plot.refresh();
-    }
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
 
-    public boolean isShadowing() {
-        return this.shadowing;
-    }
-
-    public void clear() {
-        this.shadowing = false;
-        this.setMouseInteractionEnabled(false);
-
-        this.plot.refresh();
+        if (enabled) {
+            this.makeNewShadow();
+        } else {
+            this.setMouseInteractionEnabled(false);
+        }
     }
 
     public void setMouseInteractionEnabled(boolean enabled) {
-        this.movingShadow = this.shadowing ? enabled : false;
+        this.movingShadow = enabled;
 
     }
 
+    public boolean isMouseInteractionEnabled() {
+        return this.isEnabled()? this.movingShadow: false;
+    }
+
     public void moveShadow(int delta) {
-        if (!this.shadowing) {
+        if (!this.isEnabled()) {
             return;
         }
-
+        delta = -delta;
         long newStartingPtr = this.startingPtr + delta;
         if (newStartingPtr < 0) {
             newStartingPtr = 0;
@@ -98,7 +92,7 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
-        if (this.shadowing) {
+        if (this.isEnabled()) {
             adjustBuffers(windowSize);
         }
     }
@@ -115,23 +109,38 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
-        if (!this.movingShadow) {
+        if (!this.isMouseInteractionEnabled()) {
             return true;
         }
 
+        int newX = event.getX();
         switch (action) {
+
             case "mouseDragged":
-                this.moveShadow(this.lastX - event.getX());
-                this.lastX = event.getX();
+                this.moveShadow(projectXDeltaToDataAmount(plot, event.getX(), this.lastX));
             case "mousePressed":
-                this.lastX = event.getX();
+                this.lastX = newX;
         }
         return false;
     }
 
+    public void reset() {
+        this.setEnabled(false);
+    }
 
     @Override
     public Set<String> getInterestedActions() {
         return this.interestedActions;
+    }
+
+    public void makeNewShadow() {
+        if (!this.isEnabled()) {
+            return;
+        }
+        int windowSize = plot.getWindowSize();
+        this.startingPtr = plot.getPlotLowerBound();
+        adjustBuffers(windowSize);
+
+        this.plot.refresh();
     }
 }

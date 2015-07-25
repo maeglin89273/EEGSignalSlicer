@@ -22,14 +22,32 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
         this.interestedActions.add("mousePressed");
     }
 
+    public static int projectXDeltaToDataAmount(PlotView plot, int newX, int lastX) {
+        return (int)(plot.getWindowSize() * (newX - lastX) / (double) plot.getWidth());
+    }
+
+    public static long projectMouseXToDataXIndex(PlotView plot, int mouseX) {
+        return plot.getPlotLowerBound() + (int)(plot.getWindowSize() * mouseX / (double) plot.getWidth());
+    }
+
     @Override
     public void setPlot(PlotView plot) {
         super.setPlot(plot);
         this.mouseHandler = new MouseInteractionHandler(plot.getWindowSize(), plot.getPeakValue());
+        this.setEnabled(true);
+    }
+
+    @Override
+    public void reset() {
+        this.mouseHandler.resetCoordinates();
     }
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
+        if (!this.isEnabled()) {
+            return true;
+        }
+
         switch (action) {
             case "mouseWheelMoved":
                 this.mouseHandler.mouseWheelMoved((MouseWheelEvent) event);
@@ -81,7 +99,7 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
         @Override
         public void mouseDragged(MouseEvent e) {
-            plot.moveX(this.lastX - e.getX());
+            plot.moveX(projectXDeltaToDataAmount(plot, e.getX(), this.lastX));
             this.lastX = e.getX();
         }
 
@@ -90,5 +108,10 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
             this.lastX = e.getX();
         }
 
+        public void resetCoordinates() {
+            plot.setPeakValue(this.originalPeakValue);
+            plot.setWindowSize(this.originalWindowSize);
+            plot.setXTo(0);
+        }
     }
 }

@@ -13,12 +13,12 @@ public class DTWPlugin extends SlicerPlugin {
     private static final Stroke STROKE = new BasicStroke(0.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final Color KNIFE_COLOR = Color.RED;
     private static final Color STROKE_COLOR = new Color(255, 0, 0, 80);
-    private static final int DTW_COMPUTABLE_RANGE = 350;
+    private static final int DTW_COMPUTABLE_RANGE = 400;
     public static final float ACCEPTABLE_DTW_DISTANCE_UPPERBOUND = 100;
 
     private final double[] dtwSourceBufferFront;
     private final double[] dtwSourceBufferBack;
-    private ShadowPlugin shadow;
+    private ShadowPlugin streamTemplate;
 
     private int[][] dtwWarpingPath;
     private double dtwWarpingDistance = -1;
@@ -27,7 +27,7 @@ public class DTWPlugin extends SlicerPlugin {
 
     public DTWPlugin() {
         super(KNIFE_COLOR);
-        this.shadow = new ShadowPlugin(2);
+        this.streamTemplate = new ShadowPlugin(2);
         this.dtwSourceBufferFront = new double[DTW_COMPUTABLE_RANGE];
         this.dtwSourceBufferBack = new double[DTW_COMPUTABLE_RANGE];
     }
@@ -35,27 +35,14 @@ public class DTWPlugin extends SlicerPlugin {
     @Override
     public void setPlot(PlotView plot) {
         super.setPlot(plot);
-        this.shadow.setPlot(plot);
+        this.streamTemplate.setPlot(plot);
     }
 
     @Override
     public void drawBeforePlot(Graphics2D g2) {
-        if (!this.isDTWOn()) {
-            return;
-        }
-
         super.drawBeforePlot(g2);
-        this.shadow.drawAfterPlot(g2);
+        this.streamTemplate.drawAfterPlot(g2);
         this.drawDTW(g2);
-    }
-
-    @Override
-    public void drawAfterPlot(Graphics2D g2) {
-        if (!this.isDTWOn()) {
-            return;
-        }
-
-        super.drawAfterPlot(g2);
     }
 
     private void drawDTW(Graphics2D g2) {
@@ -80,11 +67,11 @@ public class DTWPlugin extends SlicerPlugin {
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
-        if (!this.isDTWOn()) {
+        if (!this.isEnabled()) {
             return true;
         }
         boolean isOnSlicing = !super.onMouseEvent(action, event);
-        boolean returnVal = isOnSlicing? false: this.shadow.onMouseEvent(action, event);
+        boolean returnVal = isOnSlicing? false: this.streamTemplate.onMouseEvent(action, event);
 
         if (isMouseDragged(action)) {
             updateDTW();
@@ -100,13 +87,13 @@ public class DTWPlugin extends SlicerPlugin {
     @Override
     public void onYRangeChanged(float topPeakValue, float bottomPeakValue) {
         super.onYRangeChanged(topPeakValue, bottomPeakValue);
-        this.shadow.onYRangeChanged(topPeakValue, bottomPeakValue);
+        this.streamTemplate.onYRangeChanged(topPeakValue, bottomPeakValue);
     }
 
     @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
         super.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
-        this.shadow.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
+        this.streamTemplate.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
         this.updateDTW();
     }
 
@@ -141,7 +128,7 @@ public class DTWPlugin extends SlicerPlugin {
     }
 
     private long projectSliceToShadow() {
-        return (int)(this.getRelativeStartPosition() * this.plot.getWindowSize()) + this.shadow.getStartingPosition();
+        return (int)(this.getRelativeStartPosition() * this.plot.getWindowSize()) + this.streamTemplate.getStartingPosition();
     }
 
     private boolean getRenderDTW() {
@@ -160,33 +147,37 @@ public class DTWPlugin extends SlicerPlugin {
     }
 
     private boolean isAbleComputeDTW() {
-        return this.shadow.isShadowing() && this.plot.getVisibleStreams().size() == 1 && this.getSliceSize() < DTW_COMPUTABLE_RANGE;
+        return this.isEnabled() && this.plot.getVisibleStreams().size() == 1 && this.getSliceSize() < DTW_COMPUTABLE_RANGE;
     }
 
-    public void startDTW() {
-        this.shadow.makeShadow();
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        streamTemplate.setEnabled(enabled);
         this.updateDTW();
     }
 
-    public void closeDTW() {
-        this.setRenderDTW(false);
-        this.shadow.clear();
-    }
-
-    public boolean isDTWOn() {
-        return this.shadow.isShadowing();
+    @Override
+    public void reset() {
+        super.reset();
+        this.streamTemplate.reset();
     }
 
     public double getDTWDistance() {
         return this.dtwWarpingDistance;
     }
 
-    public void setBackStreamControl(boolean control) {
-        this.shadow.setMouseInteractionEnabled(control);
+    public void setTemplateControl(boolean control) {
+        this.streamTemplate.setMouseInteractionEnabled(control);
     }
 
     public void setDTWDistanceListener (DTWDistanceListener listener) {
         this.distanceListener = listener;
+    }
+
+    public void makeNewTemplate() {
+        this.streamTemplate.makeNewShadow();
+        this.updateDTW();
     }
 
     public interface DTWDistanceListener {

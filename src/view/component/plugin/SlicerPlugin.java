@@ -7,6 +7,8 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+import static view.component.plugin.NavigationPlugin.projectXDeltaToDataAmount;
+
 /**
  * Created by maeglin89273 on 7/22/15.
  */
@@ -28,19 +30,19 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     public SlicerPlugin() {
         this(Color.CYAN);
-        this.setRenderRangeBackground(true);
     }
 
     public SlicerPlugin(Color knifeColor) {
         this.knifeColor = knifeColor;
         this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), bgAlpha);
+
+        this.interestedActions = new HashSet<String>(2);
+        this.interestedActions.add("mouseDragged");
+        this.interestedActions.add("mousePressed");
     }
 
     public void setRangeChangedListener(RangeChangedListener listener) {
         this.listener = listener;
-        this.interestedActions = new HashSet<String>(1);
-        this.interestedActions.add("mouseDragged");
-        this.interestedActions.add("mousePressed");
     }
 
     public void setRenderRangeBackground(boolean wantRender) {
@@ -50,20 +52,13 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         }
     }
 
-    @Override
-    public void setPlot(PlotView plot) {
-        super.setPlot(plot);
-        // careful the start bound
-        this.endPos = plot.getPlotUpperBound();
-        this.setStartPosition(plot.getPlotLowerBound() + 50);
-        this.setEndPosition(plot.getPlotUpperBound() - 50);
-    }
+
 
     @Override
     public void drawBeforePlot(Graphics2D g2) {
         if (this.renderBg) {
-            int startX = (int) (plot.getWidth() * this.relativeStartPos);
-            int endX = (int) (plot.getWidth() * this.relativeEndPos);
+            int startX = (int) (plot.getWidth() * this.getRelativeStartPosition());
+            int endX = (int) (plot.getWidth() * this.getRelativeEndPosition());
             g2.setColor(this.bgColor);
             g2.fillRect(startX, 0, endX - startX, this.plot.getHeight());
         }
@@ -74,8 +69,8 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         g2.setStroke(STROKE);
         g2.setColor(this.knifeColor);
 
-        int startKnifeX = (int) (plot.getWidth() * this.relativeStartPos);
-        int endKnifeX = (int) (plot.getWidth() * this.relativeEndPos);
+        int startKnifeX = (int) (plot.getWidth() * this.getRelativeStartPosition());
+        int endKnifeX = (int) (plot.getWidth() * this.getRelativeEndPosition());
 
         g2.drawLine(startKnifeX, 0, startKnifeX, plot.getHeight());
         g2.drawLine(endKnifeX, 0, endKnifeX, plot.getHeight());
@@ -90,6 +85,10 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     public void setStartPosition(long startPosition) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         if (startPosition < plot.getPlotLowerBound()) {
             this.startPos = plot.getPlotLowerBound();
         } else if (startPosition >= this.getEndPosition()) {
@@ -107,6 +106,10 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     public void setEndPosition(long endPosition) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         if (endPosition > plot.getPlotUpperBound()) {
             this.endPos = plot.getPlotUpperBound();
         } else if (endPosition <= this.getStartPosition()) {
@@ -133,6 +136,10 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         this.startPos = (int) (this.relativeStartPos * windowSize) + plotLowerBound;
         this.endPos = (int) (this.relativeEndPos * windowSize) + plotLowerBound;
 
@@ -151,9 +158,8 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     }
 
     private OperatingMode operatingMode;
-    private long tmpX;
-    private long tmpStartX;
-    private long tmpEndY;
+    private int tmpX;
+
     private static final double SLICER_TOUCH_RANGE = 7f;
 
     private boolean isOnSlicer(int pos, double slicerX) {
@@ -166,9 +172,14 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
+        if (!this.isEnabled()) {
+            return true;
+        }
+
         switch (action) {
             case "mouseDragged":
                 return handleMouseDragged(event);
+
             case "mousePressed":
                 return handleMousePressed(event);
         }
@@ -187,17 +198,11 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
             return false;
         } else if (this.renderBg && this.isOnWindow(mouseX, startX, endX)) {
             this.operatingMode = OperatingMode.MOVE_RANGE;
-            tmpX = this.projectMouseXToDataXIndex(mouseX);
-            tmpStartX = this.getStartPosition();
-            tmpEndY = this.getEndPosition();
+            tmpX = mouseX;
             return false;
         }
         this.operatingMode = OperatingMode.NOT_SLICING;
         return true;
-    }
-
-    private long projectMouseXToDataXIndex(int mouseX) {
-        return this.plot.getPlotLowerBound() + (int)(this.plot.getWindowSize() * mouseX / (double) this.plot.getWidth());
     }
 
     private boolean handleMouseDragged(MouseEvent event) {
@@ -205,7 +210,7 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
             return true;
         }
 
-        long moveKnifeToHere = this.projectMouseXToDataXIndex(event.getX());
+        long moveKnifeToHere = NavigationPlugin.projectMouseXToDataXIndex(this.plot, event.getX());
         switch (operatingMode) {
             case START_SLICER:
                 this.setStartPosition(moveKnifeToHere);
@@ -216,12 +221,29 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
                 break;
 
             case MOVE_RANGE:
-                int delta = (int)(moveKnifeToHere - this.tmpX);
-                this.setStartPosition(this.tmpStartX + delta);
-                this.setEndPosition(this.tmpEndY + delta);
+                int delta = projectXDeltaToDataAmount(plot, event.getX(), this.tmpX);
+                tmpX = event.getX();
+                this.setStartPosition(this.getStartPosition() + delta);
+                this.setEndPosition(this.getEndPosition() + delta);
 
         }
         return false;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        if (enabled) {
+            this.reset();
+        }
+    }
+
+    @Override
+    public void reset() {
+        // careful the start bound
+        this.endPos = plot.getPlotUpperBound();
+        this.setStartPosition(plot.getPlotLowerBound() + 50);
+        this.setEndPosition(plot.getPlotUpperBound() - 50);
     }
 
     @Override

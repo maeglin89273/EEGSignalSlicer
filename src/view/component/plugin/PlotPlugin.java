@@ -15,6 +15,12 @@ public interface PlotPlugin extends PlotView.CoordinatesRangeChangedListener {
 
     public void setPlot(PlotView plot);
 
+    public void setEnabled(boolean enabled);
+
+    public boolean isEnabled();
+
+    public void reset();
+
     public void onYRangeChanged(float topPeakValue, float bottomPeakValue);
 
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize);

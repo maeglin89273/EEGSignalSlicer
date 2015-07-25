@@ -64,7 +64,15 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     public void setDataSource(StreamingDataSource dataSource) {
         this.dataSource = dataSource;
         this.dataSource.addPresentedDataChangedListener(this);
+        fireResetPlugin();
+        this.setXTo(0);
         this.refresh();
+    }
+
+    private void fireResetPlugin() {
+        for (int i = this.plugins.size() - 1; i >= 0; i--) {
+            this.plugins.get(i).reset();
+        }
     }
 
     public StreamingDataSource getDataSource() {
@@ -79,7 +87,11 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         this.plugins.add(plugin);
         this.rangeListeners.add(plugin);
         plugin.setPlot(this);
-        this.refresh();
+        if (this.isDataSourceSet()) {
+            plugin.reset();
+            this.refresh();
+        }
+
     }
 
     public void addCoordinatesRangeChangedListener(CoordinatesRangeChangedListener listener) {
@@ -104,7 +116,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void moveX(int delta) {
-        this.setXTo(delta + this.startingPtr);
+        this.setXTo(-delta + this.getPlotLowerBound());
     }
 
     public void setXTo(long startingPoint) {
@@ -163,15 +175,23 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     private void drawBackPlugins(Graphics2D g2) {
+        PlotPlugin plugin;
         for (int i = plugins.size() - 1; i >= 0; i--) {
-            plugins.get(i).drawBeforePlot(g2);
+            plugin = plugins.get(i);
+            if (plugin.isEnabled()) {
+                plugin.drawBeforePlot(g2);
+            }
         }
 
     }
 
     private void drawFrontPlugins(Graphics2D g2) {
+        PlotPlugin plugin;
         for (int i = plugins.size() - 1; i >= 0; i--) {
-            plugins.get(i).drawAfterPlot(g2);
+            plugin = plugins.get(i);
+            if (plugin.isEnabled()) {
+                plugins.get(i).drawAfterPlot(g2);
+            }
         }
     }
 
