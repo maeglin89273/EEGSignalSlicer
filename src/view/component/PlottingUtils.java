@@ -1,5 +1,8 @@
 package view.component;
 
+import model.datasource.Stream;
+import model.datasource.StreamingDataSource;
+
 /**
  * Created by maeglin89273 on 7/22/15.
  */
@@ -11,13 +14,13 @@ public final class PlottingUtils {
         }
     }
 
-    public static void loadYBuffer(double coordinateHeight, int plotHeight, double[] data, int startIndex, int[] yBuffer, int length) {
+    public static void loadYBuffer(double coordinateHeight, int plotHeight, Stream data, int startIndex, int[] yBuffer, int length) {
         for (int i = 0; i < yBuffer.length; i++) {
-            yBuffer[i] = mapY(coordinateHeight, plotHeight, data[i + (int) startIndex]);
+            yBuffer[i] = mapY(coordinateHeight, plotHeight, data.get(i + (int) startIndex));
         }
     }
 
-    public static void loadYBuffer(double coordinateHeight, int plotHeight, double[] data, int startIndex, int[] yBuffer) {
+    public static void loadYBuffer(double coordinateHeight, int plotHeight, Stream data, int startIndex, int[] yBuffer) {
         loadYBuffer(coordinateHeight, plotHeight, data, startIndex, yBuffer, yBuffer.length);
     }
 

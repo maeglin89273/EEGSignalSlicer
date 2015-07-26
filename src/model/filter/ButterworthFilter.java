@@ -1,5 +1,8 @@
 package model.filter;
 
+import model.datasource.FiniteLengthStream;
+import model.datasource.MutableFiniteLengthStream;
+
 /**
  * Created by maeglin89273 on 7/21/15.
  */
@@ -27,13 +30,14 @@ public class ButterworthFilter implements Filter {
         this.b = b;
     }
 
-    public double[] filter(double[] data, double[] output) {
+    @Override
+    public MutableFiniteLengthStream filter(FiniteLengthStream data, MutableFiniteLengthStream output) {
         int Nback = this.b.length;
         double[] prev_y = new double[Nback];
         double[] prev_x = new double[Nback];
 
         //step through presentedData points
-        for (int i = 0; i < data.length; i++) {
+        for (int i = 0; i < data.getCurrentLength(); i++) {
             //shift the previous outputs
             for (int j = Nback-1; j > 0; j--) {
                 prev_y[j] = prev_y[j-1];
@@ -41,7 +45,7 @@ public class ButterworthFilter implements Filter {
             }
 
             //add in the new point
-            prev_x[0] = data[i];
+            prev_x[0] = data.get(i);
 
             //compute the new presentedData point
             double out = 0;
@@ -54,7 +58,7 @@ public class ButterworthFilter implements Filter {
 
             //save output value
             prev_y[0] = out;
-            output[i] = out;
+            output.set(i, out);
         }
         return output;
     }

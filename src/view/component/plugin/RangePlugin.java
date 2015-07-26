@@ -12,8 +12,9 @@ import static view.component.plugin.NavigationPlugin.projectXDeltaToDataAmount;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
+public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
 
+    private static final double MARGIN_PERCENTAGE = 0.1;
     private long startPos;
     private double relativeStartPos;
     private long endPos;
@@ -27,18 +28,30 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     private RangeChangedListener listener;
     private Set<String> interestedActions;
+    private boolean fixedRange;
 
-    public SlicerPlugin() {
+    public RangePlugin() {
         this(Color.CYAN);
     }
 
-    public SlicerPlugin(Color knifeColor) {
+    public RangePlugin(Color knifeColor) {
         this.knifeColor = knifeColor;
         this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), bgAlpha);
 
-        this.interestedActions = new HashSet<String>(2);
+        initRelativePoses(MARGIN_PERCENTAGE);
+        initActionSet();
+    }
+
+    private void initActionSet() {
+        this.interestedActions = new HashSet<>(2);
         this.interestedActions.add("mouseDragged");
         this.interestedActions.add("mousePressed");
+    }
+
+    private void initRelativePoses(double marginPercentage) {
+        this.relativeStartPos = marginPercentage;
+        this.relativeEndPos = 1 - marginPercentage;
+
     }
 
     public void setRangeChangedListener(RangeChangedListener listener) {
@@ -51,8 +64,6 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
             this.plot.refresh();
         }
     }
-
-
 
     @Override
     public void drawBeforePlot(Graphics2D g2) {
@@ -88,42 +99,62 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         if (!this.isEnabled()) {
             return;
         }
+        int oldRange = this.getRange();
 
-        if (startPosition < plot.getPlotLowerBound()) {
-            this.startPos = plot.getPlotLowerBound();
-        } else if (startPosition >= this.getEndPosition()) {
-            this.startPos = endPos - 1;
-        } else {
-            this.startPos = startPosition;
+        this.startPos = boundStartPosition(startPosition);
+
+        this.relativeStartPos = computeRelativePos(this.getStartPosition());
+        fireStartChanged();
+
+        if (this.fixedRange) {
+            this.endPos = oldRange + this.getStartPosition() - 1;
+            this.relativeEndPos = computeRelativePos(this.getEndPosition());
+            fireEndChanged();
         }
 
-        this.relativeStartPos = (this.startPos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
-
-        if (this.listener != null) {
-            this.listener.onStartChanged(plot.getPlotLowerBound(), this.getStartPosition(), this.getEndPosition());
-        }
         this.plot.refresh();
+    }
+
+    private long boundStartPosition(long startPosition) {
+        if (startPosition >= this.getEndPosition()) {
+            startPosition = this.getEndPosition() - 1;
+        }
+        if (startPosition < plot.getPlotLowerBound()) {
+            startPosition = plot.getPlotLowerBound();
+        }
+
+        return startPosition;
     }
 
     public void setEndPosition(long endPosition) {
         if (!this.isEnabled()) {
             return;
         }
+        int oldRange = this.getRange();
+        this.endPos = boundEndPosition(endPosition);
+
+        this.relativeEndPos = computeRelativePos(this.getEndPosition());
+
+        if (this.fixedRange) {
+            this.startPos = this.getEndPosition() - oldRange + 1;
+            this.relativeStartPos = computeRelativePos(this.getStartPosition());
+            fireStartChanged();
+        }
+
+        fireEndChanged();
+        this.plot.refresh();
+    }
+
+    private long boundEndPosition(long endPosition) {
+        if (endPosition <= this.getStartPosition()) {
+            endPosition = getStartPosition() + 1;
+        }
 
         if (endPosition > plot.getPlotUpperBound()) {
-            this.endPos = plot.getPlotUpperBound();
-        } else if (endPosition <= this.getStartPosition()) {
-            this.endPos = startPos + 1;
-        } else {
-            this.endPos = endPosition;
+            endPosition = plot.getPlotUpperBound();
         }
 
-        this.relativeEndPos = (this.endPos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
-
-        if (this.listener != null) {
-            this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
-        }
-        this.plot.refresh();
+        return endPosition;
     }
 
     protected double getRelativeStartPosition() {
@@ -136,21 +167,23 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
+        this.syncRangeToPlot(plotLowerBound, plotUpperBound, windowSize);
+    }
+
+    public void setRange(int range) {
         if (!this.isEnabled()) {
             return;
         }
 
-        this.startPos = (int) (this.relativeStartPos * windowSize) + plotLowerBound;
-        this.endPos = (int) (this.relativeEndPos * windowSize) + plotLowerBound;
-
-        if (this.listener != null) {
-            this.listener.onStartChanged(plot.getPlotLowerBound(), this.getStartPosition(), this.getEndPosition());
-            this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
-        }
+        // todo: find the proper space the extend range
     }
 
-    public int getSliceSize() {
+    public int getRange() {
         return (int)(this.getEndPosition() - this.getStartPosition()) + 1;
+    }
+
+    public void setFixedRange(boolean fixedRange) {
+        this.fixedRange = fixedRange;
     }
 
     private enum OperatingMode {
@@ -188,8 +221,8 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     private boolean handleMousePressed(MouseEvent event) {
         int mouseX = event.getX();
-        double startX = this.plot.getWidth() * this.relativeStartPos;
-        double endX = this.plot.getWidth() * this.relativeEndPos;
+        double startX = this.plot.getWidth() * this.getRelativeStartPosition();
+        double endX = this.plot.getWidth() * this.getRelativeEndPosition();
         if (isOnSlicer(mouseX, startX)) {
             this.operatingMode = OperatingMode.START_SLICER;
             return false;
@@ -224,7 +257,9 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
                 int delta = projectXDeltaToDataAmount(plot, event.getX(), this.tmpX);
                 tmpX = event.getX();
                 this.setStartPosition(this.getStartPosition() + delta);
-                this.setEndPosition(this.getEndPosition() + delta);
+                if (!this.fixedRange) { //if it is fixed range, set start pos is enough.
+                    this.setEndPosition(this.getEndPosition() + delta);
+                }
 
         }
         return false;
@@ -233,17 +268,65 @@ public class SlicerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        if (enabled) {
-            this.reset();
+        syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
+    }
+
+    @Override
+    public void setPlot(PlotView plot) {
+        super.setPlot(plot);
+        if (this.isEnabled()) {
+            syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
+        } else {
+            syncPos(plot.getWindowSize(), plot.getPlotLowerBound());
+        }
+    }
+
+    private void syncPos(int windowSize, long plotLowerBound) {
+        if (!this.fixedRange) {
+            this.startPos = (int) (this.getRelativeStartPosition() * windowSize) + plotLowerBound;
+            this.endPos = (int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound;
+        } else {
+            if (windowSize > this.getRange()) {
+                this.setEnabled(false);
+                return;
+            }
+
+            //todo: align to middle
+        }
+    }
+
+    private double computeRelativePos(long pos) {
+        return (pos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
+    }
+
+    protected void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
+        syncPos(windowSize, plotLowerBound);
+
+        fireStartChanged();
+        fireEndChanged();
+    }
+
+    private void fireStartChanged() {
+        if (this.listener != null) {
+            this.listener.onStartChanged(plot.getPlotLowerBound(), this.getStartPosition(), this.getEndPosition());
+
+        }
+    }
+
+    private void fireEndChanged() {
+        if (this.listener != null) {
+            this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
         }
     }
 
     @Override
     public void reset() {
-        // careful the start bound
-        this.endPos = plot.getPlotUpperBound();
-        this.setStartPosition(plot.getPlotLowerBound() + 50);
-        this.setEndPosition(plot.getPlotUpperBound() - 50);
+        initRelativePoses(MARGIN_PERCENTAGE);
+        syncPos(plot.getWindowSize(), plot.getPlotLowerBound());
     }
 
     @Override

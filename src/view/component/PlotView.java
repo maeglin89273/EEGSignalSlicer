@@ -5,7 +5,8 @@ import view.component.plugin.PlotPlugin;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.*;
 import java.util.List;
 
@@ -13,9 +14,9 @@ import java.util.List;
  * Created by maeglin89273 on 7/22/15.
  */
 public class PlotView extends JComponent implements StreamingDataSource.PresentedDataChangedListener {
-    private final Dimension PREFERRED_SIZE = new Dimension(750, 300);
+    private static final Dimension PREFERRED_SIZE = new Dimension(750, 300);
 
-    private final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+    private static final Stroke STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
     private List<String> visibleStreamTags;
     private Map<String, Color> colorMapping;
@@ -31,15 +32,13 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     private List<CoordinatesRangeChangedListener> rangeListeners;
     private StreamingDataSource dataSource;
 
+    public PlotView(int windowSize, float peakValue, Dimension dim) {
+        this.setPreferredSize(dim);
 
-    public PlotView(int windowSize, float peakValue) {
-
-        this.plugins = new ArrayList<PlotPlugin>();
-        this.rangeListeners = new ArrayList<CoordinatesRangeChangedListener>();
-        this.colorMapping = new HashMap<String, Color>();
-        this.visibleStreamTags = new LinkedList<String>();
-
-        this.setPreferredSize(PREFERRED_SIZE);
+        this.plugins = new ArrayList<>();
+        this.rangeListeners = new ArrayList<>();
+        this.colorMapping = new HashMap<>();
+        this.visibleStreamTags = new LinkedList<>();
 
         this.setWindowSize(windowSize);
         this.setPeakValue(peakValue);
@@ -48,7 +47,14 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
         this.setBackground(new Color(-1));
         this.setOpaque(true);
+    }
 
+
+    public PlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
+        this(windowSize, peakValue, new Dimension(plotWidth, plotHeight));
+    }
+    public PlotView(int windowSize, float peakValue) {
+        this(windowSize, peakValue, PREFERRED_SIZE);
     }
 
     private void setAdapters() {
@@ -62,6 +68,10 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setDataSource(StreamingDataSource dataSource) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         this.dataSource = dataSource;
         this.dataSource.addPresentedDataChangedListener(this);
         fireResetPlugin();
@@ -84,6 +94,10 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void addPlugin(PlotPlugin plugin) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         this.plugins.add(plugin);
         this.rangeListeners.add(plugin);
         plugin.setPlot(this);
@@ -107,6 +121,10 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setWindowSize(int windowSize) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         this.xBuffer = new int[windowSize];
         this.yBuffer = new int[windowSize];
 
@@ -120,14 +138,23 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setXTo(long startingPoint) {
-        if (startingPoint < 0) {
-            startingPoint = 0;
-        } else if (startingPoint + this.getWindowSize() - 1 >= dataSource.getMaxStreamLength()) {
-            startingPoint = dataSource.getMaxStreamLength() - this.getWindowSize();
+        if (!this.isEnabled()) {
+            return;
         }
-        this.startingPtr = startingPoint;
+        this.startingPtr = boundStartingPtr(startingPoint);
         fireOnXRangeChanged();
         this.refresh();
+    }
+
+    private long boundStartingPtr(long startingPoint) {
+        if (startingPoint + this.getWindowSize() - 1 >= dataSource.getCurrentLength()) {
+            startingPoint = dataSource.getCurrentLength() - this.getWindowSize();
+        }
+
+        if (startingPoint < 0) {
+            startingPoint = 0;
+        }
+        return startingPoint;
     }
 
     public float getPeakValue() {
@@ -135,6 +162,10 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setPeakValue(float peakValue) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         this.peakValue = peakValue;
         fireOnYRangeChanged();
         this.refresh();
@@ -164,7 +195,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         g2.setBackground(this.getBackground());
         g2.clearRect(0, 0, this.getWidth(), this.getHeight());
 
-        if (this.isDataSourceSet()) {
+        if (this.isDataSourceSet() && this.isEnabled()) {
             drawBackPlugins(g2);
             g2.setStroke(STROKE);
             drawStreams(g2);
@@ -234,7 +265,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         return sb.toString();
     }
 
-
     private Graphics2D prepareGraphics(Graphics g) {
         if (!(g instanceof Graphics2D)) {
             return null;
@@ -250,6 +280,10 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setStreamVisible(String tag, boolean isVisible) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         if (isVisible) {
             this.visibleStreamTags.add(tag);
         } else {
@@ -276,6 +310,11 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
     @Override
     public void onDataChanged() {
+        this.refresh();
+    }
+
+    @Override
+    public void onDataChanged(String tag) {
         this.refresh();
     }
 

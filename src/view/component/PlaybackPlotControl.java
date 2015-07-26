@@ -1,6 +1,6 @@
 package view.component;
 
-import model.datasource.StreamingDataSource;
+import model.datasource.FiniteLengthDataSource;
 import view.component.plugin.NavigationPlugin;
 import view.component.plugin.PlotPlugin;
 
@@ -14,7 +14,7 @@ import java.awt.event.*;
 /**
  * Created by maeglin89273 on 7/21/15.
  */
-public class PlotControl extends JPanel implements ActionListener {
+public class PlaybackPlotControl extends JPanel implements ActionListener {
     private static final int SPEEED_FACTOR = -1;
     private static final int DEFAULT_SLIDING_SPEED = 3;
 
@@ -37,12 +37,11 @@ public class PlotControl extends JPanel implements ActionListener {
     private static final int ANIMATION_INTERVAL = 20;
     private int plotSlidingSpeed = DEFAULT_SLIDING_SPEED;
 
-
-    public PlotControl(int windowSize, float peakValue) {
+    public PlaybackPlotControl(int windowSize, float peakValue) {
         this(new InteractivePlotView(windowSize, peakValue));
     }
 
-    public PlotControl(PlotView plot) {
+    public PlaybackPlotControl(PlotView plot) {
         this.animator = new Timer(ANIMATION_INTERVAL, this);
 
         this.playing = false;
@@ -73,6 +72,7 @@ public class PlotControl extends JPanel implements ActionListener {
                 updateXDisplays(plotLowerBound, plotUpperBound, windowSize);
             }
         });
+
         this.playBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -90,7 +90,7 @@ public class PlotControl extends JPanel implements ActionListener {
                 if (isPlaying()) {
                     plotSlidingSpeed += (plotSlidingSpeed == -1 ? 2 : 1);
                 } else {
-                    plot.moveX(-2);
+                    plot.moveX(2);
                 }
 
             }
@@ -103,7 +103,7 @@ public class PlotControl extends JPanel implements ActionListener {
                     plotSlidingSpeed -= (plotSlidingSpeed == 1 ? 2 : 1);
 
                 } else {
-                    plot.moveX(2);
+                    plot.moveX(-2);
                 }
             }
         });
@@ -119,10 +119,10 @@ public class PlotControl extends JPanel implements ActionListener {
         });
     }
 
-    public void setDataSource(StreamingDataSource dataSource) {
+    public void setDataSource(FiniteLengthDataSource dataSource) {
         this.plot.setDataSource(dataSource);
 
-        this.playbackSlider.setMaximum((int) dataSource.getMaxStreamLength() - 1);
+        this.playbackSlider.setMaximum(dataSource.intLength() - 1);
         updateXDisplays(this.plot.getPlotLowerBound(), this.plot.getPlotUpperBound(), this.plot.getWindowSize());
 
         this.setEnableControls(true);

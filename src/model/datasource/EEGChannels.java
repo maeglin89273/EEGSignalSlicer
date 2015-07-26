@@ -9,21 +9,20 @@ import java.util.Map;
 /**
  * Created by maeglin89273 on 7/21/15.
  */
-public class EEGChannels extends StreamingDataSource {
+public class EEGChannels extends FilteredDataSource {
 
     public EEGChannels(double[][] originalRawData) {
         super(convertToMap(originalRawData));
-        System.out.println(this.getMaxStreamLength() + " presentedData loaded");
 
         this.addFilter(ButterworthFilter.NOTCH_60HZ);
         this.addFilter(ButterworthFilter.BANDPASS_1_50HZ);
 
     }
 
-    private static Map<String, double[]> convertToMap(double[][] originalRawData) {
-        Map<String, double[]> dataMap = new HashMap<String, double[]>(originalRawData.length);
+    private static Map<String, FiniteLengthStream> convertToMap(double[][] originalRawData) {
+        Map<String, FiniteLengthStream> dataMap = new HashMap<>(originalRawData.length);
         for (int i = 1; i <= originalRawData.length; i++) {
-            dataMap.put(Integer.toString(i), originalRawData[i - 1]);
+            dataMap.put(Integer.toString(i), new SimpleArrayStream(originalRawData[i - 1]));
         }
         return dataMap;
     }
@@ -39,7 +38,7 @@ public class EEGChannels extends StreamingDataSource {
     public double[][] getOriginalRawDataInArray() {
         double[][] dataArray = new double[this.originalData.size()][];
         for (int i = 1; i <= dataArray.length; i++) {
-            dataArray[i - 1] = this.originalData.get(Integer.toString(i));
+            dataArray[i - 1] = ((SimpleArrayStream)(this.originalData.get(Integer.toString(i)))).toArray();
         }
         return dataArray;
     }

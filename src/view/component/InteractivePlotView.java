@@ -20,7 +20,7 @@ public class InteractivePlotView extends PlotView {
     }
 
     private void prepareInteraction() {
-        this.mousePlugins = new ArrayList<InteractivePlotPlugin.MousePlugin>();
+        this.mousePlugins = new ArrayList<>();
         this.mouseHandler = new MouseEventHandler();
         this.addMouseListener(this.mouseHandler);
         this.addMouseMotionListener(this.mouseHandler);

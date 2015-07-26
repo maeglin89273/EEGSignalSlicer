@@ -22,7 +22,8 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     private int[] yBuffer = null;
 
     private Set<String> interestedActions;
-    private boolean movingShadow;
+    private boolean movingShadow = false;
+    private boolean lastMovingShadow = false;
     private int lastX;
 
 
@@ -54,7 +55,9 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
         if (enabled) {
             this.makeNewShadow();
+            this.setMouseInteractionEnabled(this.lastMovingShadow);
         } else {
+            this.lastMovingShadow = this.isMouseInteractionEnabled();
             this.setMouseInteractionEnabled(false);
         }
     }
@@ -73,17 +76,21 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
             return;
         }
         delta = -delta;
-        long newStartingPtr = this.startingPtr + delta;
-        if (newStartingPtr < 0) {
-            newStartingPtr = 0;
-        } else if (newStartingPtr + this.plot.getWindowSize() - 1 >= this.plot.getDataSource().getMaxStreamLength()) {
-            newStartingPtr = this.plot.getDataSource().getMaxStreamLength() - this.plot.getWindowSize();
-        }
-
-        this.startingPtr = newStartingPtr;
+        this.startingPtr = boundStartingPtr(this.startingPtr + delta);
 
         this.plot.refresh();
 
+    }
+
+    private long boundStartingPtr(long startingPtr) {
+        if (startingPtr + this.plot.getWindowSize() - 1 >= this.plot.getDataSource().getCurrentLength()) {
+            startingPtr = this.plot.getDataSource().getCurrentLength() - this.plot.getWindowSize();
+        }
+
+        if (startingPtr < 0) {
+            startingPtr = 0;
+        }
+        return startingPtr;
     }
 
     public long getStartingPosition() {

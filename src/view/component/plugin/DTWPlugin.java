@@ -1,5 +1,8 @@
 package view.component.plugin;
 
+import model.datasource.MutableFiniteLengthStream;
+import model.datasource.SimpleArrayStream;
+import model.datasource.Stream;
 import view.component.PlotView;
 import view.component.PlottingUtils;
 
@@ -9,15 +12,15 @@ import java.awt.event.MouseEvent;
 /**
  * Created by maeglin89273 on 7/24/15.
  */
-public class DTWPlugin extends SlicerPlugin {
+public class DTWPlugin extends RangePlugin {
     private static final Stroke STROKE = new BasicStroke(0.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final Color KNIFE_COLOR = Color.RED;
     private static final Color STROKE_COLOR = new Color(255, 0, 0, 80);
     private static final int DTW_COMPUTABLE_RANGE = 400;
     public static final float ACCEPTABLE_DTW_DISTANCE_UPPERBOUND = 100;
 
-    private final double[] dtwSourceBufferFront;
-    private final double[] dtwSourceBufferBack;
+    private final MutableFiniteLengthStream dtwSourceBufferFront;
+    private final MutableFiniteLengthStream dtwSourceBufferBack;
     private ShadowPlugin streamTemplate;
 
     private int[][] dtwWarpingPath;
@@ -28,8 +31,8 @@ public class DTWPlugin extends SlicerPlugin {
     public DTWPlugin() {
         super(KNIFE_COLOR);
         this.streamTemplate = new ShadowPlugin(2);
-        this.dtwSourceBufferFront = new double[DTW_COMPUTABLE_RANGE];
-        this.dtwSourceBufferBack = new double[DTW_COMPUTABLE_RANGE];
+        this.dtwSourceBufferFront = new SimpleArrayStream(DTW_COMPUTABLE_RANGE);
+        this.dtwSourceBufferBack = new SimpleArrayStream(DTW_COMPUTABLE_RANGE);
     }
 
     @Override
@@ -58,8 +61,8 @@ public class DTWPlugin extends SlicerPlugin {
             for (int[] pointMapping: dtwWarpingPath) {
                 startX = xBuffer[xOffset + pointMapping[1]];
                 endX = xBuffer[xOffset + pointMapping[0]];
-                startY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferBack[pointMapping[1]]);
-                endY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferFront[pointMapping[0]]);
+                startY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferBack.get(pointMapping[1]));
+                endY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferFront.get(pointMapping[0]));
                 g2.drawLine(startX, startY, endX, endY);
             }
         }
@@ -72,10 +75,6 @@ public class DTWPlugin extends SlicerPlugin {
         }
         boolean isOnSlicing = !super.onMouseEvent(action, event);
         boolean returnVal = isOnSlicing? false: this.streamTemplate.onMouseEvent(action, event);
-
-        if (isMouseDragged(action)) {
-            updateDTW();
-        }
 
         return returnVal;
     }
@@ -94,15 +93,26 @@ public class DTWPlugin extends SlicerPlugin {
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
         super.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
         this.streamTemplate.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
-        this.updateDTW();
+    }
+
+    @Override
+    public void setStartPosition(long startPosition) {
+        super.setStartPosition(startPosition);
+        updateDTW();
+    }
+
+    @Override
+    public void setEndPosition(long endPosition) {
+        super.setEndPosition(endPosition);
+        updateDTW();
     }
 
     public void updateDTW() {
         if (this.isAbleComputeDTW()) {
-            double[] visibleStream = this.getSingleVisibleStream();
-            int computingSize = this.getSliceSize();
-            System.arraycopy(visibleStream, (int) projectSliceToShadow(), this.dtwSourceBufferBack, 0, computingSize);
-            System.arraycopy(visibleStream, (int)this.getStartPosition(), this.dtwSourceBufferFront, 0, computingSize);
+            Stream visibleStream = this.getSingleVisibleStream();
+            int computingSize = this.getRange();
+            this.dtwSourceBufferBack.replacedBy(visibleStream, (int) projectSliceToShadow(), computingSize);
+            this.dtwSourceBufferFront.replacedBy(visibleStream, (int) this.getStartPosition(), computingSize);
 
             DTWAlgorithm dtw = new DTWAlgorithm(this.dtwSourceBufferFront, computingSize, this.dtwSourceBufferBack, computingSize);
             if (dtw.getDistance() <= ACCEPTABLE_DTW_DISTANCE_UPPERBOUND) {
@@ -142,19 +152,24 @@ public class DTWPlugin extends SlicerPlugin {
         this.renderDTW = wantRender;
     }
 
-    private double[] getSingleVisibleStream() {
+    private Stream getSingleVisibleStream() {
         return this.plot.getDataSource().getDataOf(this.plot.getVisibleStreams().get(0));
     }
 
     private boolean isAbleComputeDTW() {
-        return this.isEnabled() && this.plot.getVisibleStreams().size() == 1 && this.getSliceSize() < DTW_COMPUTABLE_RANGE;
+        return this.isEnabled() && this.plot.getVisibleStreams().size() == 1 && this.getRange() < DTW_COMPUTABLE_RANGE;
     }
 
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         streamTemplate.setEnabled(enabled);
-        this.updateDTW();
+    }
+
+    @Override
+    protected void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
+        super.syncRangeToPlot(plotLowerBound, plotUpperBound, windowSize);
+        updateDTW();
     }
 
     @Override

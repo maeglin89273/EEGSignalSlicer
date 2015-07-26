@@ -3,6 +3,8 @@
  */
 package view.component.plugin;
 
+import model.datasource.Stream;
+
 /**
  * This class implements the Dynamic Time Warping algorithm
  * given two sequences
@@ -16,8 +18,8 @@ package view.component.plugin;
  */
 public class DTWAlgorithm {
 
-    protected double[] seq1;
-    protected double[] seq2;
+    protected Stream seq1;
+    protected Stream seq2;
     protected int[][] warpingPath;
 
     protected int n;
@@ -32,7 +34,7 @@ public class DTWAlgorithm {
      * @param query
      * @param template
      */
-    public DTWAlgorithm(double[] sample, int validSampleLength, double[] template, int validTemplateLength) {
+    public DTWAlgorithm(Stream sample, int validSampleLength, Stream template, int validTemplateLength) {
         seq1 = sample;
         seq2 = template;
 
@@ -54,7 +56,7 @@ public class DTWAlgorithm {
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++) {
-                d[i][j] = distanceBetween(seq1[i], seq2[j]);
+                d[i][j] = distanceBetween(seq1.get(i), seq2.get(j));
             }
         }
 
