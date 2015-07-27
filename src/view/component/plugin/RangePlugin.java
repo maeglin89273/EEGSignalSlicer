@@ -59,7 +59,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public void setRenderRangeBackground(boolean wantRender) {
-        if (this.renderBg != wantRender) {
+        if (this.isEnabled() && this.renderBg != wantRender) {
             this.renderBg = wantRender;
             this.plot.refresh();
         }
@@ -171,11 +171,31 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public void setRange(int range) {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || this.fixedRange) {
             return;
         }
 
-        // todo: find the proper space the extend range
+        boundRange(plot.getWindowSize(), plot.getPlotLowerBound(), range);
+        fireStartChanged();
+        fireEndChanged();
+        plot.refresh();
+    }
+
+    private void boundRange(int windowSize, long plotLowerBound, int range) {
+        long middle = (int)(((this.getRelativeStartPosition() + this.getRelativeEndPosition()) / 2) * windowSize) + plotLowerBound;
+
+        int leftHalf = range / 2;
+        int rightHalf = (int)Math.ceil(range / 2.0f);
+        int middleToLower = (int) (middle - plot.getPlotLowerBound());
+
+        if (leftHalf > middleToLower) {
+            rightHalf += leftHalf - middleToLower;
+            leftHalf = middleToLower;
+        }
+        this.startPos = middle - leftHalf + 1;
+        this.relativeStartPos = computeRelativePos(this.getStartPosition());
+        this.endPos = middle + rightHalf;
+        this.relativeEndPos = computeRelativePos(this.getEndPosition());
     }
 
     public int getRange() {
@@ -183,6 +203,10 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public void setFixedRange(boolean fixedRange) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
         this.fixedRange = fixedRange;
     }
 
@@ -286,12 +310,12 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             this.startPos = (int) (this.getRelativeStartPosition() * windowSize) + plotLowerBound;
             this.endPos = (int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound;
         } else {
-            if (windowSize > this.getRange()) {
+            if (windowSize < this.getRange()) {
                 this.setEnabled(false);
                 return;
             }
 
-            //todo: align to middle
+            this.boundRange(windowSize, plotLowerBound, this.getRange());
         }
     }
 

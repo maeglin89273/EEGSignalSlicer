@@ -2,6 +2,7 @@ package view.component.plugin;
 
 import model.datasource.*;
 import org.jtransforms.fft.DoubleFFT_1D;
+import view.component.PlotView;
 
 import java.awt.*;
 import java.util.*;
@@ -13,7 +14,7 @@ import java.util.List;
 public class FourierTransformPlugin extends RangePlugin {
     private final int samplingFrequency;
     private final int transformRange;
-    private final int halfRange;
+    private final int halfFFTRange;
 
     private DataSourceManager dataManager;
 
@@ -21,10 +22,22 @@ public class FourierTransformPlugin extends RangePlugin {
         super(Color.GREEN);
         this.samplingFrequency = samplingFrequency;
         this.transformRange = range;
-        this.halfRange = this.computeHalfRange();
-        this.setRenderRangeBackground(true);
+        this.halfFFTRange = this.computeHalfRange();
 
+    }
+
+    @Override
+    public void setPlot(PlotView plot) {
+        super.setPlot(plot);
+
+        this.dataManager = new DataSourceManager();
+
+        this.setEnabled(true);
+        this.setRenderRangeBackground(true);
+        this.setRange(this.transformRange);
         this.setFixedRange(true);
+        this.setEnabled(false);
+
     }
 
     private int computeHalfRange() {
@@ -58,6 +71,12 @@ public class FourierTransformPlugin extends RangePlugin {
     @Override
     public void setEndPosition(long endPosition) {
         super.setEndPosition(endPosition);
+        updateTransformation();
+    }
+
+    @Override
+    public void setRange(int range) {
+        super.setRange(range);
         updateTransformation();
     }
 
@@ -128,7 +147,7 @@ public class FourierTransformPlugin extends RangePlugin {
 
         @Override
         public long getCurrentLength() {
-            return halfRange;
+            return halfFFTRange;
         }
 
         @Override
@@ -165,7 +184,7 @@ public class FourierTransformPlugin extends RangePlugin {
 
         @Override
         public long getCurrentLength() {
-            return halfRange;
+            return halfFFTRange;
         }
 
         public FiniteLengthStream setFtStream(FiniteLengthStream ftStream) {
@@ -182,7 +201,7 @@ public class FourierTransformPlugin extends RangePlugin {
                 return ftStream.get(1);
             }
 
-            return ftStream.get(2 * i);
+            return Math.abs(ftStream.get(2 * i));
         }
     }
 
@@ -197,7 +216,7 @@ public class FourierTransformPlugin extends RangePlugin {
                 return 0;
             }
 
-            return ftStream.get(2 * i);
+            return ftStream.get(2 * i + 1);
         }
     }
 

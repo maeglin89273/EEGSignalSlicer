@@ -280,7 +280,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setStreamVisible(String tag, boolean isVisible) {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || !this.isDataSourceSet()) {
             return;
         }
 

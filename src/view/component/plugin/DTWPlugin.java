@@ -70,17 +70,16 @@ public class DTWPlugin extends RangePlugin {
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
-        if (!this.isEnabled()) {
+
+        if (super.onMouseEvent(action, event)) {
+            if (!this.streamTemplate.onMouseEvent(action, event)) {
+                this.updateDTW();
+                return false;
+            }
             return true;
         }
-        boolean isOnSlicing = !super.onMouseEvent(action, event);
-        boolean returnVal = isOnSlicing? false: this.streamTemplate.onMouseEvent(action, event);
 
-        return returnVal;
-    }
-
-    private boolean isMouseDragged(String action) {
-        return action.equals("mouseDragged");
+        return false;
     }
 
     @Override
@@ -104,6 +103,12 @@ public class DTWPlugin extends RangePlugin {
     @Override
     public void setEndPosition(long endPosition) {
         super.setEndPosition(endPosition);
+        updateDTW();
+    }
+
+    @Override
+    public void setRange(int range) {
+        super.setRange(range);
         updateDTW();
     }
 

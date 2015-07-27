@@ -60,7 +60,7 @@ public class MainForm extends JFrame {
     private JLabel templateLbl;
     private JCheckBox fftCheckBox;
     private PlotView fftRePlot;
-    private JButton fftSanpshotBtn;
+    private JButton fftSnapshotBtn;
     private JPanel leftPanel;
     private JPanel fftPanel;
     private JPanel controlPanel;
@@ -91,7 +91,6 @@ public class MainForm extends JFrame {
         this.setupPlugins();
         this.setupOthers();
         this.setupListeners();
-        plotControl.setStreamVisible("3", true);
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
@@ -110,6 +109,11 @@ public class MainForm extends JFrame {
                 if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
                     data = RawDataFileUtils.getInstance().load(fileChooser.getSelectedFile());
                     plotControl.setDataSource(data);
+
+                    for (int i = 0; i < channelCheckBoxArray.length; i++) {
+                        setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
+                    }
+
                 }
             }
         });
@@ -153,9 +157,7 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 JCheckBox channelCheckBox = (JCheckBox) e.getSource();
 
-                plotControl.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
-                fftRePlot.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
-                fftImPlot.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
+                setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
                 dtwPlugin.updateDTW();
             }
         };
@@ -267,15 +269,23 @@ public class MainForm extends JFrame {
         fftCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fftPlugin.setEnabled(fftCheckBox.isSelected());
-                if (!fftCheckBox.isSelected()) {
+                boolean fftOn = fftCheckBox.isSelected();
+                fftPlugin.setEnabled(fftOn);
+                fftRePlot.setEnabled(fftOn);
+                fftImPlot.setEnabled(fftOn);
+                if (!fftOn) {
                     reShadowPlugin.setEnabled(false);
                     imShadowPlugin.setEnabled(false);
+                } else {
+                    for (int i = 0; i < channelCheckBoxArray.length; i++) {
+                        fftRePlot.setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
+                        fftImPlot.setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
+                    }
                 }
             }
         });
 
-        fftSanpshotBtn.addActionListener(new ActionListener() {
+        fftSnapshotBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (reShadowPlugin.isEnabled()) {
@@ -287,6 +297,12 @@ public class MainForm extends JFrame {
                 }
             }
         });
+    }
+
+    private void setStreamVisible(String tag, boolean visible) {
+        plotControl.setStreamVisible(tag, visible);
+        fftRePlot.setStreamVisible(tag, visible);
+        fftImPlot.setStreamVisible(tag, visible);
     }
 
     private void setupOthers() {
@@ -323,15 +339,15 @@ public class MainForm extends JFrame {
         this.plotControl.addPluginToPlot(this.dtwPlugin);
 
         this.fftRePlot.addPlugin(this.reShadowPlugin);
-        this.fftRePlot.addPlugin(this.imShadowPlugin);
+        this.fftImPlot.addPlugin(this.imShadowPlugin);
         this.fftRePlot.setDataSource(this.fftPlugin.getRealPartDataSource());
         this.fftImPlot.setDataSource(this.fftPlugin.getImageryPartDataSource());
     }
 
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(600, 60);
-        fftRePlot = new PlotView(50, 250, 300, 125);
-        fftImPlot = new PlotView(50, 250, 300, 125);
+        fftRePlot = new PlotView(70, 256, 300, 125);
+        fftImPlot = new PlotView(70, 256, 300, 125);
     }
 
     /**
@@ -660,13 +676,13 @@ public class MainForm extends JFrame {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(fftPanel, gbc);
-        fftSanpshotBtn = new JButton();
-        fftSanpshotBtn.setText("Sanpshot");
+        fftSnapshotBtn = new JButton();
+        fftSnapshotBtn.setText("Snapshot");
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftSanpshotBtn, gbc);
+        fftPanel.add(fftSnapshotBtn, gbc);
         fftCheckBox = new JCheckBox();
         fftCheckBox.setText("FFT Analysis");
         gbc = new GridBagConstraints();
