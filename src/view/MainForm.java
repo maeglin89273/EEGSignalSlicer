@@ -7,6 +7,7 @@ import model.filter.EEGFilter;
 import model.filter.Filter;
 import view.component.PlaybackPlotControl;
 import view.component.PlotView;
+import view.component.PlottingUtils;
 import view.component.plugin.*;
 
 import javax.swing.*;
@@ -66,6 +67,9 @@ public class MainForm extends JFrame {
     private JPanel controlPanel;
     private JPanel centerPanel;
     private PlotView fftImPlot;
+    private JLabel reLbl;
+    private JCheckBox absCheckBox;
+    private JLabel imLbl;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
@@ -77,8 +81,8 @@ public class MainForm extends JFrame {
     private DTWPlugin dtwPlugin;
     private Map<String, Filter> filterTable;
     private FourierTransformPlugin fftPlugin;
-    private ShadowPlugin reShadowPlugin;
-    private ShadowPlugin imShadowPlugin;
+    private TracerPlugin reTracerPlugin;
+    private TracerPlugin imTracerPlugin;
 
     public MainForm() {
         super("EEG Channel Slicer");
@@ -158,6 +162,7 @@ public class MainForm extends JFrame {
                 JCheckBox channelCheckBox = (JCheckBox) e.getSource();
 
                 setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
+                fftPlugin.updateTransformation();
                 dtwPlugin.updateDTW();
             }
         };
@@ -171,6 +176,7 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 data.setBandpassFilter(filterTable.get(filterChoiceGroup.getSelection().getActionCommand()));
                 dtwPlugin.updateDTW();
+                fftPlugin.updateTransformation();
             }
 
 
@@ -274,13 +280,8 @@ public class MainForm extends JFrame {
                 fftRePlot.setEnabled(fftOn);
                 fftImPlot.setEnabled(fftOn);
                 if (!fftOn) {
-                    reShadowPlugin.setEnabled(false);
-                    imShadowPlugin.setEnabled(false);
-                } else {
-                    for (int i = 0; i < channelCheckBoxArray.length; i++) {
-                        fftRePlot.setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
-                        fftImPlot.setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
-                    }
+                    reTracerPlugin.setEnabled(false);
+                    imTracerPlugin.setEnabled(false);
                 }
             }
         });
@@ -288,13 +289,20 @@ public class MainForm extends JFrame {
         fftSnapshotBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (reShadowPlugin.isEnabled()) {
-                    reShadowPlugin.makeNewShadow();
-                    imShadowPlugin.makeNewShadow();
+                if (reTracerPlugin.isEnabled()) {
+                    reTracerPlugin.trace();
+                    imTracerPlugin.trace();
                 } else {
-                    reShadowPlugin.setEnabled(true);
-                    imShadowPlugin.setEnabled(true);
+                    reTracerPlugin.setEnabled(true);
+                    imTracerPlugin.setEnabled(true);
                 }
+            }
+        });
+
+        absCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fftRePlot.setBaseline(absCheckBox.isSelected() ? PlottingUtils.Baseline.BOTTOM : PlottingUtils.Baseline.MIDDLE);
             }
         });
     }
@@ -319,11 +327,15 @@ public class MainForm extends JFrame {
         filterChoiceGroup.add(betaFilterRadioBtn);
         filterChoiceGroup.add(gammaFilterRadioBtn);
         filterChoiceGroup.add(a1to50HzFilterRadioBtn);
-        this.filterTable = new HashMap<String, Filter>(EEGFilter.EEG_BANDPASS_FILTER_TABLE);
+        this.filterTable = new HashMap<>(EEGFilter.EEG_BANDPASS_FILTER_TABLE);
         this.filterTable.put(a1to50HzFilterRadioBtn.getText(), ButterworthFilter.BANDPASS_1_50HZ);
 
         this.startSpinModel.setValue((int) this.dtwPlugin.getStartPosition());
         this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
+
+        this.fftRePlot.setLineWidth(1f);
+        this.fftRePlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
+        this.fftImPlot.setLineWidth(1f);
 
         this.fftRePlot.setEnabled(false);
         this.fftImPlot.setEnabled(false);
@@ -332,22 +344,23 @@ public class MainForm extends JFrame {
     private void setupPlugins() {
         this.dtwPlugin = new DTWPlugin();
         this.fftPlugin = new FourierTransformPlugin(250, 256);
-        this.reShadowPlugin = new ShadowPlugin();
-        this.imShadowPlugin = new ShadowPlugin();
+        this.reTracerPlugin = new TracerPlugin();
+        this.imTracerPlugin = new TracerPlugin();
 
         this.plotControl.addPluginToPlot(this.fftPlugin);
         this.plotControl.addPluginToPlot(this.dtwPlugin);
 
-        this.fftRePlot.addPlugin(this.reShadowPlugin);
-        this.fftImPlot.addPlugin(this.imShadowPlugin);
+        this.fftRePlot.addPlugin(this.reTracerPlugin);
+        this.fftImPlot.addPlugin(this.imTracerPlugin);
+
         this.fftRePlot.setDataSource(this.fftPlugin.getRealPartDataSource());
         this.fftImPlot.setDataSource(this.fftPlugin.getImageryPartDataSource());
     }
 
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(600, 60);
-        fftRePlot = new PlotView(70, 256, 300, 125);
-        fftImPlot = new PlotView(70, 256, 300, 125);
+        fftRePlot = new PlotView(70, 3.5f, 300, 125);
+        fftImPlot = new PlotView(70, 3.5f, 300, 125);
     }
 
     /**
@@ -362,16 +375,9 @@ public class MainForm extends JFrame {
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), null));
-        GridBagConstraints gbc;
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 3.0;
-        gbc.weighty = 2.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(plotControl, gbc);
         controlPanel = new JPanel();
         controlPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -679,41 +685,73 @@ public class MainForm extends JFrame {
         fftSnapshotBtn = new JButton();
         fftSnapshotBtn.setText("Snapshot");
         gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridx = 2;
+        gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(fftSnapshotBtn, gbc);
         fftCheckBox = new JCheckBox();
         fftCheckBox.setText("FFT Analysis");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(fftCheckBox, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridy = 1;
+        gbc.gridwidth = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         fftPanel.add(fftRePlot, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
+        gbc.gridy = 3;
+        gbc.gridwidth = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         fftPanel.add(fftImPlot, gbc);
         final JPanel spacer4 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridx = 1;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.VERTICAL;
         fftPanel.add(spacer4, gbc);
+        reLbl = new JLabel();
+        reLbl.setText("Real");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(reLbl, gbc);
+        absCheckBox = new JCheckBox();
+        absCheckBox.setSelected(true);
+        absCheckBox.setText("absolute");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        fftPanel.add(absCheckBox, gbc);
+        imLbl = new JLabel();
+        imLbl.setText("Imagery");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(imLbl, gbc);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 3.0;
+        gbc.weighty = 2.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        mainPanel.add(plotControl, gbc);
     }
 
     /**

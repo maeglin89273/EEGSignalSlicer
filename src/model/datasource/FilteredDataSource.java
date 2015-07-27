@@ -68,6 +68,10 @@ public abstract class FilteredDataSource extends FiniteLengthDataSource {
         return presentedData.get(tag);
     }
 
+    public FiniteLengthStream getOriginalDataOf(String tag) {
+        return this.originalData.get(tag);
+    }
+
     private FiniteLengthStream filterOriginalData(String streamTag) {
         MutableFiniteLengthStream filteredStream = claimCachedSpace(streamTag);
         FiniteLengthStream originalStream = this.originalData.get(streamTag);
@@ -98,6 +102,11 @@ public abstract class FilteredDataSource extends FiniteLengthDataSource {
     @Override
     public void addPresentedDataChangedListener(PresentedDataChangedListener listener) {
         this.listeners.add(listener);
+    }
+
+    @Override
+    public void removePresentedDataChangedListener(PresentedDataChangedListener listener) {
+        this.listeners.remove(listener);
     }
 
     private void firePresentedDataChanged() {

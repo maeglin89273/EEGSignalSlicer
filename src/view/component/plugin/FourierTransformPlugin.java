@@ -56,6 +56,10 @@ public class FourierTransformPlugin extends RangePlugin {
         return this.dataManager.getImageryPart();
     }
 
+    public StreamingDataSource getPowerPartDataSource() {
+        return this.dataManager.getPowerPart();
+    }
+
     @Override
     protected void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
         super.syncRangeToPlot(plotLowerBound, plotUpperBound, windowSize);
@@ -80,7 +84,7 @@ public class FourierTransformPlugin extends RangePlugin {
         updateTransformation();
     }
 
-    private void updateTransformation() {
+    public void updateTransformation() {
         if (!this.isEnabled()) {
             return;
         }
@@ -94,6 +98,7 @@ public class FourierTransformPlugin extends RangePlugin {
     }
 
     private class DataSourceManager {
+        private final FTDataSource powerPart;
         private FTDataSource realPart;
         private FTDataSource imageryPart;
 
@@ -107,6 +112,7 @@ public class FourierTransformPlugin extends RangePlugin {
             this.transformedData = new HashMap<>();
             this.realPart = new FTDataSource(this.transformedData, new RealPartSelector());
             this.imageryPart = new FTDataSource(this.transformedData, new ImageryPartSelector());
+            this.powerPart = new FTDataSource(this.transformedData, new PowerSelector());
         }
 
         public StreamingDataSource getRealPart() {
@@ -116,6 +122,8 @@ public class FourierTransformPlugin extends RangePlugin {
         public StreamingDataSource getImageryPart() {
             return imageryPart;
         }
+
+        public StreamingDataSource getPowerPart() {return powerPart;}
 
         public void transformData(String tag, Stream data, int startPos) {
             if (!this.transformedData.containsKey(tag)) {
@@ -167,6 +175,11 @@ public class FourierTransformPlugin extends RangePlugin {
             this.listeners.add(listener);
         }
 
+        @Override
+        public void removePresentedDataChangedListener(PresentedDataChangedListener listener) {
+            this.listeners.remove(listener);
+        }
+
     }
 
     private abstract class FTStreamSelector extends FiniteLengthStream {
@@ -191,24 +204,16 @@ public class FourierTransformPlugin extends RangePlugin {
             this.ftStream = ftStream;
             return this;
         }
-    }
 
-    private class RealPartSelector extends FTStreamSelector {
-
-        @Override
-        public double get(long i) {
+        protected double getReal(long i) {
             if (isRangeEven() && i == intLength() - 1) {
                 return ftStream.get(1);
             }
 
-            return Math.abs(ftStream.get(2 * i));
+            return ftStream.get(2 * i);
         }
-    }
 
-    private class ImageryPartSelector extends FTStreamSelector {
-
-        @Override
-        public double get(long i) {
+        protected double getImagery(long i) {
             if (!isRangeEven() && i == intLength() - 1) {
                 return ftStream.get(1);
             }
@@ -220,4 +225,30 @@ public class FourierTransformPlugin extends RangePlugin {
         }
     }
 
+    private class RealPartSelector extends FTStreamSelector {
+
+        @Override
+        public double get(long i) {
+            return getReal(i) / transformRange;
+        }
+
+    }
+
+
+
+    private class ImageryPartSelector extends FTStreamSelector {
+
+        @Override
+        public double get(long i) {
+            return getImagery(i) / transformRange;
+        }
+    }
+
+    private class PowerSelector extends FTStreamSelector {
+
+        @Override
+        public double get(long i) {
+            return Math.sqrt(Math.pow(getReal(i), 2) + Math.pow(getImagery(i), 2)) / transformRange;
+        }
+    }
 }

@@ -1,12 +1,16 @@
 package view.component;
 
 import model.datasource.Stream;
-import model.datasource.StreamingDataSource;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
 public final class PlottingUtils {
+
+    public enum Baseline {
+        BOTTOM, MIDDLE
+    }
+
     public static void loadXBuffer(double coordinateWidth, int plotWidth, int[] xBuffer) {
         double interval = plotWidth / coordinateWidth;
         for (int i = 0; i < xBuffer.length; i++) {
@@ -14,25 +18,34 @@ public final class PlottingUtils {
         }
     }
 
-    public static void loadYBuffer(double coordinateHeight, int plotHeight, Stream data, int startIndex, int[] yBuffer, int length) {
+    public static void loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer, int length) {
         for (int i = 0; i < yBuffer.length; i++) {
-            yBuffer[i] = mapY(coordinateHeight, plotHeight, data.get(i + (int) startIndex));
+            yBuffer[i] = mapY(baseline, coordinatePeak, plotHeight, data.get(i + startIndex));
         }
     }
 
-    public static void loadYBuffer(double coordinateHeight, int plotHeight, Stream data, int startIndex, int[] yBuffer) {
-        loadYBuffer(coordinateHeight, plotHeight, data, startIndex, yBuffer, yBuffer.length);
+    public static void loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer) {
+        loadYBuffer(baseline, coordinatePeak, plotHeight, data, startIndex, yBuffer, yBuffer.length);
     }
 
-    public static int mapY(double coordinateHeight, int plotHeight, double value) {
-        return panToPlotCoordinate(plotHeight, scaleIntoWindow(coordinateHeight, plotHeight, value));
+    public static int mapY(Baseline baseline, double coordinatePeak, int plotHeight, double value) {
+        return panToPlotCoordinate(baseline, plotHeight, scaleIntoWindow(baseline, coordinatePeak, plotHeight, value));
     }
 
-    public static int panToPlotCoordinate(int plotHeight, double value) {
-        return (int) Math.round(-value + plotHeight / 2.0);
+    public static int panToPlotCoordinate(Baseline baseline, int plotHeight, double value) {
+        if (baseline == Baseline.BOTTOM) {
+            return (int) Math.round(-Math.abs(value) + plotHeight);
+        } else {
+            return (int) Math.round(-value + plotHeight / 2.0);
+        }
     }
 
-    public static double scaleIntoWindow(double coordinateHeight, int plotHeight, double value) {
-        return plotHeight * value / (coordinateHeight);
+    public static double scaleIntoWindow(Baseline baseline, double coordinatePeak, int plotHeight, double value) {
+        if (baseline == Baseline.BOTTOM) {
+            return plotHeight * value / (coordinatePeak);
+        } else {
+            return plotHeight * value / (2 * coordinatePeak);
+        }
     }
+
 }

@@ -12,29 +12,26 @@ import static view.component.plugin.NavigationPlugin.projectXDeltaToDataAmount;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
+public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
     private final Stroke stroke;
-    private static final Color SHADOW_COLOR = new Color(0, 0, 0, 0.25f);
-
-
+    private static final Color TRACE_COLOR = new Color(0, 0, 0, 0.25f);
 
     private long startingPtr;
     private int[] yBuffer = null;
 
     private Set<String> interestedActions;
-    private boolean movingShadow = false;
-    private boolean lastMovingShadow = false;
+    private boolean movingTrace = false;
+    private boolean lastMovingTrace = false;
     private int lastX;
 
-
-    public ShadowPlugin() {
+    public TracerPlugin() {
         this(3);
     }
 
-    public ShadowPlugin(float blur) {
+    public TracerPlugin(float blur) {
         this.stroke = new BasicStroke(blur, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
-        this.interestedActions = new HashSet<String>(1);
+        this.interestedActions = new HashSet<>(1);
         this.interestedActions.add("mouseDragged");
         this.interestedActions.add("mousePressed");
     }
@@ -42,9 +39,9 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     @Override
     public void drawAfterPlot(Graphics2D g2) {
         g2.setStroke(stroke);
-        g2.setColor(SHADOW_COLOR);
+        g2.setColor(TRACE_COLOR);
         for (String tag : plot.getVisibleStreams()) {
-            PlottingUtils.loadYBuffer(2 * plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), (int) this.startingPtr, yBuffer);
+            PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), (int) this.startingPtr, yBuffer);
             g2.drawPolyline(this.plot.getXPoints(), yBuffer, yBuffer.length);
         }
     }
@@ -54,24 +51,24 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         super.setEnabled(enabled);
 
         if (enabled) {
-            this.makeNewShadow();
-            this.setMouseInteractionEnabled(this.lastMovingShadow);
+            this.trace();
+            this.setMouseInteractionEnabled(this.lastMovingTrace);
         } else {
-            this.lastMovingShadow = this.isMouseInteractionEnabled();
+            this.lastMovingTrace = this.isMouseInteractionEnabled();
             this.setMouseInteractionEnabled(false);
         }
     }
 
     public void setMouseInteractionEnabled(boolean enabled) {
-        this.movingShadow = enabled;
+        this.movingTrace = enabled;
 
     }
 
     public boolean isMouseInteractionEnabled() {
-        return this.isEnabled()? this.movingShadow: false;
+        return this.isEnabled()? this.movingTrace : false;
     }
 
-    public void moveShadow(int delta) {
+    public void moveTrace(int delta) {
         if (!this.isEnabled()) {
             return;
         }
@@ -124,7 +121,7 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         switch (action) {
 
             case "mouseDragged":
-                this.moveShadow(projectXDeltaToDataAmount(plot, event.getX(), this.lastX));
+                this.moveTrace(projectXDeltaToDataAmount(plot, event.getX(), this.lastX));
             case "mousePressed":
                 this.lastX = newX;
         }
@@ -140,7 +137,7 @@ public class ShadowPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         return this.interestedActions;
     }
 
-    public void makeNewShadow() {
+    public void trace() {
         if (!this.isEnabled()) {
             return;
         }

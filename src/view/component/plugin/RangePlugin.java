@@ -99,18 +99,24 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         if (!this.isEnabled()) {
             return;
         }
-        int oldRange = this.getRange();
 
-        this.startPos = boundStartPosition(startPosition);
 
-        this.relativeStartPos = computeRelativePos(this.getStartPosition());
-        fireStartChanged();
+        startPosition = boundStartPosition(startPosition);
+
 
         if (this.fixedRange) {
-            this.endPos = oldRange + this.getStartPosition() - 1;
+            long newEnd = this.getRange() + startPosition - 1;
+            if (newEnd > plot.getPlotUpperBound()) {
+                return;
+            }
+            this.endPos = newEnd;
             this.relativeEndPos = computeRelativePos(this.getEndPosition());
             fireEndChanged();
         }
+
+        this.startPos = startPosition;
+        this.relativeStartPos = computeRelativePos(this.getStartPosition());
+        fireStartChanged();
 
         this.plot.refresh();
     }
@@ -130,18 +136,21 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         if (!this.isEnabled()) {
             return;
         }
-        int oldRange = this.getRange();
-        this.endPos = boundEndPosition(endPosition);
-
-        this.relativeEndPos = computeRelativePos(this.getEndPosition());
 
         if (this.fixedRange) {
-            this.startPos = this.getEndPosition() - oldRange + 1;
+            long newStart = this.getEndPosition() - this.getRange() + 1;
+            if (newStart < plot.getPlotLowerBound()) {
+                return;
+            }
+            this.startPos = newStart;
             this.relativeStartPos = computeRelativePos(this.getStartPosition());
             fireStartChanged();
         }
 
+        this.endPos = boundEndPosition(endPosition);
+        this.relativeEndPos = computeRelativePos(this.getEndPosition());
         fireEndChanged();
+
         this.plot.refresh();
     }
 
@@ -187,11 +196,15 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         int leftHalf = range / 2;
         int rightHalf = (int)Math.ceil(range / 2.0f);
         int middleToLower = (int) (middle - plot.getPlotLowerBound());
-
+        int upperToMiddle = (int) (plot.getPlotUpperBound() - middle);
         if (leftHalf > middleToLower) {
             rightHalf += leftHalf - middleToLower;
             leftHalf = middleToLower;
+        } else if (rightHalf > upperToMiddle) {
+            leftHalf += rightHalf - upperToMiddle;
+            rightHalf = upperToMiddle;
         }
+
         this.startPos = middle - leftHalf + 1;
         this.relativeStartPos = computeRelativePos(this.getStartPosition());
         this.endPos = middle + rightHalf;

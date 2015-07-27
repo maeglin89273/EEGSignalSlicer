@@ -42,6 +42,9 @@ public class InteractivePlotView extends PlotView {
     }
 
     private void fireMouseAction(String action, MouseEvent e) {
+        if (!this.isEnabled()) {
+            return;
+        }
         boolean wantPropagateAction;
         for (int i = this.mousePlugins.size() - 1; i >= 0; i--) {
             InteractivePlotPlugin.MousePlugin plugin = this.mousePlugins.get(i);

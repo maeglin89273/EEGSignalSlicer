@@ -21,7 +21,7 @@ public class DTWPlugin extends RangePlugin {
 
     private final MutableFiniteLengthStream dtwSourceBufferFront;
     private final MutableFiniteLengthStream dtwSourceBufferBack;
-    private ShadowPlugin streamTemplate;
+    private TracerPlugin streamTemplate;
 
     private int[][] dtwWarpingPath;
     private double dtwWarpingDistance = -1;
@@ -30,7 +30,7 @@ public class DTWPlugin extends RangePlugin {
 
     public DTWPlugin() {
         super(KNIFE_COLOR);
-        this.streamTemplate = new ShadowPlugin(2);
+        this.streamTemplate = new TracerPlugin(2);
         this.dtwSourceBufferFront = new SimpleArrayStream(DTW_COMPUTABLE_RANGE);
         this.dtwSourceBufferBack = new SimpleArrayStream(DTW_COMPUTABLE_RANGE);
     }
@@ -56,13 +56,13 @@ public class DTWPlugin extends RangePlugin {
             int startX, endX, startY, endY;
             int xOffset = (int)(this.getStartPosition() - this.plot.getPlotLowerBound());
             int[] xBuffer = this.plot.getXPoints();
-            float cHeight = 2 * this.plot.getPeakValue();
+            float cHeight = this.plot.getPeakValue();
             int pHeight = this.plot.getHeight();
             for (int[] pointMapping: dtwWarpingPath) {
                 startX = xBuffer[xOffset + pointMapping[1]];
                 endX = xBuffer[xOffset + pointMapping[0]];
-                startY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferBack.get(pointMapping[1]));
-                endY = PlottingUtils.mapY(cHeight, pHeight, this.dtwSourceBufferFront.get(pointMapping[0]));
+                startY = PlottingUtils.mapY(plot.getBaseline(), cHeight, pHeight, this.dtwSourceBufferBack.get(pointMapping[1]));
+                endY = PlottingUtils.mapY(plot.getBaseline(), cHeight, pHeight, this.dtwSourceBufferFront.get(pointMapping[0]));
                 g2.drawLine(startX, startY, endX, endY);
             }
         }
@@ -116,7 +116,7 @@ public class DTWPlugin extends RangePlugin {
         if (this.isAbleComputeDTW()) {
             Stream visibleStream = this.getSingleVisibleStream();
             int computingSize = this.getRange();
-            this.dtwSourceBufferBack.replacedBy(visibleStream, (int) projectSliceToShadow(), computingSize);
+            this.dtwSourceBufferBack.replacedBy(visibleStream, (int) projectSliceToTrace(), computingSize);
             this.dtwSourceBufferFront.replacedBy(visibleStream, (int) this.getStartPosition(), computingSize);
 
             DTWAlgorithm dtw = new DTWAlgorithm(this.dtwSourceBufferFront, computingSize, this.dtwSourceBufferBack, computingSize);
@@ -142,7 +142,7 @@ public class DTWPlugin extends RangePlugin {
         }
     }
 
-    private long projectSliceToShadow() {
+    private long projectSliceToTrace() {
         return (int)(this.getRelativeStartPosition() * this.plot.getWindowSize()) + this.streamTemplate.getStartingPosition();
     }
 
@@ -196,7 +196,7 @@ public class DTWPlugin extends RangePlugin {
     }
 
     public void makeNewTemplate() {
-        this.streamTemplate.makeNewShadow();
+        this.streamTemplate.trace();
         this.updateDTW();
     }
 
