@@ -1,6 +1,7 @@
 package view.component.plugin;
 
 import model.datasource.*;
+import view.component.PlotView;
 import view.component.PlottingUtils;
 
 import java.awt.*;
@@ -18,78 +19,132 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
     private long startingPtr;
     private int windowSize;
     private int[] yBuffer;
-
+    private boolean plotSnapshot;
+    private boolean hasSnapshot;
 
     public SnapshotPlugin() {
-        this.stroke = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+        this.stroke = new BasicStroke(1.2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
         this.capturedData = new CapturedDataSource();
+        this.plotSnapshot = true;
+        this.hasSnapshot = false;
     }
 
+    @Override
+    public void setPlot(PlotView plot) {
+        super.setPlot(plot);
+        this.setEnabled(true);
+    }
+
+    public void setPlotSnapshot(boolean plotIt) {
+        this.plotSnapshot = plotIt;
+    }
+
+    public boolean isPlotSnapshot() {
+        return this.plotSnapshot;
+    }
 
     public FiniteLengthDataSource getCapturedData() {
         return this.capturedData;
     }
 
     @Override
-    public void drawAfterPlot(Graphics2D g2) {
+    public void drawBeforePlot(Graphics2D g2) {
+        if (!this.plotSnapshot || !this.hasSnapshot) {
+            return;
+        }
         g2.setStroke(stroke);
         g2.setColor(SNAPSHOT_COLOR);
-        for (String tag : ) {
-            PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), capturedData.getDataOf(tag), (int) this.startingPtr, yBuffer);
+        FiniteLengthStream stream;
+        for (String tag : this.capturedData.getCapturedTags()) {
+            stream = capturedData.getFiniteDataOf(tag);
+            PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), stream, (int) this.startingPtr, yBuffer, stream.intLength());
             g2.drawPolyline(this.plot.getXPoints(), yBuffer, yBuffer.length);
         }
     }
 
     @Override
     public void reset() {
-
+        this.clear();
     }
 
-    @Override
-    public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
-        if (this.isEnabled()) {
-            adjustBuffers(windowSize);
-        }
-    }
-
-    private void adjustBuffers(int size) {
+    private void adjustBuffer(int size) {
         if (this.shouldResizeBuffer(size)) {
             this.yBuffer = new int[size];
         }
     }
 
+    private boolean shouldResizeBuffer(int size) {
+        return this.yBuffer == null || this.yBuffer.length < size;
+    }
+
     public void capture() {
+        if (!this.isEnabled()) {
+            return;
+        }
 
         int startPos = (int) plot.getPlotLowerBound();
         int length = plot.getWindowSize();
         StreamingDataSource dataSource = plot.getDataSource();
-        for (String tag: plot.getVisibleStreams()) {
-            capturedData.captureStream(tag, dataSource.getDataOf(tag), startPos, length);
+        List<String> visibleStreams = plot.getVisibleStreams();
+        this.capturedData.setCapturedTags(visibleStreams);
+        for (String tag: visibleStreams) {
+            this.capturedData.captureStream(tag, dataSource.getDataOf(tag), startPos, length);
+        }
+
+        this.adjustBuffer(length);
+        this.hasSnapshot = true;
+        this.capturedData.notifiedPresentedDataChanged();
+
+        if (this.plotSnapshot) {
+            this.plot.refresh();
         }
     }
 
-    private boolean shouldResizeBuffer(int size) {
-        return this.yBuffer == null || this.yBuffer.length != size;
+    public void clear() {
+        if (!this.hasSnapshot) {
+            return;
+        }
+        this.hasSnapshot = false;
+        capturedData.clear();
+        this.plot.refresh();
     }
 
     private class CapturedDataSource extends FiniteLengthDataSource {
-        private HashMap<String, SimpleArrayStream> data;
-        private Set<String> capturedTags;
+        private HashMap<String, MutableFiniteLengthStream> data;
+        private Collection<String> capturedTags;
+
+        private List<PresentedDataChangedListener> listeners;
+        private int length = 0;
 
         private CapturedDataSource() {
             this.data = new HashMap<>();
+            this.listeners = new ArrayList<>();
+            this.clear();
         }
 
         public void captureStream(String tag, Stream target, int startPos, int length) {
-            if (!data.containsKey(tag)) {
-                data.put(tag, new SimpleArrayStream(length));
+            this.length = (int) Math.max(target.getCurrentLength(), length);
+            MutableFiniteLengthStream capturedStream;
+            if (this.data.containsKey(tag)) {
+                capturedStream = data.get(tag);
+                if (capturedStream.intLength() >= length) {
+                    capturedStream = new SimpleArrayStream(length);
+                    this.data.put(tag, capturedStream);
+                }
+            } else {
+                capturedStream = new SimpleArrayStream(length);
+                this.data.put(tag, capturedStream);
             }
 
-            data.get(tag).replacedBy(target, startPos, length);
+            capturedStream.replacedBy(target, startPos, length);
         }
 
         public void setCapturedTags(List<String> tags) {
-            capturedTags = new HashSet<>(tags);
+            this.capturedTags = new HashSet<>(tags);
+        }
+
+        public Collection<String> getCapturedTags() {
+            return this.capturedTags;
         }
 
         @Override
@@ -102,17 +157,28 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
 
         @Override
         public long getCurrentLength() {
-            return 0;
+            return length;
         }
 
         @Override
         public void addPresentedDataChangedListener(PresentedDataChangedListener listener) {
-
+            this.listeners.add(listener);
         }
 
         @Override
         public void removePresentedDataChangedListener(PresentedDataChangedListener listener) {
+            this.listeners.remove(listener);
+        }
 
+        public void notifiedPresentedDataChanged() {
+            for (int i = this.listeners.size() - 1; i >= 0; i--) {
+                this.listeners.get(i).onDataChanged();
+            }
+        }
+
+        public void clear() {
+            this.capturedTags = new LinkedList();
+            this.length = 0;
         }
     }
 }

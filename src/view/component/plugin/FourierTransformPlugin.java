@@ -48,39 +48,22 @@ public class FourierTransformPlugin extends RangePlugin {
         return transformRange % 2 == 0;
     }
 
-    public StreamingDataSource getRealPartDataSource() {
+    public StreamingDataSource getDataSourceOfRealPart() {
         return this.dataManager.getRealPart();
     }
 
-    public StreamingDataSource getImageryPartDataSource() {
+    public StreamingDataSource getDataSourceOfImageryPart() {
         return this.dataManager.getImageryPart();
     }
 
-    public StreamingDataSource getPowerPartDataSource() {
-        return this.dataManager.getPowerPart();
+    public StreamingDataSource getDataSourceOfPower() {
+        return this.dataManager.getPower();
     }
 
-    @Override
-    protected void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
-        super.syncRangeToPlot(plotLowerBound, plotUpperBound, windowSize);
-        updateTransformation();
-    }
+    public StreamingDataSource getDataSourceOfPhase() {return this.dataManager.getPhase();}
 
     @Override
-    public void setStartPosition(long startPosition) {
-        super.setStartPosition(startPosition);
-        updateTransformation();
-    }
-
-    @Override
-    public void setEndPosition(long endPosition) {
-        super.setEndPosition(endPosition);
-        updateTransformation();
-    }
-
-    @Override
-    public void setRange(int range) {
-        super.setRange(range);
+    protected void onRangeChanged() {
         updateTransformation();
     }
 
@@ -98,7 +81,9 @@ public class FourierTransformPlugin extends RangePlugin {
     }
 
     private class DataSourceManager {
-        private final FTDataSource powerPart;
+        private FTDataSource power;
+        private FTDataSource phase;
+
         private FTDataSource realPart;
         private FTDataSource imageryPart;
 
@@ -112,7 +97,8 @@ public class FourierTransformPlugin extends RangePlugin {
             this.transformedData = new HashMap<>();
             this.realPart = new FTDataSource(this.transformedData, new RealPartSelector());
             this.imageryPart = new FTDataSource(this.transformedData, new ImageryPartSelector());
-            this.powerPart = new FTDataSource(this.transformedData, new PowerSelector());
+            this.power = new FTDataSource(this.transformedData, new PowerSelector());
+            this.phase = new FTDataSource(this.transformedData, new PhaseSelector());
         }
 
         public StreamingDataSource getRealPart() {
@@ -123,7 +109,11 @@ public class FourierTransformPlugin extends RangePlugin {
             return imageryPart;
         }
 
-        public StreamingDataSource getPowerPart() {return powerPart;}
+        public StreamingDataSource getPower() {return power;}
+
+        public StreamingDataSource getPhase() {
+            return phase;
+        }
 
         public void transformData(String tag, Stream data, int startPos) {
             if (!this.transformedData.containsKey(tag)) {
@@ -139,7 +129,11 @@ public class FourierTransformPlugin extends RangePlugin {
         public void endTransformData() {
             realPart.fireDataChanged();
             imageryPart.fireDataChanged();
+            power.fireDataChanged();
+            phase.fireDataChanged();
         }
+
+
     }
 
     private class FTDataSource extends FiniteLengthDataSource {
@@ -196,7 +190,7 @@ public class FourierTransformPlugin extends RangePlugin {
         }
 
         @Override
-        public long getCurrentLength() {
+        public int intLength() {
             return halfFFTRange;
         }
 
@@ -234,8 +228,6 @@ public class FourierTransformPlugin extends RangePlugin {
 
     }
 
-
-
     private class ImageryPartSelector extends FTStreamSelector {
 
         @Override
@@ -248,7 +240,23 @@ public class FourierTransformPlugin extends RangePlugin {
 
         @Override
         public double get(long i) {
-            return Math.sqrt(Math.pow(getReal(i), 2) + Math.pow(getImagery(i), 2)) / transformRange;
+            return Math.sqrt((Math.pow(getReal(i), 2) +  Math.pow(getImagery(i), 2)) / transformRange);
         }
+    }
+
+    private class PhaseSelector extends FTStreamSelector {
+
+        private final double EPSILON = 400;
+
+        @Override
+        public double get(long i) {
+            double im = getImagery(i);
+            double re = getReal(i);
+            double powerSq = Math.pow(re, 2) / transformRange + Math.pow(im, 2) / transformRange;
+
+            return powerSq < EPSILON ? 0: Math.atan2(im, re);
+        }
+
+
     }
 }

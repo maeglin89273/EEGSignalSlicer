@@ -183,6 +183,4 @@ public class DTWAlgorithm {
         }
         return retVal;
     }
-
-
 }

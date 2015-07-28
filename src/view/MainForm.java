@@ -68,8 +68,9 @@ public class MainForm extends JFrame {
     private JPanel centerPanel;
     private PlotView fftImPlot;
     private JLabel reLbl;
-    private JCheckBox absCheckBox;
+    private JCheckBox fftPowerCheckBox;
     private JLabel imLbl;
+    private JButton fftClearSnapsotBtn;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
@@ -81,8 +82,8 @@ public class MainForm extends JFrame {
     private DTWPlugin dtwPlugin;
     private Map<String, Filter> filterTable;
     private FourierTransformPlugin fftPlugin;
-    private TracerPlugin reTracerPlugin;
-    private TracerPlugin imTracerPlugin;
+    private SnapshotPlugin reSnapshotPlugin;
+    private SnapshotPlugin imSnapshotPlugin;
 
     public MainForm() {
         super("EEG Channel Slicer");
@@ -98,7 +99,6 @@ public class MainForm extends JFrame {
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
-
     }
 
     private void setupListeners() {
@@ -276,12 +276,16 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 boolean fftOn = fftCheckBox.isSelected();
-                fftPlugin.setEnabled(fftOn);
                 fftRePlot.setEnabled(fftOn);
                 fftImPlot.setEnabled(fftOn);
+                fftPowerCheckBox.setEnabled(fftOn);
+                fftSnapshotBtn.setEnabled(fftOn);
+                fftClearSnapsotBtn.setEnabled(fftOn);
+                fftPlugin.setEnabled(fftOn);
+
                 if (!fftOn) {
-                    reTracerPlugin.setEnabled(false);
-                    imTracerPlugin.setEnabled(false);
+                    reSnapshotPlugin.clear();
+                    imSnapshotPlugin.clear();
                 }
             }
         });
@@ -289,20 +293,38 @@ public class MainForm extends JFrame {
         fftSnapshotBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (reTracerPlugin.isEnabled()) {
-                    reTracerPlugin.trace();
-                    imTracerPlugin.trace();
-                } else {
-                    reTracerPlugin.setEnabled(true);
-                    imTracerPlugin.setEnabled(true);
-                }
+                reSnapshotPlugin.capture();
+                imSnapshotPlugin.capture();
             }
         });
 
-        absCheckBox.addActionListener(new ActionListener() {
+        fftClearSnapsotBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fftRePlot.setBaseline(absCheckBox.isSelected() ? PlottingUtils.Baseline.BOTTOM : PlottingUtils.Baseline.MIDDLE);
+                reSnapshotPlugin.clear();
+                imSnapshotPlugin.clear();
+            }
+        });
+
+        fftPowerCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (fftPowerCheckBox.isSelected()) {
+                    fftRePlot.setDataSource(fftPlugin.getDataSourceOfPower());
+                    fftRePlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
+                    reLbl.setText("Power");
+                    fftImPlot.setDataSource(fftPlugin.getDataSourceOfPhase());
+                    fftImPlot.setPeakValue((float) Math.PI);
+                    imLbl.setText("Phase");
+                } else {
+                    fftRePlot.setDataSource(fftPlugin.getDataSourceOfRealPart());
+                    fftRePlot.setBaseline(PlottingUtils.Baseline.MIDDLE);
+                    reLbl.setText("Real");
+                    fftImPlot.setDataSource(fftPlugin.getDataSourceOfImageryPart());
+                    fftImPlot.setPeakValue(4);
+                    imLbl.setText("Imagery");
+                }
+
             }
         });
     }
@@ -334,7 +356,6 @@ public class MainForm extends JFrame {
         this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
 
         this.fftRePlot.setLineWidth(1f);
-        this.fftRePlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
         this.fftImPlot.setLineWidth(1f);
 
         this.fftRePlot.setEnabled(false);
@@ -344,23 +365,23 @@ public class MainForm extends JFrame {
     private void setupPlugins() {
         this.dtwPlugin = new DTWPlugin();
         this.fftPlugin = new FourierTransformPlugin(250, 256);
-        this.reTracerPlugin = new TracerPlugin();
-        this.imTracerPlugin = new TracerPlugin();
+        this.reSnapshotPlugin = new SnapshotPlugin();
+        this.imSnapshotPlugin = new SnapshotPlugin();
 
-        this.plotControl.addPluginToPlot(this.fftPlugin);
         this.plotControl.addPluginToPlot(this.dtwPlugin);
+        this.plotControl.addPluginToPlot(this.fftPlugin);
 
-        this.fftRePlot.addPlugin(this.reTracerPlugin);
-        this.fftImPlot.addPlugin(this.imTracerPlugin);
+        this.fftRePlot.addPlugin(this.reSnapshotPlugin);
+        this.fftImPlot.addPlugin(this.imSnapshotPlugin);
 
-        this.fftRePlot.setDataSource(this.fftPlugin.getRealPartDataSource());
-        this.fftImPlot.setDataSource(this.fftPlugin.getImageryPartDataSource());
+        this.fftRePlot.setDataSource(this.fftPlugin.getDataSourceOfRealPart());
+        this.fftImPlot.setDataSource(this.fftPlugin.getDataSourceOfImageryPart());
     }
 
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(600, 60);
-        fftRePlot = new PlotView(70, 3.5f, 300, 125);
-        fftImPlot = new PlotView(70, 3.5f, 300, 125);
+        fftRePlot = new PlotView(60, 5f, 300, 125);
+        fftImPlot = new PlotView(60, 5f, 300, 125);
     }
 
     /**
@@ -375,9 +396,89 @@ public class MainForm extends JFrame {
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridBagLayout());
         mainPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), null));
+        final JSplitPane splitPane1 = new JSplitPane();
+        splitPane1.setContinuousLayout(true);
+        splitPane1.setDividerLocation(750);
+        splitPane1.setDividerSize(5);
+        splitPane1.setResizeWeight(0.5);
+        GridBagConstraints gbc;
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 2.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        mainPanel.add(splitPane1, gbc);
+        splitPane1.setLeftComponent(plotControl);
+        fftPanel = new JPanel();
+        fftPanel.setLayout(new GridBagLayout());
+        splitPane1.setRightComponent(fftPanel);
+        fftSnapshotBtn = new JButton();
+        fftSnapshotBtn.setEnabled(false);
+        fftSnapshotBtn.setText("Snapshot");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 4;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(fftSnapshotBtn, gbc);
+        fftCheckBox = new JCheckBox();
+        fftCheckBox.setText("FFT Analysis");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(fftCheckBox, gbc);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 4;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        fftPanel.add(fftRePlot, gbc);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 4;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        fftPanel.add(fftImPlot, gbc);
+        reLbl = new JLabel();
+        reLbl.setText("Real");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(reLbl, gbc);
+        imLbl = new JLabel();
+        imLbl.setText("Imagery");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(imLbl, gbc);
+        fftClearSnapsotBtn = new JButton();
+        fftClearSnapsotBtn.setEnabled(false);
+        fftClearSnapsotBtn.setText("Clear");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 4;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(fftClearSnapsotBtn, gbc);
+        fftPowerCheckBox = new JCheckBox();
+        fftPowerCheckBox.setEnabled(false);
+        fftPowerCheckBox.setSelected(false);
+        fftPowerCheckBox.setText("Power/Phase");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        fftPanel.add(fftPowerCheckBox, gbc);
         controlPanel = new JPanel();
         controlPanel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -673,85 +774,6 @@ public class MainForm extends JFrame {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         controlPanel.add(centerPanel, gbc);
-        fftPanel = new JPanel();
-        fftPanel.setLayout(new GridBagLayout());
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(fftPanel, gbc);
-        fftSnapshotBtn = new JButton();
-        fftSnapshotBtn.setText("Snapshot");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftSnapshotBtn, gbc);
-        fftCheckBox = new JCheckBox();
-        fftCheckBox.setText("FFT Analysis");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftCheckBox, gbc);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 3;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        fftPanel.add(fftRePlot, gbc);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 3;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        fftPanel.add(fftImPlot, gbc);
-        final JPanel spacer4 = new JPanel();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        fftPanel.add(spacer4, gbc);
-        reLbl = new JLabel();
-        reLbl.setText("Real");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(reLbl, gbc);
-        absCheckBox = new JCheckBox();
-        absCheckBox.setSelected(true);
-        absCheckBox.setText("absolute");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        fftPanel.add(absCheckBox, gbc);
-        imLbl = new JLabel();
-        imLbl.setText("Imagery");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(imLbl, gbc);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 3.0;
-        gbc.weighty = 2.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(plotControl, gbc);
     }
 
     /**

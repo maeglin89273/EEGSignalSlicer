@@ -100,9 +100,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             return;
         }
 
-
         startPosition = boundStartPosition(startPosition);
-
 
         if (this.fixedRange) {
             long newEnd = this.getRange() + startPosition - 1;
@@ -118,6 +116,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         this.relativeStartPos = computeRelativePos(this.getStartPosition());
         fireStartChanged();
 
+        onRangeChanged();
         this.plot.refresh();
     }
 
@@ -137,6 +136,8 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             return;
         }
 
+        endPosition = boundEndPosition(endPosition);
+
         if (this.fixedRange) {
             long newStart = this.getEndPosition() - this.getRange() + 1;
             if (newStart < plot.getPlotLowerBound()) {
@@ -147,10 +148,10 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             fireStartChanged();
         }
 
-        this.endPos = boundEndPosition(endPosition);
         this.relativeEndPos = computeRelativePos(this.getEndPosition());
         fireEndChanged();
 
+        onRangeChanged();
         this.plot.refresh();
     }
 
@@ -185,8 +186,10 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         }
 
         boundRange(plot.getWindowSize(), plot.getPlotLowerBound(), range);
+
         fireStartChanged();
         fireEndChanged();
+        onRangeChanged();
         plot.refresh();
     }
 
@@ -222,6 +225,8 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
         this.fixedRange = fixedRange;
     }
+
+
 
     private enum OperatingMode {
         NOT_SLICING, START_SLICER, END_SLICER, MOVE_RANGE
@@ -336,7 +341,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         return (pos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
     }
 
-    protected void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
+    private void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
         if (!this.isEnabled()) {
             return;
         }
@@ -345,6 +350,8 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
         fireStartChanged();
         fireEndChanged();
+
+        onRangeChanged();
     }
 
     private void fireStartChanged() {
@@ -359,6 +366,10 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             this.listener.onEndChanged(this.getStartPosition(), this.getEndPosition(), plot.getPlotUpperBound());
         }
     }
+
+    protected void onRangeChanged() {
+
+    };
 
     @Override
     public void reset() {

@@ -33,9 +33,8 @@ public class RawDataFileUtils {
             rawData = new double[8][lines.size() - COMMENTS_LINE_NUM];
             int lineCounter = -COMMENTS_LINE_NUM;
             for(String line: lines) {
-
                 if (lineCounter >= 0) {
-                    String[] entries = line.split(", ");
+                    String[] entries = line.split(",");
                     for (int i = 0; i < 8; i++) {
                         rawData[i][lineCounter] = Double.parseDouble(entries[i + 1]);
                     }

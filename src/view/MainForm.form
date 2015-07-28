@@ -9,6 +9,110 @@
       <size top="10" left="10" bottom="10" right="10"/>
     </border>
     <children>
+      <splitpane id="f69d7">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="200"/>
+          </grid>
+          <gridbag weightx="1.0" weighty="2.0"/>
+        </constraints>
+        <properties>
+          <continuousLayout value="true"/>
+          <dividerLocation value="750"/>
+          <dividerSize value="5"/>
+          <resizeWeight value="0.5"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <component id="f0050" class="view.component.PlaybackPlotControl" binding="plotControl" custom-create="true">
+            <constraints>
+              <splitpane position="left"/>
+            </constraints>
+            <properties/>
+          </component>
+          <grid id="3b59d" binding="fftPanel" layout-manager="GridBagLayout">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="82ee4" class="javax.swing.JButton" binding="fftSnapshotBtn">
+                <constraints>
+                  <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <enabled value="false"/>
+                  <text value="Snapshot"/>
+                </properties>
+              </component>
+              <component id="16b4b" class="javax.swing.JCheckBox" binding="fftCheckBox">
+                <constraints>
+                  <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="FFT Analysis"/>
+                </properties>
+              </component>
+              <component id="84252" class="view.component.PlotView" binding="fftRePlot" custom-create="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="6f4d0" class="view.component.PlotView" binding="fftImPlot" custom-create="true">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="2a3ff" class="javax.swing.JLabel" binding="reLbl">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="Real"/>
+                </properties>
+              </component>
+              <component id="ad63a" class="javax.swing.JLabel" binding="imLbl">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <text value="Imagery"/>
+                </properties>
+              </component>
+              <component id="1c233" class="javax.swing.JButton" binding="fftClearSnapsotBtn">
+                <constraints>
+                  <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <enabled value="false"/>
+                  <text value="Clear"/>
+                </properties>
+              </component>
+              <component id="668d5" class="javax.swing.JCheckBox" binding="fftPowerCheckBox">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties>
+                  <enabled value="false"/>
+                  <selected value="false"/>
+                  <text value="Power/Phase"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </splitpane>
       <grid id="f89ee" binding="controlPanel" layout-manager="GridBagLayout">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -368,89 +472,6 @@
           </grid>
         </children>
       </grid>
-      <grid id="3b59d" binding="fftPanel" layout-manager="GridBagLayout">
-        <constraints>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="1.0"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="82ee4" class="javax.swing.JButton" binding="fftSnapshotBtn">
-            <constraints>
-              <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="Snapshot"/>
-            </properties>
-          </component>
-          <component id="16b4b" class="javax.swing.JCheckBox" binding="fftCheckBox">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="FFT Analysis"/>
-            </properties>
-          </component>
-          <component id="84252" class="view.component.PlotView" binding="fftRePlot" custom-create="true">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.0" weighty="1.0"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="6f4d0" class="view.component.PlotView" binding="fftImPlot" custom-create="true">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.0" weighty="1.0"/>
-            </constraints>
-            <properties/>
-          </component>
-          <vspacer id="d65b5">
-            <constraints>
-              <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.0" weighty="0.0"/>
-            </constraints>
-          </vspacer>
-          <component id="2a3ff" class="javax.swing.JLabel" binding="reLbl">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="Real"/>
-            </properties>
-          </component>
-          <component id="668d5" class="javax.swing.JCheckBox" binding="absCheckBox">
-            <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <selected value="true"/>
-              <text value="absolute"/>
-            </properties>
-          </component>
-          <component id="ad63a" class="javax.swing.JLabel" binding="imLbl">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="Imagery"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
-      <component id="f0050" class="view.component.PlaybackPlotControl" binding="plotControl" custom-create="true">
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="3.0" weighty="2.0"/>
-        </constraints>
-        <properties/>
-      </component>
     </children>
   </grid>
 </form>

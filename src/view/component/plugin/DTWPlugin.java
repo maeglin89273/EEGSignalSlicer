@@ -94,23 +94,6 @@ public class DTWPlugin extends RangePlugin {
         this.streamTemplate.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
     }
 
-    @Override
-    public void setStartPosition(long startPosition) {
-        super.setStartPosition(startPosition);
-        updateDTW();
-    }
-
-    @Override
-    public void setEndPosition(long endPosition) {
-        super.setEndPosition(endPosition);
-        updateDTW();
-    }
-
-    @Override
-    public void setRange(int range) {
-        super.setRange(range);
-        updateDTW();
-    }
 
     public void updateDTW() {
         if (this.isAbleComputeDTW()) {
@@ -172,8 +155,7 @@ public class DTWPlugin extends RangePlugin {
     }
 
     @Override
-    protected void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
-        super.syncRangeToPlot(plotLowerBound, plotUpperBound, windowSize);
+    protected void onRangeChanged() {
         updateDTW();
     }
 

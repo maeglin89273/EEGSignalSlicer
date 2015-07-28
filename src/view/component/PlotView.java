@@ -75,13 +75,13 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setDataSource(StreamingDataSource dataSource) {
-        if (dataSource != null) {
+        if (this.dataSource != null) {
             this.dataSource.removePresentedDataChangedListener(this);
         }
         this.dataSource = dataSource;
         this.dataSource.addPresentedDataChangedListener(this);
-        fireResetPlugin();
         this.setXTo(0);
+        fireResetPlugin();
         this.refresh();
     }
 
@@ -100,7 +100,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void addPlugin(PlotPlugin plugin) {
-
 
         this.plugins.add(plugin);
         this.rangeListeners.add(plugin);
@@ -293,7 +292,9 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         }
 
         if (isVisible) {
-            this.visibleStreamTags.add(tag);
+            if (!this.visibleStreamTags.contains(tag)) {
+                this.visibleStreamTags.add(tag);
+            }
         } else {
             this.visibleStreamTags.remove(tag);
         }

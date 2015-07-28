@@ -90,7 +90,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
                 if (isPlaying()) {
                     plotSlidingSpeed += (plotSlidingSpeed == -1 ? 2 : 1);
                 } else {
-                    plot.moveX(2);
+                    plot.moveX(-2);
                 }
 
             }
@@ -103,7 +103,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
                     plotSlidingSpeed -= (plotSlidingSpeed == 1 ? 2 : 1);
 
                 } else {
-                    plot.moveX(-2);
+                    plot.moveX(2);
                 }
             }
         });
