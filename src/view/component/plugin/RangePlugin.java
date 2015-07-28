@@ -139,7 +139,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         endPosition = boundEndPosition(endPosition);
 
         if (this.fixedRange) {
-            long newStart = this.getEndPosition() - this.getRange() + 1;
+            long newStart = endPosition - this.getRange() + 1;
             if (newStart < plot.getPlotLowerBound()) {
                 return;
             }
@@ -148,6 +148,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             fireStartChanged();
         }
 
+        this.endPos = endPosition;
         this.relativeEndPos = computeRelativePos(this.getEndPosition());
         fireEndChanged();
 

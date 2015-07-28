@@ -220,21 +220,30 @@
                       <text value="Channels"/>
                     </properties>
                   </component>
-                  <component id="b1a9a" class="javax.swing.JButton" binding="loadBtn">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="7" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Load EEG Raw Data..."/>
-                    </properties>
-                  </component>
                   <hspacer id="5eb02">
                     <constraints>
                       <grid row="0" column="9" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="1.0" weighty="0.0"/>
                     </constraints>
                   </hspacer>
+                  <component id="e3280" class="javax.swing.JButton" binding="loadCSVBtn">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Load CSV Data..."/>
+                    </properties>
+                  </component>
+                  <component id="b1a9a" class="javax.swing.JButton" binding="loadOpenBCIBtn">
+                    <constraints>
+                      <grid row="0" column="4" row-span="1" col-span="5" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Load OpebBCI Raw Data..."/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
               <grid id="70e71" binding="dtwPanel" layout-manager="GridBagLayout">

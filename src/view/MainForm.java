@@ -1,8 +1,9 @@
 package view;
 
+import model.datasource.FilteredDataSource;
+import model.datasource.FiniteLengthDataSource;
 import model.filter.ButterworthFilter;
-import model.datasource.EEGChannels;
-import model.RawDataFileUtils;
+import model.DataFileUtils;
 import model.filter.EEGFilter;
 import model.filter.Filter;
 import view.component.PlaybackPlotControl;
@@ -17,6 +18,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +27,8 @@ import java.util.Map;
  * Created by maeglin89273 on 7/20/15.
  */
 public class MainForm extends JFrame {
+    private static final String APPLICATION_NAME = "Signal Viewer";
+
     private JButton sliceBtn;
     private JCheckBox channel1CheckBox;
     private JCheckBox channel2CheckBox;
@@ -43,7 +47,7 @@ public class MainForm extends JFrame {
     private JPanel channelPanel;
     private JPanel filterPanel;
     private JPanel mainPanel;
-    private JButton loadBtn;
+    private JButton loadOpenBCIBtn;
     private JTextField tagField;
     private JLabel tagLbl;
     private JSpinner sliceStartSpinner;
@@ -71,13 +75,15 @@ public class MainForm extends JFrame {
     private JCheckBox fftPowerCheckBox;
     private JLabel imLbl;
     private JButton fftClearSnapsotBtn;
+    private JButton loadCSVBtn;
 
     private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
     private SpinnerNumberModel startSpinModel;
     private SpinnerNumberModel endSpinModel;
 
-    private EEGChannels data;
+    private FiniteLengthDataSource data;
+
 
     private DTWPlugin dtwPlugin;
     private Map<String, Filter> filterTable;
@@ -102,25 +108,26 @@ public class MainForm extends JFrame {
     }
 
     private void setupListeners() {
-        this.loadBtn.addActionListener(new ActionListener() {
+        this.loadOpenBCIBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
-                fileChooser.setFileFilter(filter);
-                fileChooser.setMultiSelectionEnabled(false);
-                if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
-                    data = RawDataFileUtils.getInstance().load(fileChooser.getSelectedFile());
-                    plotControl.setDataSource(data);
-
-                    for (int i = 0; i < channelCheckBoxArray.length; i++) {
-                        setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
-                    }
-
+                File file = loadData("txt");
+                if (file != null) {
+                    setData(DataFileUtils.getInstance().loadOpenBCIRawFile(file));
                 }
             }
         });
+
+        this.loadCSVBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                File file = loadData("csv");
+                if (file != null) {
+                    setData(DataFileUtils.getInstance().loadGeneralCSVFile(file));
+                }
+            }
+        });
+
 
         this.startSpinModel.addChangeListener(new ChangeListener() {
             @Override
@@ -146,7 +153,7 @@ public class MainForm extends JFrame {
         this.sliceBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String filename = RawDataFileUtils.getInstance().saveSlice(tagField.getText(), data,
+                String filename = DataFileUtils.getInstance().saveSlice(tagField.getText(), data,
                         ((Number) startSpinModel.getValue()).intValue(), ((Number) endSpinModel.getValue()).intValue());
                 if (filename != null) {
                     savedHintLbl.setText(filename + " saved!");
@@ -174,12 +181,12 @@ public class MainForm extends JFrame {
         ActionListener filterBtnListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                data.setBandpassFilter(filterTable.get(filterChoiceGroup.getSelection().getActionCommand()));
-                dtwPlugin.updateDTW();
-                fftPlugin.updateTransformation();
+                if (data instanceof FilteredDataSource) {
+                    ((FilteredDataSource) data).replaceFilter(1, filterTable.get(filterChoiceGroup.getSelection().getActionCommand()));
+                    dtwPlugin.updateDTW();
+                    fftPlugin.updateTransformation();
+                }
             }
-
-
         };
 
         Enumeration<AbstractButton> filterBtns = this.filterChoiceGroup.getElements();
@@ -329,6 +336,28 @@ public class MainForm extends JFrame {
         });
     }
 
+    private void setData(FiniteLengthDataSource data) {
+        this.data = data;
+        MainForm.this.setTitle(APPLICATION_NAME + " - " + DataFileUtils.getInstance().getWorkingDir().getPath());
+        plotControl.setDataSource(data);
+
+        for (int i = 0; i < channelCheckBoxArray.length; i++) {
+            setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
+        }
+    }
+
+    private File loadData(String fileExtension) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("data Files", fileExtension);
+        fileChooser.setFileFilter(filter);
+        fileChooser.setMultiSelectionEnabled(false);
+        if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
+    }
+
     private void setStreamVisible(String tag, boolean visible) {
         plotControl.setStreamVisible(tag, visible);
         fftRePlot.setStreamVisible(tag, visible);
@@ -336,6 +365,7 @@ public class MainForm extends JFrame {
     }
 
     private void setupOthers() {
+        this.setTitle(APPLICATION_NAME);
         this.startSpinModel = (SpinnerNumberModel) this.sliceStartSpinner.getModel();
         this.endSpinModel = (SpinnerNumberModel) this.sliceEndSpinner.getModel();
         this.channelCheckBoxArray = new JCheckBox[]
@@ -569,14 +599,6 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         channelPanel.add(channelLbl, gbc);
-        loadBtn = new JButton();
-        loadBtn.setText("Load EEG Raw Data...");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 7;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(loadBtn, gbc);
         final JPanel spacer1 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
@@ -584,6 +606,22 @@ public class MainForm extends JFrame {
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         channelPanel.add(spacer1, gbc);
+        loadCSVBtn = new JButton();
+        loadCSVBtn.setText("Load CSV Data...");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        channelPanel.add(loadCSVBtn, gbc);
+        loadOpenBCIBtn = new JButton();
+        loadOpenBCIBtn.setText("Load OpebBCI Raw Data...");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.gridwidth = 5;
+        gbc.anchor = GridBagConstraints.WEST;
+        channelPanel.add(loadOpenBCIBtn, gbc);
         dtwPanel = new JPanel();
         dtwPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();

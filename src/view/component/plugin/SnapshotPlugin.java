@@ -93,7 +93,7 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
 
         this.adjustBuffer(length);
         this.hasSnapshot = true;
-        this.capturedData.notifiedPresentedDataChanged();
+        this.capturedData.firePresentedDataChanged();
 
         if (this.plotSnapshot) {
             this.plot.refresh();
@@ -113,12 +113,10 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         private HashMap<String, MutableFiniteLengthStream> data;
         private Collection<String> capturedTags;
 
-        private List<PresentedDataChangedListener> listeners;
         private int length = 0;
 
         private CapturedDataSource() {
             this.data = new HashMap<>();
-            this.listeners = new ArrayList<>();
             this.clear();
         }
 
@@ -156,24 +154,18 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         }
 
         @Override
-        public long getCurrentLength() {
+        public int intLength() {
             return length;
         }
 
         @Override
-        public void addPresentedDataChangedListener(PresentedDataChangedListener listener) {
-            this.listeners.add(listener);
+        public Collection<String> getTags() {
+            return capturedTags;
         }
 
         @Override
-        public void removePresentedDataChangedListener(PresentedDataChangedListener listener) {
-            this.listeners.remove(listener);
-        }
-
-        public void notifiedPresentedDataChanged() {
-            for (int i = this.listeners.size() - 1; i >= 0; i--) {
-                this.listeners.get(i).onDataChanged();
-            }
+        public void firePresentedDataChanged() {
+            super.firePresentedDataChanged();
         }
 
         public void clear() {
