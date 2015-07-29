@@ -104,7 +104,10 @@ public class InteractivePlotView extends PlotView {
 
     private void fireStreamVisibilityChangedToPlugins(String tag, boolean isVisible) {
         for (int i = this.visibilityPlugins.size() - 1; i >= 0; i--) {
-            this.visibilityPlugins.get(i).onStreamVisibilityChanged(tag, isVisible);
+            InterestedStreamVisibilityPlugin plugin = this.visibilityPlugins.get(i);
+            if (plugin.isEnabled()) {
+                plugin.onStreamVisibilityChanged(tag, isVisible);
+            }
         }
     }
 

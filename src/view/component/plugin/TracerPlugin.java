@@ -38,7 +38,6 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
     @Override
     public void drawAfterPlot(Graphics2D g2) {
-
         g2.setStroke(stroke);
         g2.setColor(TRACE_COLOR);
         for (String tag : plot.getVisibleStreams()) {
@@ -118,7 +117,6 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
 
         int newX = event.getX();
         switch (action) {
-
             case "mouseDragged":
                 this.moveTrace(projectXDeltaToDataAmount(plot, event.getX(), this.lastX));
             case "mousePressed":

@@ -83,7 +83,11 @@ public class DataFileUtils {
             for(int lineCounter = 1; lineCounter < lines.size(); lineCounter++) {
                 String[] entries = lines.get(lineCounter).split(",");
                 for (int i = 0; i < tmpData.length; i++) {
+                    if (entries[i].toUpperCase().equals("NAN")) {
+                        entries[i] = "NaN";
+                    }
                     tmpData[i][lineCounter - 1] = Double.parseDouble(entries[i]);
+
                 }
             }
 

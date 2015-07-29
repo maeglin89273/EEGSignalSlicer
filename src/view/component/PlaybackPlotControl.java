@@ -276,8 +276,8 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
     }
 
     private void updateYDisplays(float topPeakValue, float bottomPeakValue) {
-        this.posPeakLbl.setText(String.format("%.1f", topPeakValue));
-        this.negPeakLbl.setText(String.format("%.1f", bottomPeakValue));
+        this.posPeakLbl.setText(String.format("%.1e", topPeakValue));
+        this.negPeakLbl.setText(String.format("%.1e", bottomPeakValue));
     }
     
     public void refreshPlot() {

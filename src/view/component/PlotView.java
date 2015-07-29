@@ -120,7 +120,13 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public long getPlotUpperBound() {
-        return this.startingPtr + getWindowSize() - 1;
+        long upper = this.startingPtr + getWindowSize() - 1;
+        if (isDataSourceSet()) {
+            if (upper > dataSource.getCurrentLength() - 1) {
+                return dataSource.getCurrentLength() - 1;
+            }
+        }
+        return upper;
     }
 
     public void setWindowSize(int windowSize) {
@@ -140,6 +146,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     public void setXTo(long startingPoint) {
 
         this.startingPtr = boundStartingPtr(startingPoint);
+
         fireOnXRangeChanged();
         this.refresh();
     }

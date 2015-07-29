@@ -191,7 +191,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             return;
         }
 
-        boundRange(plot.getWindowSize(), plot.getPlotLowerBound(), range);
+        boundRange(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound(), range);
 
         fireStartChanged();
         fireEndChanged();
@@ -199,13 +199,13 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         plot.refresh();
     }
 
-    private void boundRange(int windowSize, long plotLowerBound, int range) {
+    private void boundRange(int windowSize, long plotLowerBound, long plotUpperBound, int range) {
         long middle = (int)(((this.getRelativeStartPosition() + this.getRelativeEndPosition()) / 2) * windowSize) + plotLowerBound;
 
         int leftHalf = range / 2;
         int rightHalf = (int)Math.ceil(range / 2.0f);
-        int middleToLower = (int) (middle - plot.getPlotLowerBound());
-        int upperToMiddle = (int) (plot.getPlotUpperBound() - middle);
+        int middleToLower = (int) (middle - plotLowerBound);
+        int upperToMiddle = (int) (plotUpperBound - middle);
         if (leftHalf > middleToLower) {
             rightHalf += leftHalf - middleToLower;
             leftHalf = middleToLower;
@@ -236,6 +236,9 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
     }
 
+    public boolean isRangeOverPlot() {
+        return this.rangeOverPlot;
+    }
 
 
     private enum OperatingMode {
@@ -328,21 +331,24 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         if (this.isEnabled()) {
             syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
         } else {
-            syncPos(plot.getWindowSize(), plot.getPlotLowerBound());
+            syncPos(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound());
         }
     }
 
-    private void syncPos(int windowSize, long plotLowerBound) {
+    private void syncPos(int windowSize, long plotLowerBound, long plotUpperBound) {
+
         if (!this.fixedRange) {
-            this.startPos = (int) (this.getRelativeStartPosition() * windowSize) + plotLowerBound;
-            this.endPos = (int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound;
+            this.startPos = boundStartPosition((int) (this.getRelativeStartPosition() * windowSize) + plotLowerBound);
+            this.relativeStartPos = computeRelativePos(getStartPosition());
+            this.endPos = boundEndPosition((int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound);
+            this.relativeEndPos = computeRelativePos(getEndPosition());
         } else {
-            if (windowSize < this.getRange()) {
+            if (plotUpperBound - plotLowerBound + 1 < this.getRange()) {
                 this.rangeOverPlot = true;
                 return;
             }
 
-            this.boundRange(windowSize, plotLowerBound, this.getRange());
+            this.boundRange(windowSize, plotLowerBound, plotUpperBound, this.getRange());
         }
         this.rangeOverPlot = false;
     }
@@ -356,7 +362,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             return;
         }
 
-        syncPos(windowSize, plotLowerBound);
+        syncPos(windowSize, plotLowerBound, plotUpperBound);
 
         fireStartChanged();
         fireEndChanged();
@@ -384,7 +390,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     @Override
     public void reset() {
         initRelativePoses(MARGIN_PERCENTAGE);
-        syncPos(plot.getWindowSize(), plot.getPlotLowerBound());
+        syncPos(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound());
     }
 
     @Override

@@ -150,6 +150,8 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         streamTemplate.setEnabled(enabled);
+        updateVisibleStream();
+        updateDTW();
     }
 
     @Override
@@ -161,6 +163,11 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
 
     @Override
     public void onStreamVisibilityChanged(String tag, boolean isVisible) {
+        updateVisibleStream();
+        updateDTW();
+    }
+
+    private void updateVisibleStream() {
         Collection<String> visibleStreams = plot.getVisibleStreams();
         if (visibleStreams.size() == 1) {
             for (String theTag: visibleStreams) {
@@ -169,7 +176,6 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
         } else {
             visibleStream = null;
         }
-        updateDTW();
     }
 
     @Override

@@ -68,12 +68,25 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
     }
 
     @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        if (enabled && !this.isRangeOverPlot()) {
+            this.dataManager.setTags(plot.getVisibleStreams());
+            this.updateTransformation();
+        }
+    }
+
+    @Override
     protected void onRangeChanged() {
         updateTransformation();
     }
 
     @Override
     public void onStreamVisibilityChanged(String tag, boolean isVisible) {
+        if (this.isRangeOverPlot()) {
+            return;
+        }
+
         if (isVisible) {
             this.dataManager.addTag(tag);
             this.dataManager.transformData(tag, plot.getDataSource().getDataOf(tag), (int) this.getStartPosition());
@@ -85,7 +98,7 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
     }
 
     public void updateTransformation() {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || this.isRangeOverPlot()) {
             return;
         }
 
@@ -168,6 +181,11 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
 
         public Collection<String> getTags() {
             return this.validStreams;
+        }
+
+        public void setTags(Collection<String> visibleStreams) {
+            this.validStreams.clear();
+            this.validStreams.addAll(visibleStreams);
         }
     }
 
@@ -284,7 +302,5 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
 
             return powerSq < EPSILON ? 0: Math.atan2(im, re);
         }
-
-
     }
 }
