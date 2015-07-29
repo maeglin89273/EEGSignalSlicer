@@ -69,10 +69,8 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         return this.isEnabled()? this.movingTrace : false;
     }
 
-    public void moveTrace(int delta) {
-        if (!this.isEnabled()) {
-            return;
-        }
+    private void moveTrace(int delta) {
+
         delta = -delta;
         this.startingPtr = boundStartingPtr(this.startingPtr + delta);
 

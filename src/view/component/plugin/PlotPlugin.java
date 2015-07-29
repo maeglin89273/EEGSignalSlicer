@@ -24,4 +24,5 @@ public interface PlotPlugin extends PlotView.CoordinatesRangeChangedListener {
     public void onYRangeChanged(float topPeakValue, float bottomPeakValue);
 
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize);
+
 }

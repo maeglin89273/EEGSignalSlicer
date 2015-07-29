@@ -20,7 +20,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
 
     private JLabel startLbl;
     private JLabel endLbl;
-    private PlotView plot;
+    private InteractivePlotView plot;
     private JButton playBtn;
     private JButton backBtn;
     private JButton forthBtn;
@@ -41,7 +41,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         this(new InteractivePlotView(windowSize, peakValue));
     }
 
-    public PlaybackPlotControl(PlotView plot) {
+    public PlaybackPlotControl(InteractivePlotView plot) {
         this.animator = new Timer(ANIMATION_INTERVAL, this);
 
         this.playing = false;
@@ -159,7 +159,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         this.plot.setStreamVisible(tag, isVisible);
     }
 
-    private void setupUI(PlotView plot) {
+    private void setupUI(InteractivePlotView plot) {
 
         this.setLayout(new GridBagLayout());
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), null));

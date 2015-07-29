@@ -19,9 +19,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by maeglin89273 on 7/20/15.
@@ -30,16 +29,9 @@ public class MainForm extends JFrame {
     private static final String APPLICATION_NAME = "Signal Viewer";
 
     private JButton sliceBtn;
-    private JCheckBox channel1CheckBox;
-    private JCheckBox channel2CheckBox;
-    private JCheckBox channel3CheckBox;
-    private JCheckBox channel4CheckBox;
-    private JCheckBox channel5CheckBox;
-    private JCheckBox channel6CheckBox;
-    private JCheckBox channel7CheckBox;
-    private JCheckBox channel8CheckBox;
+
     private JLabel filterLbl;
-    private JLabel channelLbl;
+    private JLabel tagsLbl;
     private JRadioButton alphaFilterRadioBtn;
     private JRadioButton betaFilterRadioBtn;
     private JRadioButton gammaFilterRadioBtn;
@@ -76,8 +68,8 @@ public class MainForm extends JFrame {
     private JLabel imLbl;
     private JButton fftClearSnapsotBtn;
     private JButton loadCSVBtn;
+    private JPanel tagsPanel;
 
-    private JCheckBox[] channelCheckBoxArray;
     private ButtonGroup filterChoiceGroup;
     private SpinnerNumberModel startSpinModel;
     private SpinnerNumberModel endSpinModel;
@@ -163,21 +155,6 @@ public class MainForm extends JFrame {
             }
         });
 
-        ActionListener checkBoxListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JCheckBox channelCheckBox = (JCheckBox) e.getSource();
-
-                setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
-                fftPlugin.updateTransformation();
-                dtwPlugin.updateDTW();
-            }
-        };
-
-        for (int i = 0; i < this.channelCheckBoxArray.length; i++) {
-            this.channelCheckBoxArray[i].addActionListener(checkBoxListener);
-        }
-
         ActionListener filterBtnListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -209,6 +186,7 @@ public class MainForm extends JFrame {
                 templateMakeBtn.setEnabled(enabled);
                 sliceBtn.setEnabled(enabled);
                 tagField.setEnabled(enabled);
+                dtwValueLbl.setForeground(Color.BLACK);
                 dtwValueLbl.setText("None");
             }
         });
@@ -336,14 +314,47 @@ public class MainForm extends JFrame {
         });
     }
 
+
     private void setData(FiniteLengthDataSource data) {
         this.data = data;
-        MainForm.this.setTitle(APPLICATION_NAME + " - " + DataFileUtils.getInstance().getWorkingDir().getPath());
+        MainForm.this.setTitle(APPLICATION_NAME + " - " + DataFileUtils.getInstance().getWorkingFile().getPath());
         plotControl.setDataSource(data);
 
-        for (int i = 0; i < channelCheckBoxArray.length; i++) {
-            setStreamVisible(channelCheckBoxArray[i].getText(), channelCheckBoxArray[i].isSelected());
+        updateTagsCheckBoxes(data);
+
+    }
+
+    private ActionListener tagCkBoxListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JCheckBox channelCheckBox = (JCheckBox) e.getSource();
+            plotControl.setStreamVisible(channelCheckBox.getText(), channelCheckBox.isSelected());
         }
+    };
+
+    private void updateTagsCheckBoxes(FiniteLengthDataSource data) {
+        JCheckBox tagCkBox;
+        for (Component oldComp : tagsPanel.getComponents()) {
+            tagCkBox = (JCheckBox) oldComp;
+            tagCkBox.removeActionListener(tagCkBoxListener);
+        }
+
+        tagsPanel.removeAll();
+        List<String> tags = new ArrayList<>(data.getTags());
+        Collections.sort(tags);
+        for (String tag : tags) {
+            tagCkBox = new JCheckBox(tag);
+            tagCkBox.addActionListener(tagCkBoxListener);
+
+            tagsPanel.add(tagCkBox);
+
+        }
+        tagCkBox = (JCheckBox) tagsPanel.getComponent(0);
+        tagCkBox.setSelected(true);
+        plotControl.setStreamVisible(tagCkBox.getText(), true);
+
+
+        this.pack();
     }
 
     private File loadData(String fileExtension) {
@@ -358,20 +369,10 @@ public class MainForm extends JFrame {
         return null;
     }
 
-    private void setStreamVisible(String tag, boolean visible) {
-        plotControl.setStreamVisible(tag, visible);
-        fftRePlot.setStreamVisible(tag, visible);
-        fftImPlot.setStreamVisible(tag, visible);
-    }
-
     private void setupOthers() {
         this.setTitle(APPLICATION_NAME);
         this.startSpinModel = (SpinnerNumberModel) this.sliceStartSpinner.getModel();
         this.endSpinModel = (SpinnerNumberModel) this.sliceEndSpinner.getModel();
-        this.channelCheckBoxArray = new JCheckBox[]
-                {this.channel1CheckBox, this.channel2CheckBox, this.channel3CheckBox, this.channel4CheckBox,
-                        this.channel5CheckBox, this.channel6CheckBox, this.channel7CheckBox, this.channel8CheckBox};
-
 
         filterChoiceGroup = new ButtonGroup();
         filterChoiceGroup.add(thetaFilterRadioBtn);
@@ -534,71 +535,13 @@ public class MainForm extends JFrame {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         leftPanel.add(channelPanel, gbc);
-        channel1CheckBox = new JCheckBox();
-        channel1CheckBox.setText("1");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel1CheckBox, gbc);
-        channel2CheckBox = new JCheckBox();
-        channel2CheckBox.setText("2");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel2CheckBox, gbc);
-        channel3CheckBox = new JCheckBox();
-        channel3CheckBox.setSelected(true);
-        channel3CheckBox.setText("3");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel3CheckBox, gbc);
-        channel4CheckBox = new JCheckBox();
-        channel4CheckBox.setText("4");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel4CheckBox, gbc);
-        channel5CheckBox = new JCheckBox();
-        channel5CheckBox.setText("5");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel5CheckBox, gbc);
-        channel6CheckBox = new JCheckBox();
-        channel6CheckBox.setText("6");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel6CheckBox, gbc);
-        channel7CheckBox = new JCheckBox();
-        channel7CheckBox.setText("7");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 7;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel7CheckBox, gbc);
-        channel8CheckBox = new JCheckBox();
-        channel8CheckBox.setLabel("8");
-        channel8CheckBox.setText("8");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 8;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channel8CheckBox, gbc);
-        channelLbl = new JLabel();
-        channelLbl.setText("Channels");
+        tagsLbl = new JLabel();
+        tagsLbl.setText("Streams");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        channelPanel.add(channelLbl, gbc);
+        channelPanel.add(tagsLbl, gbc);
         final JPanel spacer1 = new JPanel();
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
@@ -622,6 +565,14 @@ public class MainForm extends JFrame {
         gbc.gridwidth = 5;
         gbc.anchor = GridBagConstraints.WEST;
         channelPanel.add(loadOpenBCIBtn, gbc);
+        tagsPanel = new JPanel();
+        tagsPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.gridwidth = 9;
+        gbc.fill = GridBagConstraints.BOTH;
+        channelPanel.add(tagsPanel, gbc);
         dtwPanel = new JPanel();
         dtwPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -774,7 +725,7 @@ public class MainForm extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(gammaFilterRadioBtn, gbc);
         filterLbl = new JLabel();
-        filterLbl.setText("Filter");
+        filterLbl.setText("Filter(EEG only)");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;

@@ -25,6 +25,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     private final Color bgColor;
 
     private boolean renderBg = false;
+    private boolean rangeOverPlot = false;
 
     private RangeChangedListener listener;
     private Set<String> interestedActions;
@@ -67,7 +68,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
     @Override
     public void drawBeforePlot(Graphics2D g2) {
-        if (this.renderBg) {
+        if (this.renderBg && !this.rangeOverPlot) {
             int startX = (int) (plot.getWidth() * this.getRelativeStartPosition());
             int endX = (int) (plot.getWidth() * this.getRelativeEndPosition());
             g2.setColor(this.bgColor);
@@ -77,6 +78,10 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
     @Override
     public void drawAfterPlot(Graphics2D g2) {
+        if (rangeOverPlot) {
+            return;
+        }
+
         g2.setStroke(STROKE);
         g2.setColor(this.knifeColor);
 
@@ -96,7 +101,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public void setStartPosition(long startPosition) {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || rangeOverPlot) {
             return;
         }
 
@@ -132,7 +137,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public void setEndPosition(long endPosition) {
-        if (!this.isEnabled()) {
+        if (!this.isEnabled() || rangeOverPlot) {
             return;
         }
 
@@ -223,8 +228,12 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         if (!this.isEnabled()) {
             return;
         }
-
         this.fixedRange = fixedRange;
+        if (this.rangeOverPlot && !this.fixedRange) {
+            this.initRelativePoses(0);
+            this.syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
+        }
+
     }
 
 
@@ -248,10 +257,9 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
-        if (!this.isEnabled()) {
+        if (rangeOverPlot) {
             return true;
         }
-
         switch (action) {
             case "mouseDragged":
                 return handleMouseDragged(event);
@@ -330,12 +338,13 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             this.endPos = (int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound;
         } else {
             if (windowSize < this.getRange()) {
-                this.setEnabled(false);
+                this.rangeOverPlot = true;
                 return;
             }
 
             this.boundRange(windowSize, plotLowerBound, this.getRange());
         }
+        this.rangeOverPlot = false;
     }
 
     private double computeRelativePos(long pos) {

@@ -137,87 +137,13 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="f6d42" class="javax.swing.JCheckBox" binding="channel1CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="1"/>
-                    </properties>
-                  </component>
-                  <component id="879aa" class="javax.swing.JCheckBox" binding="channel2CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="2"/>
-                    </properties>
-                  </component>
-                  <component id="6cf08" class="javax.swing.JCheckBox" binding="channel3CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <selected value="true"/>
-                      <text value="3"/>
-                    </properties>
-                  </component>
-                  <component id="8187d" class="javax.swing.JCheckBox" binding="channel4CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="4"/>
-                    </properties>
-                  </component>
-                  <component id="1f4f0" class="javax.swing.JCheckBox" binding="channel5CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="5"/>
-                    </properties>
-                  </component>
-                  <component id="48b4a" class="javax.swing.JCheckBox" binding="channel6CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="6"/>
-                    </properties>
-                  </component>
-                  <component id="21c5e" class="javax.swing.JCheckBox" binding="channel7CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="7"/>
-                    </properties>
-                  </component>
-                  <component id="da0e5" class="javax.swing.JCheckBox" binding="channel8CheckBox" default-binding="true">
-                    <constraints>
-                      <grid row="2" column="8" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <label value="8"/>
-                      <text value="8"/>
-                    </properties>
-                  </component>
-                  <component id="2d0b7" class="javax.swing.JLabel" binding="channelLbl">
+                  <component id="2d0b7" class="javax.swing.JLabel" binding="tagsLbl">
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
-                      <text value="Channels"/>
+                      <text value="Streams"/>
                     </properties>
                   </component>
                   <hspacer id="5eb02">
@@ -244,6 +170,15 @@
                       <text value="Load OpebBCI Raw Data..."/>
                     </properties>
                   </component>
+                  <grid id="59266" binding="tagsPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+                    <constraints>
+                      <grid row="2" column="1" row-span="1" col-span="9" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children/>
+                  </grid>
                 </children>
               </grid>
               <grid id="70e71" binding="dtwPanel" layout-manager="GridBagLayout">
@@ -437,7 +372,7 @@
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
-                      <text value="Filter"/>
+                      <text value="Filter(EEG only)"/>
                     </properties>
                   </component>
                   <component id="7a583" class="javax.swing.JRadioButton" binding="thetaFilterRadioBtn">

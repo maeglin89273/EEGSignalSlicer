@@ -44,9 +44,6 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
-        if (!this.isEnabled()) {
-            return true;
-        }
 
         switch (action) {
             case "mouseWheelMoved":

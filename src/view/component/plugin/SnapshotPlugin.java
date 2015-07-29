@@ -85,7 +85,7 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         int startPos = (int) plot.getPlotLowerBound();
         int length = plot.getWindowSize();
         StreamingDataSource dataSource = plot.getDataSource();
-        List<String> visibleStreams = plot.getVisibleStreams();
+        Collection<String> visibleStreams = plot.getVisibleStreams();
         this.capturedData.setCapturedTags(visibleStreams);
         for (String tag: visibleStreams) {
             this.capturedData.captureStream(tag, dataSource.getDataOf(tag), startPos, length);
@@ -137,7 +137,7 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
             capturedStream.replacedBy(target, startPos, length);
         }
 
-        public void setCapturedTags(List<String> tags) {
+        public void setCapturedTags(Collection<String> tags) {
             this.capturedTags = new HashSet<>(tags);
         }
 

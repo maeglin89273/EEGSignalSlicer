@@ -8,11 +8,12 @@ import view.component.PlottingUtils;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 
 /**
  * Created by maeglin89273 on 7/24/15.
  */
-public class DTWPlugin extends RangePlugin {
+public class DTWPlugin extends RangePlugin implements InterestedStreamVisibilityPlugin {
     private static final Stroke STROKE = new BasicStroke(0.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final Color KNIFE_COLOR = Color.RED;
     private static final Color STROKE_COLOR = new Color(255, 0, 0, 80);
@@ -97,10 +98,10 @@ public class DTWPlugin extends RangePlugin {
 
     public void updateDTW() {
         if (this.isAbleComputeDTW()) {
-            Stream visibleStream = this.getSingleVisibleStream();
+
             int computingSize = this.getRange();
-            this.dtwSourceBufferBack.replacedBy(visibleStream, (int) projectSliceToTrace(), computingSize);
-            this.dtwSourceBufferFront.replacedBy(visibleStream, (int) this.getStartPosition(), computingSize);
+            this.dtwSourceBufferBack.replacedBy(this.visibleStream, (int) projectSliceToTrace(), computingSize);
+            this.dtwSourceBufferFront.replacedBy(this.visibleStream, (int) this.getStartPosition(), computingSize);
 
             DTWAlgorithm dtw = new DTWAlgorithm(this.dtwSourceBufferFront, computingSize, this.dtwSourceBufferBack, computingSize);
             if (dtw.getDistance() <= ACCEPTABLE_DTW_DISTANCE_UPPERBOUND) {
@@ -140,12 +141,9 @@ public class DTWPlugin extends RangePlugin {
         this.renderDTW = wantRender;
     }
 
-    private Stream getSingleVisibleStream() {
-        return this.plot.getDataSource().getDataOf(this.plot.getVisibleStreams().get(0));
-    }
 
     private boolean isAbleComputeDTW() {
-        return this.isEnabled() && this.plot.getVisibleStreams().size() == 1 && this.getRange() < DTW_COMPUTABLE_RANGE;
+        return this.isEnabled() && visibleStream != null && this.getRange() < DTW_COMPUTABLE_RANGE;
     }
 
     @Override
@@ -156,6 +154,21 @@ public class DTWPlugin extends RangePlugin {
 
     @Override
     protected void onRangeChanged() {
+        updateDTW();
+    }
+
+    private Stream visibleStream;
+
+    @Override
+    public void onStreamVisibilityChanged(String tag, boolean isVisible) {
+        Collection<String> visibleStreams = plot.getVisibleStreams();
+        if (visibleStreams.size() == 1) {
+            for (String theTag: visibleStreams) {
+                visibleStream = plot.getDataSource().getDataOf(theTag);
+            }
+        } else {
+            visibleStream = null;
+        }
         updateDTW();
     }
 

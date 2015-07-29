@@ -6,12 +6,11 @@ import view.component.PlotView;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by maeglin89273 on 7/26/15.
  */
-public class FourierTransformPlugin extends RangePlugin {
+public class FourierTransformPlugin extends RangePlugin implements InterestedStreamVisibilityPlugin {
     private final int samplingFrequency;
     private final int transformRange;
     private final int halfFFTRange;
@@ -63,8 +62,26 @@ public class FourierTransformPlugin extends RangePlugin {
     public StreamingDataSource getDataSourceOfPhase() {return this.dataManager.getPhase();}
 
     @Override
+    public void reset() {
+        super.reset();
+        this.dataManager.reset();
+    }
+
+    @Override
     protected void onRangeChanged() {
         updateTransformation();
+    }
+
+    @Override
+    public void onStreamVisibilityChanged(String tag, boolean isVisible) {
+        if (isVisible) {
+            this.dataManager.addTag(tag);
+            this.dataManager.transformData(tag, plot.getDataSource().getDataOf(tag), (int) this.getStartPosition());
+        } else {
+            this.dataManager.removeTag(tag);
+        }
+
+        this.dataManager.endTransformData();
     }
 
     public void updateTransformation() {
@@ -72,11 +89,7 @@ public class FourierTransformPlugin extends RangePlugin {
             return;
         }
 
-        Collection<String> visibleStreams = plot.getVisibleStreams();
-
-        this.dataManager.setTags(visibleStreams);
-
-        for (String tag: visibleStreams) {
+        for (String tag: this.dataManager.getTags()) {
             this.dataManager.transformData(tag, plot.getDataSource().getDataOf(tag), (int) this.getStartPosition());
 
         }
@@ -97,8 +110,10 @@ public class FourierTransformPlugin extends RangePlugin {
 
         public DataSourceManager() {
             this.fft = new DoubleFFT_1D(transformRange);
+
             this.transformedData = new HashMap<>();
             this.validStreams = new LinkedList<>();
+
             this.realPart = new FTDataSource(this.transformedData,this.validStreams,  new RealPartSelector());
             this.imageryPart = new FTDataSource(this.transformedData, this.validStreams,  new ImageryPartSelector());
             this.power = new FTDataSource(this.transformedData, this.validStreams, new PowerSelector());
@@ -131,16 +146,28 @@ public class FourierTransformPlugin extends RangePlugin {
             fft.realForward(buffer.toArray());
         }
 
-        public void setTags(Collection<String> tags) {
-            this.validStreams.clear();
-            this.validStreams.addAll(tags);
-        }
-
         public void endTransformData() {
             realPart.firePresentedDataChanged();
             imageryPart.firePresentedDataChanged();
             power.firePresentedDataChanged();
             phase.firePresentedDataChanged();
+        }
+
+        public void addTag(String tag) {
+            this.validStreams.add(tag);
+        }
+
+        public void reset() {
+            this.validStreams.clear();
+            this.transformedData.clear();
+        }
+
+        public void removeTag(String tag) {
+            this.validStreams.remove(tag);
+        }
+
+        public Collection<String> getTags() {
+            return this.validStreams;
         }
     }
 

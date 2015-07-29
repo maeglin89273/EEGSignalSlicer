@@ -16,7 +16,6 @@ import java.util.List;
 public class PlotView extends JComponent implements StreamingDataSource.PresentedDataChangedListener {
     private static final Dimension PREFERRED_SIZE = new Dimension(750, 300);
 
-    private List<String> visibleStreamTags;
     private Map<String, Color> colorMapping;
 
     private float peakValue;
@@ -38,7 +37,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         this.plugins = new ArrayList<>();
         this.rangeListeners = new ArrayList<>();
         this.colorMapping = new HashMap<>();
-        this.visibleStreamTags = new LinkedList<>();
 
         this.baseline = PlottingUtils.Baseline.MIDDLE;
 
@@ -75,13 +73,15 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setDataSource(StreamingDataSource dataSource) {
+
         if (this.dataSource != null) {
+            this.setXTo(0);
             this.dataSource.removePresentedDataChangedListener(this);
         }
         this.dataSource = dataSource;
         this.dataSource.addPresentedDataChangedListener(this);
-        this.setXTo(0);
-        fireResetPlugin();
+
+        this.fireResetPlugin();
         this.refresh();
     }
 
@@ -124,7 +124,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setWindowSize(int windowSize) {
-
 
         this.xBuffer = new int[windowSize];
         this.yBuffer = new int[windowSize];
@@ -209,7 +208,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
                 plugin.drawBeforePlot(g2);
             }
         }
-
     }
 
     private void drawFrontPlugins(Graphics2D g2) {
@@ -222,13 +220,13 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         }
     }
 
-    private void drawStreams(Graphics2D g2) {
-        for (String tag : visibleStreamTags) {
+    protected void drawStreams(Graphics2D g2) {
+        for (String tag : this.dataSource.getTags()) {
             drawStream(g2, tag);
         }
     }
 
-    private void drawStream(Graphics2D g2, String tag) {
+    protected void drawStream(Graphics2D g2, String tag) {
         g2.setColor(hashStringToColor(tag));
         PlottingUtils.loadYBuffer(this.baseline, this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), (int) this.getPlotLowerBound(), yBuffer);
         g2.drawPolyline(xBuffer, yBuffer, getWindowSize());
@@ -286,25 +284,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         return this.baseline;
     }
 
-    public void setStreamVisible(String tag, boolean isVisible) {
-        if (!this.isDataSourceSet()) {
-            return;
-        }
-
-        if (isVisible) {
-            if (!this.visibleStreamTags.contains(tag)) {
-                this.visibleStreamTags.add(tag);
-            }
-        } else {
-            this.visibleStreamTags.remove(tag);
-        }
-        this.refresh();
-    }
-
-    public List<String> getVisibleStreams() {
-        return this.visibleStreamTags;
-    }
-
     private void updateXBuffer() {
         PlottingUtils.loadXBuffer(this.getWindowSize(), this.getWidth(), this.xBuffer);
     }
@@ -325,6 +304,10 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     @Override
     public void onDataChanged(String tag) {
         this.refresh();
+    }
+
+    public Collection<String> getVisibleStreams() {
+        return this.dataSource.getTags();
     }
 
     public interface CoordinatesRangeChangedListener {

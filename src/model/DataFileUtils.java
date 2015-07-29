@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class DataFileUtils {
     private static final int OPENBCI_COMMENTS_LINE_NUM = 5;
-    private File workingDir;
+    private File workingFile;
     private Map<String, Integer> sliceRecord;
     private static DataFileUtils instance = new DataFileUtils();
 
@@ -27,12 +27,12 @@ public class DataFileUtils {
         this.sliceRecord = new HashMap<String, Integer>();
     }
 
-    public File getWorkingDir() {
-        return this.workingDir;
+    public File getWorkingFile() {
+        return this.workingFile;
     }
 
     public FilteredFiniteDataSource loadOpenBCIRawFile(File rawDataFile) {
-        this.workingDir = rawDataFile.getParentFile();
+        this.workingFile = rawDataFile;
         double[][] rawData =  null;
         try {
             List<String> lines = Files.readAllLines(rawDataFile.toPath());
@@ -72,7 +72,7 @@ public class DataFileUtils {
     }
 
     public FiniteLengthDataSource loadGeneralCSVFile(File csvFile) {
-        this.workingDir = csvFile.getParentFile();
+        this.workingFile = csvFile;
         Map<String, FiniteLengthStream> rawData = null;
         try {
             List<String> lines = Files.readAllLines(csvFile.toPath());
@@ -129,7 +129,7 @@ public class DataFileUtils {
 
     private String saveDataSource(String filename, FiniteLengthDataSource data, int start, int end) {
 
-        File newFlie = new File(this.workingDir, filename);
+        File newFlie = new File(this.workingFile.getParentFile(), filename);
         try {
             newFlie.createNewFile();
             BufferedWriter writer = new BufferedWriter(new FileWriter(newFlie));

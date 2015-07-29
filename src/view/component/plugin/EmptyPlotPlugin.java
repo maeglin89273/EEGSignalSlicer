@@ -39,11 +39,14 @@ public abstract class EmptyPlotPlugin implements PlotPlugin {
         this.plot = plot;
     }
 
+    @Override
     public void onYRangeChanged(float topPeakValue, float bottomPeakValue) {
 
     }
 
+    @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
 
     }
+
 }
