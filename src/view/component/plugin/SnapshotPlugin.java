@@ -57,8 +57,8 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         FiniteLengthStream stream;
         for (String tag : this.capturedData.getCapturedTags()) {
             stream = capturedData.getFiniteDataOf(tag);
-            PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), stream, (int) this.startingPtr, yBuffer, stream.intLength());
-            g2.drawPolyline(this.plot.getXPoints(), yBuffer, yBuffer.length);
+            int length = PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), stream, (int) this.startingPtr, yBuffer);
+            g2.drawPolyline(this.plot.getXPoints(), yBuffer, length);
         }
     }
 

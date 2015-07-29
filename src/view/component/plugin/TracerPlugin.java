@@ -42,8 +42,8 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         g2.setStroke(stroke);
         g2.setColor(TRACE_COLOR);
         for (String tag : plot.getVisibleStreams()) {
-            PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), (int) this.startingPtr, yBuffer);
-            g2.drawPolyline(this.plot.getXPoints(), yBuffer, yBuffer.length);
+            int length = PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), (int) this.startingPtr, yBuffer);
+            g2.drawPolyline(this.plot.getXPoints(), yBuffer, length);
         }
     }
 

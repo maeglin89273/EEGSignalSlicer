@@ -19,13 +19,16 @@ public final class PlottingUtils {
     }
 
     public static void loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer, int length) {
-        for (int i = 0; i < yBuffer.length; i++) {
+        for (int i = 0; i < length; i++) {
             yBuffer[i] = mapY(baseline, coordinatePeak, plotHeight, data.get(i + startIndex));
         }
     }
 
-    public static void loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer) {
-        loadYBuffer(baseline, coordinatePeak, plotHeight, data, startIndex, yBuffer, yBuffer.length);
+    public static int loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer) {
+        int length = (int) (data.getCurrentLength() - startIndex);
+        length = length > yBuffer.length? yBuffer.length: length;
+        loadYBuffer(baseline, coordinatePeak, plotHeight, data, startIndex, yBuffer, length);
+        return length;
     }
 
     public static int mapY(Baseline baseline, double coordinatePeak, int plotHeight, double value) {

@@ -39,6 +39,7 @@ public class SimpleArrayStream extends MutableFiniteLengthStream {
     @Override
     public void replacedBy(Stream stream, int start, int length) {
         this.validLength = buffer.length >= length? length: buffer.length;
+
         if (stream instanceof FiniteLengthStream) {
             FiniteLengthStream arrayStream = (FiniteLengthStream) stream;
 
