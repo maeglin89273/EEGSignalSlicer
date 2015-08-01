@@ -68,13 +68,13 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
     private class MouseInteractionHandler extends MouseAdapter {
         private static final float SCALING_FACTOR = 1.1f;
-        private static final int MAX_SCALING_LEVEL = 10;
-        private static final int MIN_SCALING_LEVEL = -9;
+        private static final int MAX_WINDOW_SCALING_LEVEL = 7;
+        private static final int MIN_WINDOW_SCALING_LEVEL = -6;
 
         private int scalingLevel = 1;
 
-        private final float originalPeakValue;
         private final int originalWindowSize;
+        private final float originalPeakValue;
 
         private int lastX = 0;
 
@@ -85,13 +85,13 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
-            int newScaleLevel = this.scalingLevel + e.getWheelRotation();
-            if (newScaleLevel >= MIN_SCALING_LEVEL && newScaleLevel <= MAX_SCALING_LEVEL) {
-                this.scalingLevel = newScaleLevel;
-                double scale = Math.pow(SCALING_FACTOR, this.scalingLevel);
-                plot.setPeakValue((float) (this.originalPeakValue * scale));
+
+            this.scalingLevel = this.scalingLevel + e.getWheelRotation();
+            double scale = Math.pow(SCALING_FACTOR, this.scalingLevel);
+            if (this.scalingLevel >= MIN_WINDOW_SCALING_LEVEL && scalingLevel <= MAX_WINDOW_SCALING_LEVEL) {
                 plot.setWindowSize((int) (this.originalWindowSize * scale));
             }
+            plot.setPeakValue((float) (this.originalPeakValue * scale));
         }
 
         @Override
@@ -108,7 +108,7 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
         public void resetCoordinates() {
             plot.setPeakValue(this.originalPeakValue);
             plot.setWindowSize(this.originalWindowSize);
-            plot.setXTo(0);
+            this.scalingLevel = 1;
         }
     }
 }

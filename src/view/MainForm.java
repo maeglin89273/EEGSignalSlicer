@@ -410,9 +410,9 @@ public class MainForm extends JFrame {
     }
 
     private void createUIComponents() {
-        plotControl = new PlaybackPlotControl(600, 0.0005f);
-        fftRePlot = new PlotView(60, 0.00005f, 300, 125);
-        fftImPlot = new PlotView(60, 0.00005f, 300, 125);
+        plotControl = new PlaybackPlotControl(600, 60f);
+        fftRePlot = new PlotView(60, 5f, 300, 125);
+        fftImPlot = new PlotView(60, 5f, 300, 125);
     }
 
     /**
