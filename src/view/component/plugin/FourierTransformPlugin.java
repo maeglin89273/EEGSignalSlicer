@@ -82,6 +82,11 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
     }
 
     @Override
+    public void onPresentedDataChanged() {
+        this.updateTransformation();
+    }
+
+    @Override
     public void onStreamVisibilityChanged(String tag, boolean isVisible) {
         if (this.isRangeOverPlot()) {
             return;

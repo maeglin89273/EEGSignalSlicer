@@ -49,4 +49,8 @@ public abstract class EmptyPlotPlugin implements PlotPlugin {
 
     }
 
+    @Override
+    public void onPresentedDataChanged() {
+
+    }
 }

@@ -59,7 +59,7 @@ public class DataFileUtils {
 
         FilteredFiniteDataSource bciData = new FilteredFiniteDataSource(new SimpleFiniteLengthDataSource(convert2DArrayToMap(rawData)));
         bciData.addFilter(ButterworthFilter.NOTCH_60HZ);
-        bciData.addFilter(ButterworthFilter.BANDPASS_1_50HZ);
+        bciData.addFilter(ButterworthFilter.EMPTY_FILTER);
         return bciData;
     }
 

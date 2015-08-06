@@ -53,7 +53,6 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
         if (this.getRenderDTW()) {
             g2.setStroke(STROKE);
             g2.setColor(STROKE_COLOR);
-
             int startX, endX, startY, endY;
             int xOffset = (int)(this.getStartPosition() - this.plot.getPlotLowerBound());
             int[] xBuffer = this.plot.getXPoints();
@@ -95,13 +94,17 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
         this.streamTemplate.onXRangeChanged(plotLowerBound, plotUpperBound, windowSize);
     }
 
+    @Override
+    public void onPresentedDataChanged() {
+        this.updateDTW();
+    }
 
     public void updateDTW() {
         if (this.isAbleComputeDTW()) {
-
             int computingSize = this.getRange();
-            this.dtwSourceBufferBack.replacedBy(this.visibleStream, (int) projectSliceToTrace(), computingSize);
-            this.dtwSourceBufferFront.replacedBy(this.visibleStream, (int) this.getStartPosition(), computingSize);
+            Stream visibleStream = plot.getDataSource().getDataOf(this.visibleTag);
+            this.dtwSourceBufferBack.replacedBy(visibleStream, (int) projectSliceToTrace(), computingSize);
+            this.dtwSourceBufferFront.replacedBy(visibleStream, (int) this.getStartPosition(), computingSize);
 
             DTWAlgorithm dtw = new DTWAlgorithm(this.dtwSourceBufferFront, computingSize, this.dtwSourceBufferBack, computingSize);
             if (dtw.getDistance() <= ACCEPTABLE_DTW_DISTANCE_UPPERBOUND) {
@@ -143,7 +146,7 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
 
 
     private boolean isAbleComputeDTW() {
-        return this.isEnabled() && visibleStream != null && this.getRange() < DTW_COMPUTABLE_RANGE;
+        return this.isEnabled() && visibleTag != null && this.getRange() < DTW_COMPUTABLE_RANGE;
     }
 
     @Override
@@ -159,7 +162,7 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
         updateDTW();
     }
 
-    private Stream visibleStream;
+    private String visibleTag;
 
     @Override
     public void onStreamVisibilityChanged(String tag, boolean isVisible) {
@@ -171,10 +174,10 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
         Collection<String> visibleStreams = plot.getVisibleStreams();
         if (visibleStreams.size() == 1) {
             for (String theTag: visibleStreams) {
-                visibleStream = plot.getDataSource().getDataOf(theTag);
+                visibleTag = theTag;
             }
         } else {
-            visibleStream = null;
+            visibleTag = null;
         }
     }
 

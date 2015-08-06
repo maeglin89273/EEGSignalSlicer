@@ -11,7 +11,7 @@ public class ButterworthFilter implements Filter {
     private static final double[] NOTCH_60HZ_B = {9.650809863447347e-001, -2.424683201757643e-001, 1.945391494128786e+000, -2.424683201757643e-001, 9.650809863447347e-001};
     public static final ButterworthFilter NOTCH_60HZ = new ButterworthFilter(NOTCH_60HZ_A, NOTCH_60HZ_B);
 
-    private static final double[] BANDPASS_1_50HZ_A = {1.0, -2.355934631131582, 1.941257088655214, -7.847063755334187e-001, 1.999076052968340e-001};
+    private static final double[] BANDPASS_1_50HZ_A = {1.0, -2.355934631131582, 1.941257088655214, -7.847063755334187e-1, 1.999076052968340e-1};
     private static final double[] BANDPASS_1_50HZ_B = {2.001387256580685e-1, 0.0, -4.002774513161369e-1, 0.0, 2.001387256580685e-1};
     public static final ButterworthFilter BANDPASS_1_50HZ = new ButterworthFilter(BANDPASS_1_50HZ_A, BANDPASS_1_50HZ_B);
 

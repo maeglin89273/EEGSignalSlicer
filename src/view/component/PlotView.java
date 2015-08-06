@@ -191,6 +191,14 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         }
     }
 
+
+    private void fireOnPresentedDataChanged() {
+        for (int i = plugins.size() - 1; i >= 0; i--) {
+            plugins.get(i).onPresentedDataChanged();
+        }
+    }
+
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = prepareGraphics(g);
@@ -305,6 +313,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
     @Override
     public void onDataChanged() {
+        this.fireOnPresentedDataChanged();
         this.refresh();
     }
 

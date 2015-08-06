@@ -28,7 +28,7 @@ public class EEGFilter extends ButterworthFilter {
 
 
     static {
-        EEG_BANDPASS_FILTER_TABLE.put("Alpha", ALPHA);
+        EEG_BANDPASS_FILTER_TABLE.put("Alpha", Filter.EMPTY_FILTER);
         EEG_BANDPASS_FILTER_TABLE.put("Beta", BETA);
         EEG_BANDPASS_FILTER_TABLE.put("Theta", THETA);
         EEG_BANDPASS_FILTER_TABLE.put("Gamma", GAMMA);

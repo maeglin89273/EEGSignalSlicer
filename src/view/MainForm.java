@@ -160,8 +160,6 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (data instanceof FilteredDataSource) {
                     ((FilteredDataSource) data).replaceFilter(1, filterTable.get(filterChoiceGroup.getSelection().getActionCommand()));
-                    dtwPlugin.updateDTW();
-                    fftPlugin.updateTransformation();
                 }
             }
         };
