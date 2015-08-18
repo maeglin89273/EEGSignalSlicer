@@ -55,16 +55,15 @@ public class MainForm extends JFrame {
     private JLabel slicerLbl;
     private JButton templateMakeBtn;
     private JLabel templateLbl;
-    private JCheckBox fftCheckBox;
-    private PlotView fftRePlot;
+    private JCheckBox freqSpectrumCheckBox;
+    private PlotView fftSpectrumPlot;
     private JButton fftSnapshotBtn;
     private JPanel leftPanel;
     private JPanel fftPanel;
     private JPanel controlPanel;
     private JPanel centerPanel;
-    private PlotView fftImPlot;
+    private PlotView dwtSpectrumPlot;
     private JLabel reLbl;
-    private JCheckBox fftPowerCheckBox;
     private JLabel imLbl;
     private JButton fftClearSnapsotBtn;
     private JButton loadCSVBtn;
@@ -79,7 +78,7 @@ public class MainForm extends JFrame {
 
     private DTWPlugin dtwPlugin;
     private Map<String, Filter> filterTable;
-    private FourierTransformPlugin fftPlugin;
+    private FrequencySpectrumPlugin spectrumPlugin;
     private SnapshotPlugin reSnapshotPlugin;
     private SnapshotPlugin imSnapshotPlugin;
 
@@ -255,16 +254,15 @@ public class MainForm extends JFrame {
             }
         });
 
-        fftCheckBox.addActionListener(new ActionListener() {
+        freqSpectrumCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                boolean fftOn = fftCheckBox.isSelected();
-                fftRePlot.setEnabled(fftOn);
-                fftImPlot.setEnabled(fftOn);
-                fftPowerCheckBox.setEnabled(fftOn);
+                boolean fftOn = freqSpectrumCheckBox.isSelected();
+                fftSpectrumPlot.setEnabled(fftOn);
+                dwtSpectrumPlot.setEnabled(fftOn);
                 fftSnapshotBtn.setEnabled(fftOn);
                 fftClearSnapsotBtn.setEnabled(fftOn);
-                fftPlugin.setEnabled(fftOn);
+                spectrumPlugin.setEnabled(fftOn);
 
                 if (!fftOn) {
                     reSnapshotPlugin.clear();
@@ -286,28 +284,6 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 reSnapshotPlugin.clear();
                 imSnapshotPlugin.clear();
-            }
-        });
-
-        fftPowerCheckBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (fftPowerCheckBox.isSelected()) {
-                    fftRePlot.setDataSource(fftPlugin.getDataSourceOfPower());
-                    fftRePlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
-                    reLbl.setText("Power");
-                    fftImPlot.setDataSource(fftPlugin.getDataSourceOfPhase());
-                    fftImPlot.setPeakValue((float) Math.PI);
-                    imLbl.setText("Phase");
-                } else {
-                    fftRePlot.setDataSource(fftPlugin.getDataSourceOfRealPart());
-                    fftRePlot.setBaseline(PlottingUtils.Baseline.MIDDLE);
-                    reLbl.setText("Real");
-                    fftImPlot.setDataSource(fftPlugin.getDataSourceOfImageryPart());
-                    fftImPlot.setPeakValue(4);
-                    imLbl.setText("Imagery");
-                }
-
             }
         });
     }
@@ -384,33 +360,34 @@ public class MainForm extends JFrame {
         this.startSpinModel.setValue((int) this.dtwPlugin.getStartPosition());
         this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
 
-        this.fftRePlot.setLineWidth(1f);
-        this.fftImPlot.setLineWidth(1f);
+        this.fftSpectrumPlot.setLineWidth(1f);
+        this.dwtSpectrumPlot.setLineWidth(1f);
 
-        this.fftRePlot.setEnabled(false);
-        this.fftImPlot.setEnabled(false);
+        this.fftSpectrumPlot.setEnabled(false);
+        this.dwtSpectrumPlot.setEnabled(false);
     }
 
     private void setupPlugins() {
         this.dtwPlugin = new DTWPlugin();
-        this.fftPlugin = new FourierTransformPlugin(250, 256);
+        this.spectrumPlugin = new FrequencySpectrumPlugin(250, 256);
         this.reSnapshotPlugin = new SnapshotPlugin();
         this.imSnapshotPlugin = new SnapshotPlugin();
 
         this.plotControl.addPluginToPlot(this.dtwPlugin);
-        this.plotControl.addPluginToPlot(this.fftPlugin);
+        this.plotControl.addPluginToPlot(this.spectrumPlugin);
 
-        this.fftRePlot.addPlugin(this.reSnapshotPlugin);
-        this.fftImPlot.addPlugin(this.imSnapshotPlugin);
+        this.fftSpectrumPlot.addPlugin(this.reSnapshotPlugin);
+        this.dwtSpectrumPlot.addPlugin(this.imSnapshotPlugin);
 
-        this.fftRePlot.setDataSource(this.fftPlugin.getDataSourceOfRealPart());
-        this.fftImPlot.setDataSource(this.fftPlugin.getDataSourceOfImageryPart());
+        this.fftSpectrumPlot.setDataSource(this.spectrumPlugin.getFFTDataSource());
+        this.dwtSpectrumPlot.setDataSource(this.spectrumPlugin.getDWTDataSource());
     }
 
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(600, 60f);
-        fftRePlot = new PlotView(60, 5f, 300, 125);
-        fftImPlot = new PlotView(60, 5f, 300, 125);
+        fftSpectrumPlot = new PlotView(60, 5f, 300, 125);
+        fftSpectrumPlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
+        dwtSpectrumPlot = new PlotView(60, 5f, 300, 125);
     }
 
     /**
@@ -450,14 +427,14 @@ public class MainForm extends JFrame {
         gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(fftSnapshotBtn, gbc);
-        fftCheckBox = new JCheckBox();
-        fftCheckBox.setText("FFT Analysis");
+        freqSpectrumCheckBox = new JCheckBox();
+        freqSpectrumCheckBox.setText("Frequency Analysis");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftCheckBox, gbc);
+        fftPanel.add(freqSpectrumCheckBox, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -465,7 +442,7 @@ public class MainForm extends JFrame {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        fftPanel.add(fftRePlot, gbc);
+        fftPanel.add(fftSpectrumPlot, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -473,16 +450,16 @@ public class MainForm extends JFrame {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        fftPanel.add(fftImPlot, gbc);
+        fftPanel.add(dwtSpectrumPlot, gbc);
         reLbl = new JLabel();
-        reLbl.setText("Real");
+        reLbl.setText("FFT");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(reLbl, gbc);
         imLbl = new JLabel();
-        imLbl.setText("Imagery");
+        imLbl.setText("DWT");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -496,16 +473,6 @@ public class MainForm extends JFrame {
         gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(fftClearSnapsotBtn, gbc);
-        fftPowerCheckBox = new JCheckBox();
-        fftPowerCheckBox.setEnabled(false);
-        fftPowerCheckBox.setSelected(false);
-        fftPowerCheckBox.setText("Power/Phase");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftPowerCheckBox, gbc);
         controlPanel = new JPanel();
         controlPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();

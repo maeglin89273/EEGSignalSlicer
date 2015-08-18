@@ -26,22 +26,30 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
     private boolean renderBg = false;
     private boolean rangeOverPlot = false;
+    private boolean fixedRange;
 
     private RangeChangedListener listener;
     private Set<String> interestedActions;
-    private boolean fixedRange;
+
 
     public RangePlugin() {
         this(Color.CYAN);
     }
 
     public RangePlugin(Color knifeColor) {
+        this(knifeColor, false);
+    }
+
+    public RangePlugin(Color knifeColor, boolean wantBackground) {
         this.knifeColor = knifeColor;
         this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), bgAlpha);
+
+        this.renderBg = wantBackground;
 
         initRelativePoses(MARGIN_PERCENTAGE);
         initActionSet();
     }
+
 
     private void initActionSet() {
         this.interestedActions = new HashSet<>(2);

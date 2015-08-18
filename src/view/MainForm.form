@@ -47,23 +47,23 @@
                   <text value="Snapshot"/>
                 </properties>
               </component>
-              <component id="16b4b" class="javax.swing.JCheckBox" binding="fftCheckBox">
+              <component id="16b4b" class="javax.swing.JCheckBox" binding="freqSpectrumCheckBox">
                 <constraints>
                   <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
-                  <text value="FFT Analysis"/>
+                  <text value="Frequency Analysis"/>
                 </properties>
               </component>
-              <component id="84252" class="view.component.PlotView" binding="fftRePlot" custom-create="true">
+              <component id="84252" class="view.component.PlotView" binding="fftSpectrumPlot" custom-create="true">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties/>
               </component>
-              <component id="6f4d0" class="view.component.PlotView" binding="fftImPlot" custom-create="true">
+              <component id="6f4d0" class="view.component.PlotView" binding="dwtSpectrumPlot" custom-create="true">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
@@ -76,7 +76,7 @@
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
-                  <text value="Real"/>
+                  <text value="FFT"/>
                 </properties>
               </component>
               <component id="ad63a" class="javax.swing.JLabel" binding="imLbl">
@@ -85,7 +85,7 @@
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
-                  <text value="Imagery"/>
+                  <text value="DWT"/>
                 </properties>
               </component>
               <component id="1c233" class="javax.swing.JButton" binding="fftClearSnapsotBtn">
@@ -96,17 +96,6 @@
                 <properties>
                   <enabled value="false"/>
                   <text value="Clear"/>
-                </properties>
-              </component>
-              <component id="668d5" class="javax.swing.JCheckBox" binding="fftPowerCheckBox">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <enabled value="false"/>
-                  <selected value="false"/>
-                  <text value="Power/Phase"/>
                 </properties>
               </component>
             </children>

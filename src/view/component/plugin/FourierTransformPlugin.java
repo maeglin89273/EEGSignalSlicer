@@ -18,7 +18,7 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
     private DataSourceManager dataManager;
 
     public FourierTransformPlugin(int samplingFrequency, int range) {
-        super(Color.GREEN);
+        super(Color.GREEN, true);
         this.samplingFrequency = samplingFrequency;
         this.transformRange = range;
         this.halfFFTRange = this.computeHalfRange();
@@ -32,9 +32,11 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
         this.dataManager = new DataSourceManager();
 
         this.setEnabled(true);
+
         this.setRenderRangeBackground(true);
         this.setRange(this.transformRange);
         this.setFixedRange(true);
+
         this.setEnabled(false);
 
     }
@@ -78,7 +80,7 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
 
     @Override
     protected void onRangeChanged() {
-        updateTransformation();
+        this.updateTransformation();
     }
 
     @Override
@@ -223,6 +225,7 @@ public class FourierTransformPlugin extends RangePlugin implements InterestedStr
 
         @Override
         public void firePresentedDataChanged() {
+            // for the public visibility sake
             super.firePresentedDataChanged();
         }
     }
