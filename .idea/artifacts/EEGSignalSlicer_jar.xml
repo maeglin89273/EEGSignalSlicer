@@ -1,9 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="EEGSignalSlicer:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/EEGSignalSlicer_jar</output-path>
-    <root id="archive" name="EEGSignalSlicer.jar">
-      <element id="module-output" name="EEGSignalSlicer" />
-      <element id="library" level="project" name="net.razorvine:pyrolite:4.9" />
-    </root>
-  </artifact>
-</component>

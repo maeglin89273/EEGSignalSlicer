@@ -25,6 +25,7 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
         }
 
         long startingPos = plot.getPlotLowerBound();
+        g2.setStroke(STROKE);
         for (String tag: plot.getVisibleStreams()) {
             g2.setColor(PlottingUtils.hashStringToColor(tag, true));
             for (Stream data: dataSource.getSetofStreamsOf(tag)) {

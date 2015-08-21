@@ -253,7 +253,7 @@ public class TrainingPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 String newAction = actionField.getText().trim();
                 if (!newAction.isEmpty()) {
-                    datasetBox.add(new DatasetView(newAction, datasetManager));
+                    datasetBox.add(new DatasetView(newAction, datasetManager), 0);
                     layoutDatasetPanel();
                 }
             }
@@ -263,11 +263,12 @@ public class TrainingPanel extends JPanel {
             @Override
             public void stateChanged(ChangeEvent e) {
                 int newPos = rangeSpinnerModel.getNumber().intValue();
-                PlotView plot = transformRange.getPlot();
+                if (newPos != transformRange.getStartPosition()) {
+                    PlotView plot = transformRange.getPlot();
 
-                int offset = (int) (transformRange.getStartPosition() - plot.getPlotLowerBound());
-                plot.setXTo(newPos - offset);
-
+                    int offset = (int) (transformRange.getStartPosition() - plot.getPlotLowerBound());
+                    plot.setXTo(newPos - offset);
+                }
             }
         });
 
@@ -293,7 +294,6 @@ public class TrainingPanel extends JPanel {
 
             private Map<String, Collection<FragmentDataSource>> CollectDatasets() {
                 Map<String, Collection<FragmentDataSource>> fullDataset = new HashMap<>();
-                System.out.println(datasetBox.getComponentCount());
                 for (int i = 0; i < datasetBox.getComponentCount(); i++) {
                     DatasetView view = (DatasetView) datasetBox.getComponent(i);
                     fullDataset.put(view.getTag(), view.getAllData());
@@ -327,13 +327,13 @@ public class TrainingPanel extends JPanel {
 
             private void loadAndBuildDataset(File dir) {
                 Map<String, Collection<FragmentDataSource>> dataset = DataFileUtils.getInstance().loadFragmentDataSource(dir);
-                for (Map.Entry<String, Collection<FragmentDataSource>> pair: dataset.entrySet()) {
+                for (Map.Entry<String, Collection<FragmentDataSource>> pair : dataset.entrySet()) {
                     DatasetView actionView = new DatasetView(pair.getKey(), datasetManager);
 
-                    for (FragmentDataSource dataSource: pair.getValue()) {
+                    for (FragmentDataSource dataSource : pair.getValue()) {
                         actionView.addNewData(dataSource);
                     }
-                    datasetBox.add(actionView);
+                    datasetBox.add(actionView, 0);
                 }
 
                 layoutDatasetPanel();
