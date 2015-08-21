@@ -1,6 +1,6 @@
 package view.component.plugin;
 
-import view.component.PlottingUtils;
+import model.datasource.StreamingDataSource;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -12,12 +12,11 @@ import static view.component.plugin.NavigationPlugin.projectXDeltaToDataAmount;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
+public class TracerPlugin extends StreamPlottingPlugin implements InteractivePlotPlugin.MousePlugin {
     private final Stroke stroke;
     private static final Color TRACE_COLOR = new Color(0, 0, 0, 0.25f);
 
     private long startingPtr;
-    private int[] yBuffer = null;
 
     private Set<String> interestedActions;
     private boolean movingTrace = false;
@@ -41,8 +40,7 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         g2.setStroke(stroke);
         g2.setColor(TRACE_COLOR);
         for (String tag : plot.getVisibleStreams()) {
-            int length = PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), plot.getDataSource().getDataOf(tag), (int) this.startingPtr, yBuffer);
-            g2.drawPolyline(this.plot.getXPoints(), yBuffer, length);
+            this.plotStream(g2, plot.getDataSource().getDataOf(tag), this.startingPtr);
         }
     }
 
@@ -95,19 +93,10 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
     @Override
     public void onXRangeChanged(long plotLowerBound, long plotUpperBound, int windowSize) {
         if (this.isEnabled()) {
-            adjustBuffers(windowSize);
+            this.adjustBuffer(windowSize);
         }
     }
 
-    private void adjustBuffers(int size) {
-        if (this.shouldResizeBuffer(size)) {
-            this.yBuffer = new int[size];
-        }
-    }
-
-    private boolean shouldResizeBuffer(int size) {
-        return this.yBuffer == null || this.yBuffer.length != size;
-    }
 
     @Override
     public boolean onMouseEvent(String action, MouseEvent event) {
@@ -125,7 +114,7 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         return false;
     }
 
-    public void reset() {
+    public void onSourceReplaced(StreamingDataSource oldSource) {
         this.trace();
     }
 
@@ -140,7 +129,7 @@ public class TracerPlugin extends EmptyPlotPlugin implements InteractivePlotPlug
         }
         int windowSize = plot.getWindowSize();
         this.startingPtr = plot.getPlotLowerBound();
-        adjustBuffers(windowSize);
+        adjustBuffer(windowSize);
 
         this.plot.refresh();
     }

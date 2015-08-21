@@ -25,18 +25,21 @@ public class PyOracle {
         try {
             this.nameServer = NameServerProxy.locateNS(null);
         } catch (IOException e) {
-            e.printStackTrace();
-
+//            e.printStackTrace();
+            System.out.println(e);
+            System.out.println("pyro name server is not found");
         }
     }
 
     public PyroProxy getOracle(String name) {
+        name = "oracle." + name;
         if (!oracles.containsKey(name)) {
             PyroProxy proxy = null;
             try {
                  proxy = new PyroProxy(this.nameServer.lookup(name));
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e);
+                System.out.println("oracle " + name + " is not found");
                 return null;
             }
 

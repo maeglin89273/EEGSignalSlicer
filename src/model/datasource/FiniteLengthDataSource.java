@@ -1,7 +1,6 @@
 package model.datasource;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -9,8 +8,8 @@ import java.util.List;
  */
 public abstract class FiniteLengthDataSource implements StreamingDataSource {
 
-
     private List<PresentedDataChangedListener> listeners;
+
 
     public FiniteLengthDataSource() {
         this.listeners = new ArrayList<>();
@@ -30,7 +29,6 @@ public abstract class FiniteLengthDataSource implements StreamingDataSource {
         return this.intLength();
     }
 
-
     @Override
     public void addPresentedDataChangedListener(PresentedDataChangedListener listener) {
         listeners.add(listener);
@@ -43,8 +41,13 @@ public abstract class FiniteLengthDataSource implements StreamingDataSource {
 
     protected void firePresentedDataChanged() {
         for (int i = this.listeners.size() - 1; i >= 0; i--) {
-            this.listeners.get(i).onDataChanged();
+            this.listeners.get(i).onDataChanged(this);
         }
     }
 
+    protected void firePresentedDataChanged(String tag) {
+        for (int i = this.listeners.size() - 1; i >= 0; i--) {
+            this.listeners.get(i).onDataChanged(this, tag);
+        }
+    }
 }

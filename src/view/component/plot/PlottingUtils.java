@@ -1,11 +1,20 @@
-package view.component;
+package view.component.plot;
 
 import model.datasource.Stream;
+
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by maeglin89273 on 7/22/15.
  */
 public final class PlottingUtils {
+
+    private static Map<String, Color[]> colorMapping = new HashMap<>();
 
     public enum Baseline {
         BOTTOM, MIDDLE
@@ -50,5 +59,38 @@ public final class PlottingUtils {
             return plotHeight * value / (2 * coordinatePeak);
         }
     }
+
+    public static Color hashStringToColor(String string, boolean translucent) {
+        if (!colorMapping.containsKey(string)) {
+
+            int hash = PlottingUtils.saltString(string).hashCode();
+
+            int r = (hash & 0xFF0000) >> 16;
+            int g = (hash & 0x00FF00) >> 8;
+            int b = hash & 0x0000FF;
+            Color newColor = new Color(r / 255f, g / 255f, b / 255f);
+            Color translucentColor = new Color(r / 255f, g / 255f, b / 255f, 0.4f);
+            colorMapping.put(string, new Color[] {newColor, translucentColor});
+        }
+
+        return colorMapping.get(string)[translucent? 1: 0];
+    }
+
+    public static Color hashStringToColor(String string) {
+        return hashStringToColor(string, false);
+    }
+
+    private static String saltString(String string) {
+        final String SALT = "RGB?HSL";
+        float strHash = string.hashCode();
+        StringBuilder sb = new StringBuilder(string);
+        for (int i = 0; i < SALT.length(); i++) {
+            sb.append(SALT.charAt(Math.abs(((Float)(strHash / SALT.charAt(i))).hashCode() % SALT.length())));
+            sb.append(string);
+        }
+
+        return sb.toString();
+    }
+
 
 }

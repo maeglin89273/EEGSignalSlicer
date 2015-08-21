@@ -1,5 +1,7 @@
 package view.component.plugin;
 
+import view.component.plot.InteractivePlotView;
+
 import java.awt.event.MouseEvent;
 import java.util.Set;
 

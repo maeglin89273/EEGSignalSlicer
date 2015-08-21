@@ -7,18 +7,17 @@ import java.util.*;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class FilteredFiniteDataSource extends FiniteLengthDataSource implements FilteredDataSource {
-    private final HashMap<String, MutableFiniteLengthStream> cachedDataSpace;
+public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengthStream> implements FilteredDataSource, ViewDataSource {
+    private final HashMap<String, MutableFiniteStream> cachedDataSpace;
 
     protected final FiniteLengthDataSource rawSource;
-    protected final Map<String, FiniteLengthStream> presentedData;
     protected LinkedList<Filter> filters;
 
     public FilteredFiniteDataSource(FiniteLengthDataSource rawSource) {
         this.rawSource = rawSource;
-        this.presentedData = new HashMap<>();
         this.cachedDataSpace = new HashMap<>();
         this.filters = new LinkedList<>();
+        this.rawSource.addPresentedDataChangedListener(this);
     }
 
     @Override
@@ -41,11 +40,10 @@ public class FilteredFiniteDataSource extends FiniteLengthDataSource implements 
 
     @Override
     public FiniteLengthStream getFiniteDataOf(String tag) {
-        if (!this.presentedData.containsKey(tag)) {
-            this.presentedData.put(tag, filterOriginalData(tag));
+        if (!this.cachedData.containsKey(tag)) {
+            this.cachedData.put(tag, filterOriginalData(tag));
         }
-
-        return presentedData.get(tag);
+        return super.getFiniteDataOf(tag);
     }
 
     @Override
@@ -54,7 +52,7 @@ public class FilteredFiniteDataSource extends FiniteLengthDataSource implements 
     }
 
     private FiniteLengthStream filterOriginalData(String streamTag) {
-        MutableFiniteLengthStream filteredStream = claimCachedSpace(streamTag);
+        MutableFiniteStream filteredStream = claimCachedSpace(streamTag);
         FiniteLengthStream originalStream = this.rawSource.getFiniteDataOf(streamTag);
 
         if (filters.isEmpty()) {
@@ -71,17 +69,17 @@ public class FilteredFiniteDataSource extends FiniteLengthDataSource implements 
         return filteredStream;
     }
 
-    private MutableFiniteLengthStream claimCachedSpace(String streamTag) {
+    private MutableFiniteStream claimCachedSpace(String streamTag) {
         if (this.cachedDataSpace.containsKey(streamTag)) {
             return this.cachedDataSpace.get(streamTag);
         }
-        MutableFiniteLengthStream streamCache = new SimpleArrayStream(this.rawSource.getFiniteDataOf(streamTag).intLength());
+        MutableFiniteStream streamCache = new SimpleArrayStream(this.rawSource.getFiniteDataOf(streamTag).intLength());
         this.cachedDataSpace.put(streamTag, streamCache);
         return streamCache;
     }
 
     private void clearPresentedData() {
-        this.presentedData.clear();
+        this.cachedData.clear();
         this.firePresentedDataChanged();
     }
 
@@ -93,5 +91,21 @@ public class FilteredFiniteDataSource extends FiniteLengthDataSource implements 
     @Override
     public Collection<String> getTags() {
         return this.rawSource.getTags();
+    }
+
+    @Override
+    public void onDataChanged(StreamingDataSource source) {
+        this.clearPresentedData();
+    }
+
+    @Override
+    public void onDataChanged(StreamingDataSource source, String tag) {
+        this.cachedData.remove(tag);
+        this.firePresentedDataChanged(tag);
+    }
+
+    @Override
+    public void stopViewingSource() {
+        this.rawSource.removePresentedDataChangedListener(this);
     }
 }

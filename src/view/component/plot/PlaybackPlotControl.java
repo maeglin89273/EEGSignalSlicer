@@ -1,4 +1,4 @@
-package view.component;
+package view.component.plot;
 
 import model.datasource.FiniteLengthDataSource;
 import view.component.plugin.NavigationPlugin;

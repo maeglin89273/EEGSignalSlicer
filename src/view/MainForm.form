@@ -24,7 +24,7 @@
         </properties>
         <border type="none"/>
         <children>
-          <component id="f0050" class="view.component.PlaybackPlotControl" binding="plotControl" custom-create="true">
+          <component id="f0050" class="view.component.plot.PlaybackPlotControl" binding="plotControl" custom-create="true">
             <constraints>
               <splitpane position="left"/>
             </constraints>
@@ -37,33 +37,14 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="82ee4" class="javax.swing.JButton" binding="fftSnapshotBtn">
-                <constraints>
-                  <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <enabled value="false"/>
-                  <text value="Snapshot"/>
-                </properties>
-              </component>
-              <component id="16b4b" class="javax.swing.JCheckBox" binding="freqSpectrumCheckBox">
-                <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <text value="Frequency Analysis"/>
-                </properties>
-              </component>
-              <component id="84252" class="view.component.PlotView" binding="fftSpectrumPlot" custom-create="true">
+              <component id="484dc" class="view.component.plot.InteractivePlotView" binding="fftSpectrumPlot" custom-create="true">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties/>
               </component>
-              <component id="6f4d0" class="view.component.PlotView" binding="dwtSpectrumPlot" custom-create="true">
+              <component id="d1a45" class="view.component.plot.InteractivePlotView" binding="dwtSpectrumPlot" custom-create="true">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
@@ -72,7 +53,7 @@
               </component>
               <component id="2a3ff" class="javax.swing.JLabel" binding="reLbl">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
@@ -81,21 +62,11 @@
               </component>
               <component id="ad63a" class="javax.swing.JLabel" binding="imLbl">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties>
                   <text value="DWT"/>
-                </properties>
-              </component>
-              <component id="1c233" class="javax.swing.JButton" binding="fftClearSnapsotBtn">
-                <constraints>
-                  <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <enabled value="false"/>
-                  <text value="Clear"/>
                 </properties>
               </component>
             </children>
@@ -113,7 +84,7 @@
           <grid id="5d533" binding="leftPanel" layout-manager="GridBagLayout">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="1.5" weighty="1.0"/>
+              <gridbag weightx="0.0" weighty="1.0"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -135,12 +106,6 @@
                       <text value="Streams"/>
                     </properties>
                   </component>
-                  <hspacer id="5eb02">
-                    <constraints>
-                      <grid row="0" column="9" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="1.0" weighty="0.0"/>
-                    </constraints>
-                  </hspacer>
                   <component id="e3280" class="javax.swing.JButton" binding="loadCSVBtn">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
@@ -168,6 +133,12 @@
                     <border type="none"/>
                     <children/>
                   </grid>
+                  <hspacer id="becbc">
+                    <constraints>
+                      <grid row="0" column="9" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="1.0" weighty="0.0"/>
+                    </constraints>
+                  </hspacer>
                 </children>
               </grid>
               <grid id="70e71" binding="dtwPanel" layout-manager="GridBagLayout">
@@ -311,7 +282,7 @@
                       <text value="make"/>
                     </properties>
                   </component>
-                  <hspacer id="44471">
+                  <hspacer id="ecae1">
                     <constraints>
                       <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="1.0" weighty="0.0"/>
@@ -384,25 +355,25 @@
                       <text value="1~50Hz"/>
                     </properties>
                   </component>
-                  <hspacer id="decda">
+                  <component id="73699" class="javax.swing.JRadioButton" binding="noneFilterRadioBtn">
                     <constraints>
-                      <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="1.0" weighty="0.0"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
-                  </hspacer>
+                    <properties>
+                      <text value="None"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>
           </grid>
-          <grid id="f5365" binding="centerPanel" layout-manager="GridBagLayout">
+          <component id="4318b" class="view.component.dataview.TrainingPanel" binding="trainingPanel" custom-create="true">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.8" weighty="1.0"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
             </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
+          </component>
         </children>
       </grid>
     </children>

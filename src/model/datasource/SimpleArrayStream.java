@@ -3,16 +3,15 @@ package model.datasource;
 /**
  * Created by maeglin89273 on 7/26/15.
  */
-public class SimpleArrayStream extends MutableFiniteLengthStream {
-    private final double[] buffer;
+public class SimpleArrayStream extends MutableFiniteStream {
+    private double[] buffer;
     private int validLength;
     public SimpleArrayStream(int length) {
         this(new double[length]);
     }
 
     public SimpleArrayStream(double[] array) {
-        this.buffer = array;
-        this.validLength = this.buffer.length;
+        this.setUnderlyingBuffer(array);
     }
 
     @Override
@@ -38,7 +37,7 @@ public class SimpleArrayStream extends MutableFiniteLengthStream {
 
     @Override
     public void replacedBy(Stream stream, int start, int length) {
-        this.validLength = buffer.length >= length? length: buffer.length;
+        this.validLength = buffer.length >= length? (int)length: buffer.length;
 
         if (stream instanceof FiniteLengthStream) {
             FiniteLengthStream arrayStream = (FiniteLengthStream) stream;
@@ -56,4 +55,9 @@ public class SimpleArrayStream extends MutableFiniteLengthStream {
         return this.buffer;
     }
 
+    public SimpleArrayStream setUnderlyingBuffer(double[] buffer) {
+        this.buffer = buffer;
+        this.validLength = this.buffer.length;
+        return this;
+    }
 }

@@ -1,19 +1,17 @@
 package model.datasource;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Created by maeglin89273 on 7/28/15.
  */
-public class SimpleFiniteLengthDataSource extends FiniteLengthDataSource {
-    protected final Map<String, FiniteLengthStream> originalData;
+public class SimpleFiniteDataSource extends CachedFiniteDataSource<FiniteLengthStream> {
 
     private int maxStreamLength;
 
-    public SimpleFiniteLengthDataSource(Map<String, FiniteLengthStream> data) {
-        this.originalData = data;
+    public SimpleFiniteDataSource(Map<String, FiniteLengthStream> data) {
+        super(data);
         maxStreamLength = findMaxLength(data);
     }
 
@@ -27,17 +25,12 @@ public class SimpleFiniteLengthDataSource extends FiniteLengthDataSource {
     }
 
     @Override
-    public FiniteLengthStream getFiniteDataOf(String tag) {
-        return this.originalData.get(tag);
-    }
-
-    @Override
     public int intLength() {
         return this.maxStreamLength;
     }
 
     @Override
     public Collection<String> getTags() {
-        return originalData.keySet();
+        return this.cachedData.keySet();
     }
 }

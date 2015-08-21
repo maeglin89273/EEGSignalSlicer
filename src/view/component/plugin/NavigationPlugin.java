@@ -1,6 +1,7 @@
 package view.component.plugin;
 
-import view.component.PlotView;
+import model.datasource.StreamingDataSource;
+import view.component.plot.PlotView;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -12,10 +13,18 @@ import java.util.Set;
  * Created by maeglin89273 on 7/23/15.
  */
 public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
+
+    public enum ZoomingMode {
+        ZOOM_X, ZOOM_Y, ZOOM_XY;
+    }
+
+    private ZoomingMode zoomingMode;
+
     private Set<String> interestedActions;
     private MouseInteractionHandler mouseHandler;
 
     public NavigationPlugin() {
+        this.zoomingMode = ZoomingMode.ZOOM_XY;
         this.interestedActions = new HashSet<String>();
         this.interestedActions.add("mouseWheelMoved");
         this.interestedActions.add("mouseDragged");
@@ -38,7 +47,7 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
     }
 
     @Override
-    public void reset() {
+    public void onSourceReplaced(StreamingDataSource oldSource) {
         this.mouseHandler.resetCoordinates();
     }
 
@@ -59,6 +68,12 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
         }
         return false;
+    }
+
+    public void setZoomingMode(ZoomingMode mode) {
+        if (this.isEnabled()) {
+            this.zoomingMode = mode;
+        }
     }
 
     @Override
@@ -88,10 +103,22 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
             this.scalingLevel = this.scalingLevel + e.getWheelRotation();
             double scale = Math.pow(SCALING_FACTOR, this.scalingLevel);
-            if (this.scalingLevel >= MIN_WINDOW_SCALING_LEVEL && scalingLevel <= MAX_WINDOW_SCALING_LEVEL) {
-                plot.setWindowSize((int) (this.originalWindowSize * scale));
+
+            switch (zoomingMode) {
+                case ZOOM_X:
+                    plot.setWindowSize((int) (this.originalWindowSize * scale));
+                    break;
+                case ZOOM_Y:
+                    plot.setPeakValue((float) (this.originalPeakValue * scale));
+                    break;
+                case ZOOM_XY:
+                    if (this.scalingLevel >= MIN_WINDOW_SCALING_LEVEL && scalingLevel <= MAX_WINDOW_SCALING_LEVEL) {
+                        plot.setWindowSize((int) (this.originalWindowSize * scale));
+                    }
+                    plot.setPeakValue((float) (this.originalPeakValue * scale));
+                    break;
             }
-            plot.setPeakValue((float) (this.originalPeakValue * scale));
+
         }
 
         @Override

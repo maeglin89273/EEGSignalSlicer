@@ -1,7 +1,7 @@
 package model.filter;
 
 import model.datasource.FiniteLengthStream;
-import model.datasource.MutableFiniteLengthStream;
+import model.datasource.MutableFiniteStream;
 
 /**
  * Created by maeglin89273 on 7/21/15.
@@ -31,7 +31,7 @@ public class ButterworthFilter implements Filter {
     }
 
     @Override
-    public MutableFiniteLengthStream filter(FiniteLengthStream data, MutableFiniteLengthStream output) {
+    public MutableFiniteStream filter(FiniteLengthStream data, MutableFiniteStream output) {
         int Nback = this.b.length;
         double[] prev_y = new double[Nback];
         double[] prev_x = new double[Nback];

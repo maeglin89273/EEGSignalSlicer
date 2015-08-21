@@ -1,6 +1,7 @@
 package view.component.plugin;
 
-import view.component.PlotView;
+import model.datasource.StreamingDataSource;
+import view.component.plot.PlotView;
 
 import java.awt.*;
 
@@ -15,11 +16,13 @@ public interface PlotPlugin extends PlotView.CoordinatesRangeChangedListener {
 
     public void setPlot(PlotView plot);
 
+    public PlotView getPlot();
+
     public void setEnabled(boolean enabled);
 
     public boolean isEnabled();
 
-    public void reset();
+    public void onSourceReplaced(StreamingDataSource oldSource);
 
     public void onYRangeChanged(float topPeakValue, float bottomPeakValue);
 

@@ -1,4 +1,4 @@
-package view.component;
+package view.component.plot;
 
 import model.datasource.StreamingDataSource;
 import view.component.plugin.InteractivePlotPlugin;
@@ -20,12 +20,21 @@ public class InteractivePlotView extends PlotView {
     private List<InteractivePlotPlugin.MousePlugin> mousePlugins;
     private List<InterestedStreamVisibilityPlugin> visibilityPlugins;
     private MouseEventHandler mouseHandler;
+    private boolean viewAllStreams;
 
-    public InteractivePlotView(int windowSize, float peakValue) {
-        super(windowSize, peakValue);
+    public InteractivePlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
+        this(windowSize, peakValue, new Dimension(plotWidth, plotHeight));
+    }
+
+    public InteractivePlotView(int windowSize, float peakValue, Dimension dim) {
+        super(windowSize, peakValue, dim);
         this.visibleStreamTags = new LinkedList<>();
         this.visibilityPlugins = new ArrayList<>();
         this.prepareInteraction();
+    }
+
+    public InteractivePlotView(int windowSize, float peakValue) {
+        this(windowSize, peakValue, PREFERRED_SIZE);
     }
 
     private void prepareInteraction() {
@@ -44,9 +53,17 @@ public class InteractivePlotView extends PlotView {
 
     @Override
     protected void drawStreams(Graphics2D g2) {
-        for (String tag: this.visibleStreamTags) {
-            this.drawStream(g2, tag);
+        if (this.viewAllStreams) {
+            super.drawStreams(g2);
+        } else {
+            for (String tag : this.visibleStreamTags) {
+                this.drawStream(g2, tag);
+            }
         }
+    }
+
+    public void setViewAllStreams(boolean viewAll) {
+        this.viewAllStreams = viewAll;
     }
 
     @Override
@@ -84,7 +101,7 @@ public class InteractivePlotView extends PlotView {
     }
 
     public void setStreamVisible(String tag, boolean isVisible) {
-        if (!this.isDataSourceSet()) {
+        if (!this.isDataSourceSet() || this.viewAllStreams) {
             return;
         }
 
@@ -113,7 +130,7 @@ public class InteractivePlotView extends PlotView {
 
     @Override
     public Collection<String> getVisibleStreams() {
-        return this.visibleStreamTags;
+        return this.viewAllStreams? super.getVisibleStreams(): this.visibleStreamTags;
     }
 
     private class MouseEventHandler implements MouseListener, MouseMotionListener, MouseWheelListener {

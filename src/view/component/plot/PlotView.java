@@ -1,4 +1,4 @@
-package view.component;
+package view.component.plot;
 
 import model.datasource.StreamingDataSource;
 import view.component.plugin.PlotPlugin;
@@ -14,9 +14,7 @@ import java.util.List;
  * Created by maeglin89273 on 7/22/15.
  */
 public class PlotView extends JComponent implements StreamingDataSource.PresentedDataChangedListener {
-    private static final Dimension PREFERRED_SIZE = new Dimension(750, 300);
-
-    private Map<String, Color> colorMapping;
+    protected static final Dimension PREFERRED_SIZE = new Dimension(750, 300);
 
     private float peakValue;
 
@@ -36,7 +34,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
         this.plugins = new ArrayList<>();
         this.rangeListeners = new ArrayList<>();
-        this.colorMapping = new HashMap<>();
 
         this.baseline = PlottingUtils.Baseline.MIDDLE;
 
@@ -78,17 +75,12 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
             this.setXTo(0);
             this.dataSource.removePresentedDataChangedListener(this);
         }
+        StreamingDataSource oldSource = this.dataSource;
         this.dataSource = dataSource;
         this.dataSource.addPresentedDataChangedListener(this);
 
-        this.fireResetPlugin();
+        this.fireSourceReplacedToPlugin(oldSource);
         this.refresh();
-    }
-
-    private void fireResetPlugin() {
-        for (int i = this.plugins.size() - 1; i >= 0; i--) {
-            this.plugins.get(i).reset();
-        }
     }
 
     public StreamingDataSource getDataSource() {
@@ -99,13 +91,19 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         return this.dataSource != null;
     }
 
+    private void fireSourceReplacedToPlugin(StreamingDataSource oldSource) {
+        for (int i = this.plugins.size() - 1; i >= 0; i--) {
+            this.plugins.get(i).onSourceReplaced(oldSource);
+        }
+    }
+
     public void addPlugin(PlotPlugin plugin) {
 
         this.plugins.add(plugin);
         this.rangeListeners.add(plugin);
         plugin.setPlot(this);
         if (this.isDataSourceSet()) {
-            plugin.reset();
+            plugin.onSourceReplaced(dataSource);
             this.refresh();
         }
 
@@ -130,6 +128,9 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     public void setWindowSize(int windowSize) {
+        if (windowSize < 2) {
+            return;
+        }
 
         this.xBuffer = new int[windowSize];
         this.yBuffer = new int[windowSize];
@@ -242,37 +243,13 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     protected void drawStream(Graphics2D g2, String tag) {
-        g2.setColor(hashStringToColor(tag));
+        g2.setColor(PlottingUtils.hashStringToColor(tag));
+
         int length = PlottingUtils.loadYBuffer(this.baseline, this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), (int) this.getPlotLowerBound(), yBuffer);
         g2.drawPolyline(xBuffer, yBuffer, length);
     }
 
-    private Color hashStringToColor(String string) {
-        if (this.colorMapping.containsKey(string)) {
-            return this.colorMapping.get(string);
-        }
 
-        int hash = saltString(string).hashCode();
-
-        int h = (hash & 0xFF0000) >> 16;
-        int s = (hash & 0x00FF00) >> 8;
-        int b = hash & 0x0000FF;
-        Color newColor = new Color(h / 255f, s / 255f, b / 255f);
-        this.colorMapping.put(string, newColor);
-        return newColor;
-    }
-
-    private static String saltString(String string) {
-        final String SALT = "RGB?HSL";
-        float strHash = string.hashCode();
-        StringBuilder sb = new StringBuilder(string);
-        for (int i = 0; i < SALT.length(); i++) {
-            sb.append(SALT.charAt(Math.abs(((Float)(strHash / SALT.charAt(i))).hashCode() % SALT.length())));
-            sb.append(string);
-        }
-
-        return sb.toString();
-    }
 
     private Graphics2D prepareGraphics(Graphics g) {
         if (!(g instanceof Graphics2D)) {
@@ -312,17 +289,20 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     }
 
     @Override
-    public void onDataChanged() {
+    public void onDataChanged(StreamingDataSource source) {
         this.fireOnPresentedDataChanged();
         this.refresh();
     }
 
     @Override
-    public void onDataChanged(String tag) {
+    public void onDataChanged(StreamingDataSource source, String tag) {
         this.refresh();
     }
 
     public Collection<String> getVisibleStreams() {
+        if (!this.isDataSourceSet()) {
+            return new LinkedList<>();
+        }
         return this.dataSource.getTags();
     }
 

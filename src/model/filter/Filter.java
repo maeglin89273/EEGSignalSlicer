@@ -1,8 +1,7 @@
 package model.filter;
 
-import model.datasource.FiniteLengthDataSource;
 import model.datasource.FiniteLengthStream;
-import model.datasource.MutableFiniteLengthStream;
+import model.datasource.MutableFiniteStream;
 
 /**
  * Created by maeglin89273 on 7/22/15.
@@ -10,11 +9,11 @@ import model.datasource.MutableFiniteLengthStream;
 public interface Filter {
     public static final Filter EMPTY_FILTER = new Filter() {
         @Override
-        public MutableFiniteLengthStream filter(FiniteLengthStream input, MutableFiniteLengthStream output) {
+        public MutableFiniteStream filter(FiniteLengthStream input, MutableFiniteStream output) {
             output.replacedBy(input, 0, input.intLength());
             return output;
         }
     };
 
-    public MutableFiniteLengthStream filter(FiniteLengthStream input, MutableFiniteLengthStream output);
+    public MutableFiniteStream filter(FiniteLengthStream input, MutableFiniteStream output);
 }

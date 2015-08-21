@@ -1,7 +1,5 @@
 package model.datasource;
 
-import view.component.PlotView;
-
 import java.util.Collection;
 
 /**
@@ -18,8 +16,8 @@ public interface StreamingDataSource {
     void removePresentedDataChangedListener(PresentedDataChangedListener listener);
 
     public interface PresentedDataChangedListener {
-        public void onDataChanged();
-        public void onDataChanged(String tag);
+        public void onDataChanged(StreamingDataSource source);
+        public void onDataChanged(StreamingDataSource source, String tag);
     }
 
 }

@@ -1,6 +1,6 @@
 package view.component.plugin;
 
-import view.component.PlotView;
+import view.component.plot.PlotView;
 
 import java.awt.*;
 
@@ -35,8 +35,14 @@ public abstract class EmptyPlotPlugin implements PlotPlugin {
         this.plot.refresh();
     }
 
+    @Override
     public void setPlot(PlotView plot) {
         this.plot = plot;
+    }
+
+    @Override
+    public PlotView getPlot() {
+        return this.plot;
     }
 
     @Override

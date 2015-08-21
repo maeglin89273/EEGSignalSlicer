@@ -1,24 +1,21 @@
 package view.component.plugin;
 
 import model.datasource.*;
-import view.component.PlotView;
-import view.component.PlottingUtils;
+import view.component.plot.PlotView;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by maeglin89273 on 7/27/15.
  */
-public class SnapshotPlugin extends EmptyPlotPlugin {
+public class SnapshotPlugin extends StreamPlottingPlugin {
     private final Stroke stroke;
     private static final Color SNAPSHOT_COLOR = new Color(0, 0, 0, 0.25f);
 
     CapturedDataSource capturedData;
     private long startingPtr;
     private int windowSize;
-    private int[] yBuffer;
     private boolean plotSnapshot;
     private boolean hasSnapshot;
 
@@ -57,24 +54,13 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         FiniteLengthStream stream;
         for (String tag : this.capturedData.getCapturedTags()) {
             stream = capturedData.getFiniteDataOf(tag);
-            int length = PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), stream, (int) this.startingPtr, yBuffer);
-            g2.drawPolyline(this.plot.getXPoints(), yBuffer, length);
+            this.plotStream(g2, stream, this.startingPtr);
         }
     }
 
     @Override
-    public void reset() {
+    public void onSourceReplaced(StreamingDataSource oldSource) {
         this.clear();
-    }
-
-    private void adjustBuffer(int size) {
-        if (this.shouldResizeBuffer(size)) {
-            this.yBuffer = new int[size];
-        }
-    }
-
-    private boolean shouldResizeBuffer(int size) {
-        return this.yBuffer == null || this.yBuffer.length < size;
     }
 
     public void capture() {
@@ -109,29 +95,26 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         this.plot.refresh();
     }
 
-    private class CapturedDataSource extends FiniteLengthDataSource {
-        private HashMap<String, MutableFiniteLengthStream> data;
+    private class CapturedDataSource extends CachedFiniteDataSource<MutableFiniteStream> {
         private Collection<String> capturedTags;
-
-        private int length = 0;
+        private int length;
 
         private CapturedDataSource() {
-            this.data = new HashMap<>();
             this.clear();
         }
 
         public void captureStream(String tag, Stream target, int startPos, int length) {
             this.length = (int) Math.max(target.getCurrentLength(), length);
-            MutableFiniteLengthStream capturedStream;
-            if (this.data.containsKey(tag)) {
-                capturedStream = data.get(tag);
+            MutableFiniteStream capturedStream;
+            if (this.cachedData.containsKey(tag)) {
+                capturedStream = cachedData.get(tag);
                 if (capturedStream.intLength() >= length) {
                     capturedStream = new SimpleArrayStream(length);
-                    this.data.put(tag, capturedStream);
+                    this.cachedData.put(tag, capturedStream);
                 }
             } else {
                 capturedStream = new SimpleArrayStream(length);
-                this.data.put(tag, capturedStream);
+                this.cachedData.put(tag, capturedStream);
             }
 
             capturedStream.replacedBy(target, startPos, length);
@@ -148,7 +131,7 @@ public class SnapshotPlugin extends EmptyPlotPlugin {
         @Override
         public FiniteLengthStream getFiniteDataOf(String tag) {
             if (this.capturedTags.contains(tag)) {
-                return this.data.get(tag);
+                return super.getFiniteDataOf(tag);
             }
             return null;
         }

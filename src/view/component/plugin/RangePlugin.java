@@ -1,9 +1,11 @@
 package view.component.plugin;
 
-import view.component.PlotView;
+import model.datasource.*;
+import view.component.plot.PlotView;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,9 +14,10 @@ import static view.component.plugin.NavigationPlugin.projectXDeltaToDataAmount;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin {
+public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugin.MousePlugin, InterestedStreamVisibilityPlugin {
 
     private static final double MARGIN_PERCENTAGE = 0.1;
+
     private long startPos;
     private double relativeStartPos;
     private long endPos;
@@ -30,6 +33,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
 
     private RangeChangedListener listener;
     private Set<String> interestedActions;
+    private RangedDataSource rangedDataSource;
 
 
     public RangePlugin() {
@@ -37,19 +41,21 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public RangePlugin(Color knifeColor) {
-        this(knifeColor, false);
-    }
-
-    public RangePlugin(Color knifeColor, boolean wantBackground) {
         this.knifeColor = knifeColor;
         this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), bgAlpha);
-
-        this.renderBg = wantBackground;
-
+        this.rangedDataSource = new RangedDataSource();
         initRelativePoses(MARGIN_PERCENTAGE);
         initActionSet();
+
     }
 
+    public RangePlugin(Color knifeColor, int fixedRange) {
+        this.knifeColor = knifeColor;
+        this.bgColor = new Color(knifeColor.getRed(), knifeColor.getGreen(), knifeColor.getBlue(), bgAlpha);
+        this.rangedDataSource = new RangedDataSource();
+        initFixedRange(fixedRange);
+        initActionSet();
+    }
 
     private void initActionSet() {
         this.interestedActions = new HashSet<>(2);
@@ -68,7 +74,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     public void setRenderRangeBackground(boolean wantRender) {
-        if (this.isEnabled() && this.renderBg != wantRender) {
+        if (this.isEnabled() && !this.fixedRange && this.renderBg != wantRender) {
             this.renderBg = wantRender;
             this.plot.refresh();
         }
@@ -236,18 +242,93 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         if (!this.isEnabled()) {
             return;
         }
+
         this.fixedRange = fixedRange;
+        this.setRenderRangeBackground(this.fixedRange);
         if (this.rangeOverPlot && !this.fixedRange) {
             this.initRelativePoses(0);
             this.syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
         }
+    }
 
+    private void initFixedRange(int fixedRange) {
+        this.startPos = 0;
+        this.endPos = fixedRange - 1;
+        this.fixedRange = true;
+        this.renderBg = true;
     }
 
     public boolean isRangeOverPlot() {
         return this.rangeOverPlot;
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
+    }
+
+    @Override
+    public void setPlot(PlotView plot) {
+        super.setPlot(plot);
+        if (this.isEnabled()) {
+            syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
+        } else {
+            syncPos(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound());
+        }
+
+    }
+
+    private void syncPos(int windowSize, long plotLowerBound, long plotUpperBound) {
+
+        if (!this.fixedRange) {
+            this.startPos = boundStartPosition((int) (this.getRelativeStartPosition() * windowSize) + plotLowerBound);
+            this.relativeStartPos = computeRelativePos(getStartPosition());
+            this.endPos = boundEndPosition((int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound);
+            this.relativeEndPos = computeRelativePos(getEndPosition());
+        } else {
+            if (plotUpperBound - plotLowerBound + 1 < this.getRange()) {
+                this.rangeOverPlot = true;
+                return;
+            }
+
+            this.boundRange(windowSize, plotLowerBound, plotUpperBound, this.getRange());
+        }
+        this.rangeOverPlot = false;
+    }
+
+    private double computeRelativePos(long pos) {
+        return (pos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
+    }
+
+    private void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
+        if (!this.isEnabled()) {
+            return;
+        }
+
+        syncPos(windowSize, plotLowerBound, plotUpperBound);
+
+        fireStartChanged();
+        fireEndChanged();
+
+        onRangeChanged();
+    }
+
+
+    @Override
+    public void onSourceReplaced(StreamingDataSource oldSource) {
+        initRelativePoses(MARGIN_PERCENTAGE);
+        syncPos(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound());
+        if (oldSource != null) {
+            oldSource.removePresentedDataChangedListener(this.rangedDataSource);
+        }
+        plot.getDataSource().addPresentedDataChangedListener(this.rangedDataSource);
+    }
+
+    @Override
+    public Set<String> getInterestedActions() {
+        return this.interestedActions;
+    }
 
     private enum OperatingMode {
         NOT_SLICING, START_SLICER, END_SLICER, MOVE_RANGE
@@ -322,61 +403,10 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
                 if (!this.fixedRange) { //if it is fixed range, set start pos is enough.
                     this.setEndPosition(this.getEndPosition() + delta);
                 }
-
         }
         return false;
     }
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
-    }
-
-    @Override
-    public void setPlot(PlotView plot) {
-        super.setPlot(plot);
-        if (this.isEnabled()) {
-            syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());
-        } else {
-            syncPos(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound());
-        }
-    }
-
-    private void syncPos(int windowSize, long plotLowerBound, long plotUpperBound) {
-
-        if (!this.fixedRange) {
-            this.startPos = boundStartPosition((int) (this.getRelativeStartPosition() * windowSize) + plotLowerBound);
-            this.relativeStartPos = computeRelativePos(getStartPosition());
-            this.endPos = boundEndPosition((int) (this.getRelativeEndPosition() * windowSize) + plotLowerBound);
-            this.relativeEndPos = computeRelativePos(getEndPosition());
-        } else {
-            if (plotUpperBound - plotLowerBound + 1 < this.getRange()) {
-                this.rangeOverPlot = true;
-                return;
-            }
-
-            this.boundRange(windowSize, plotLowerBound, plotUpperBound, this.getRange());
-        }
-        this.rangeOverPlot = false;
-    }
-
-    private double computeRelativePos(long pos) {
-        return (pos - plot.getPlotLowerBound()) / (double) plot.getWindowSize();
-    }
-
-    private void syncRangeToPlot(long plotLowerBound, long plotUpperBound, int windowSize) {
-        if (!this.isEnabled()) {
-            return;
-        }
-
-        syncPos(windowSize, plotLowerBound, plotUpperBound);
-
-        fireStartChanged();
-        fireEndChanged();
-
-        onRangeChanged();
-    }
 
     private void fireStartChanged() {
         if (this.listener != null) {
@@ -392,22 +422,96 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
     }
 
     protected void onRangeChanged() {
-
-    };
-
-    @Override
-    public void reset() {
-        initRelativePoses(MARGIN_PERCENTAGE);
-        syncPos(plot.getWindowSize(), plot.getPlotLowerBound(), plot.getPlotUpperBound());
+        this.rangedDataSource.firePresentedDataChanged();
     }
 
     @Override
-    public Set<String> getInterestedActions() {
-        return this.interestedActions;
+    public void onStreamVisibilityChanged(String tag, boolean isVisible) {
+        this.rangedDataSource.firePresentedDataChanged(tag);
+    }
+
+    public FiniteLengthDataSource getRangedDataSource() {
+        return this.rangedDataSource;
     }
 
     public interface RangeChangedListener {
         public void onStartChanged(long lowerBound, long value, long upperBound);
         public void onEndChanged(long lowerBound, long value, long upperBound);
     }
+
+    private class RangedDataSource extends FiniteLengthDataSource implements ViewDataSource {
+
+        @Override
+        public FiniteLengthStream getFiniteDataOf(String tag) {
+            return new RangedStream(plot.getDataSource().getDataOf(tag));
+        }
+
+        @Override
+        public int intLength() {
+            return getRange();
+        }
+
+        @Override
+        public Collection<String> getTags() {
+            return plot.getVisibleStreams();
+        }
+
+        @Override
+        public void firePresentedDataChanged() {
+            super.firePresentedDataChanged();
+        }
+
+        @Override
+        public void firePresentedDataChanged(String tag) {
+            super.firePresentedDataChanged(tag);
+        }
+
+        @Override
+        public void onDataChanged(StreamingDataSource source) {
+            this.firePresentedDataChanged();
+        }
+
+        @Override
+        public void onDataChanged(StreamingDataSource source, String tag) {
+            this.firePresentedDataChanged(tag);
+        }
+
+        @Override
+        public void stopViewingSource() {
+            plot.getDataSource().removePresentedDataChangedListener(this);
+        }
+
+        private class RangedStream extends FiniteLengthStream {
+            private final Stream source;
+
+            public RangedStream(Stream source) {
+                this.source = source;
+            }
+
+            @Override
+            public int intLength() {
+                return getRange();
+            }
+
+            @Override
+            public double[] toArray() {
+                double[] buffer = new double[this.intLength()];
+                for (int i = 0; i < buffer.length; i++) {
+                    buffer[i] = source.get(sourceIndex(i));
+                }
+                return buffer;
+            }
+
+            @Override
+            public double get(long i) {
+                return source.get(sourceIndex(i));
+            }
+
+            private long sourceIndex(long i) {
+                return i + getStartPosition();
+            }
+        }
+    }
+
+
 }

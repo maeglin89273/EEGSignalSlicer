@@ -1,0 +1,46 @@
+package model.filter;
+
+import model.datasource.FiniteLengthStream;
+import model.datasource.FiniteListStream;
+import model.datasource.MutableFiniteStream;
+import model.filter.Filter;
+import net.razorvine.pyro.PyroProxy;
+import oracle.PyOracle;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * Created by maeglin89273 on 8/21/15.
+ */
+public class DomainTransformFilter implements Filter {
+
+    public static final DomainTransformFilter FFT = new DomainTransformFilter("fft_transform");
+    public static final DomainTransformFilter DWT_COIF4 = new DomainTransformFilter("dwt_coif4_transform");
+    public static final DomainTransformFilter DWT_DB4 = new DomainTransformFilter("dwt_db4_transform");
+
+    private final PyroProxy oracle;
+    private final FiniteListStream adapter;
+    private String transformationName;
+
+    public DomainTransformFilter(String transformationName) {
+        this.transformationName = transformationName;
+        this.oracle = PyOracle.getInstance().getOracle("transform");
+        this.adapter = new FiniteListStream(0);
+    }
+
+    public void setTransformation(String transformationName) {
+        this.transformationName = transformationName;
+    }
+
+    @Override
+    public MutableFiniteStream filter(FiniteLengthStream input, MutableFiniteStream output) {
+        try {
+            List<Double> result = (List<Double>) oracle.call(transformationName, input.toArray());
+            output.replacedBy(adapter.setUnderlyingBuffer(result), 0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return output;
+    }
+}

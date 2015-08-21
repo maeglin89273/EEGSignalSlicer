@@ -1,10 +1,11 @@
 package view.component.plugin;
 
-import model.datasource.MutableFiniteLengthStream;
+import model.datasource.MutableFiniteStream;
 import model.datasource.SimpleArrayStream;
 import model.datasource.Stream;
-import view.component.PlotView;
-import view.component.PlottingUtils;
+import model.datasource.StreamingDataSource;
+import view.component.plot.PlotView;
+import view.component.plot.PlottingUtils;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -20,8 +21,8 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
     private static final int DTW_COMPUTABLE_RANGE = 400;
     public static final float ACCEPTABLE_DTW_DISTANCE_UPPERBOUND = 100;
 
-    private final MutableFiniteLengthStream dtwSourceBufferFront;
-    private final MutableFiniteLengthStream dtwSourceBufferBack;
+    private final MutableFiniteStream dtwSourceBufferFront;
+    private final MutableFiniteStream dtwSourceBufferBack;
     private TracerPlugin streamTemplate;
 
     private int[][] dtwWarpingPath;
@@ -182,9 +183,9 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
     }
 
     @Override
-    public void reset() {
-        super.reset();
-        this.streamTemplate.reset();
+    public void onSourceReplaced(StreamingDataSource oldSource) {
+        super.onSourceReplaced(oldSource);
+        this.streamTemplate.onSourceReplaced(oldSource);
     }
 
     public double getDTWDistance() {

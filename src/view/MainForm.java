@@ -6,15 +6,14 @@ import model.filter.ButterworthFilter;
 import model.DataFileUtils;
 import model.filter.EEGFilter;
 import model.filter.Filter;
-import view.component.PlaybackPlotControl;
-import view.component.PlotView;
-import view.component.PlottingUtils;
+import view.component.dataview.TrainingPanel;
+import view.component.plot.InteractivePlotView;
+import view.component.plot.PlaybackPlotControl;
 import view.component.plugin.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -55,19 +54,17 @@ public class MainForm extends JFrame {
     private JLabel slicerLbl;
     private JButton templateMakeBtn;
     private JLabel templateLbl;
-    private JCheckBox freqSpectrumCheckBox;
-    private PlotView fftSpectrumPlot;
-    private JButton fftSnapshotBtn;
+    private InteractivePlotView fftSpectrumPlot;
     private JPanel leftPanel;
     private JPanel fftPanel;
     private JPanel controlPanel;
-    private JPanel centerPanel;
-    private PlotView dwtSpectrumPlot;
+    private InteractivePlotView dwtSpectrumPlot;
     private JLabel reLbl;
     private JLabel imLbl;
-    private JButton fftClearSnapsotBtn;
     private JButton loadCSVBtn;
     private JPanel tagsPanel;
+    private JRadioButton noneFilterRadioBtn;
+    private TrainingPanel trainingPanel;
 
     private ButtonGroup filterChoiceGroup;
     private SpinnerNumberModel startSpinModel;
@@ -75,12 +72,8 @@ public class MainForm extends JFrame {
 
     private FiniteLengthDataSource data;
 
-
     private DTWPlugin dtwPlugin;
     private Map<String, Filter> filterTable;
-    private FrequencySpectrumPlugin spectrumPlugin;
-    private SnapshotPlugin reSnapshotPlugin;
-    private SnapshotPlugin imSnapshotPlugin;
 
     public MainForm() {
         super("EEG Channel Slicer");
@@ -102,7 +95,7 @@ public class MainForm extends JFrame {
         this.loadOpenBCIBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File file = loadData("txt");
+                File file = DataFileUtils.getInstance().loadFileDialog(MainForm.this, "txt");
                 if (file != null) {
                     setData(DataFileUtils.getInstance().loadOpenBCIRawFile(file));
                 }
@@ -112,7 +105,7 @@ public class MainForm extends JFrame {
         this.loadCSVBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File file = loadData("csv");
+                File file = DataFileUtils.getInstance().loadFileDialog(MainForm.this, "csv");
                 if (file != null) {
                     setData(DataFileUtils.getInstance().loadGeneralCSVFile(file));
                 }
@@ -123,7 +116,7 @@ public class MainForm extends JFrame {
         this.startSpinModel.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                int value = ((Number) startSpinModel.getValue()).intValue();
+                int value = startSpinModel.getNumber().intValue();
                 if (value != dtwPlugin.getStartPosition()) {
                     dtwPlugin.setStartPosition(value);
                 }
@@ -133,7 +126,7 @@ public class MainForm extends JFrame {
         this.endSpinModel.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                int value = ((Number) endSpinModel.getValue()).intValue();
+                int value = endSpinModel.getNumber().intValue();
                 if (value != dtwPlugin.getEndPosition()) {
                     dtwPlugin.setEndPosition(value);
 
@@ -254,38 +247,6 @@ public class MainForm extends JFrame {
             }
         });
 
-        freqSpectrumCheckBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                boolean fftOn = freqSpectrumCheckBox.isSelected();
-                fftSpectrumPlot.setEnabled(fftOn);
-                dwtSpectrumPlot.setEnabled(fftOn);
-                fftSnapshotBtn.setEnabled(fftOn);
-                fftClearSnapsotBtn.setEnabled(fftOn);
-                spectrumPlugin.setEnabled(fftOn);
-
-                if (!fftOn) {
-                    reSnapshotPlugin.clear();
-                    imSnapshotPlugin.clear();
-                }
-            }
-        });
-
-        fftSnapshotBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reSnapshotPlugin.capture();
-                imSnapshotPlugin.capture();
-            }
-        });
-
-        fftClearSnapsotBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                reSnapshotPlugin.clear();
-                imSnapshotPlugin.clear();
-            }
-        });
     }
 
 
@@ -331,18 +292,6 @@ public class MainForm extends JFrame {
         this.pack();
     }
 
-    private File loadData(String fileExtension) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("data Files", fileExtension);
-        fileChooser.setFileFilter(filter);
-        fileChooser.setMultiSelectionEnabled(false);
-        if (fileChooser.showDialog(MainForm.this, "Load") == JFileChooser.APPROVE_OPTION) {
-            return fileChooser.getSelectedFile();
-        }
-        return null;
-    }
-
     private void setupOthers() {
         this.setTitle(APPLICATION_NAME);
         this.startSpinModel = (SpinnerNumberModel) this.sliceStartSpinner.getModel();
@@ -354,40 +303,29 @@ public class MainForm extends JFrame {
         filterChoiceGroup.add(betaFilterRadioBtn);
         filterChoiceGroup.add(gammaFilterRadioBtn);
         filterChoiceGroup.add(a1to50HzFilterRadioBtn);
+        filterChoiceGroup.add(noneFilterRadioBtn);
         this.filterTable = new HashMap<>(EEGFilter.EEG_BANDPASS_FILTER_TABLE);
+        this.filterTable.put(noneFilterRadioBtn.getText(), Filter.EMPTY_FILTER);
         this.filterTable.put(a1to50HzFilterRadioBtn.getText(), ButterworthFilter.BANDPASS_1_50HZ);
 
         this.startSpinModel.setValue((int) this.dtwPlugin.getStartPosition());
         this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
 
-        this.fftSpectrumPlot.setLineWidth(1f);
-        this.dwtSpectrumPlot.setLineWidth(1f);
-
-        this.fftSpectrumPlot.setEnabled(false);
-        this.dwtSpectrumPlot.setEnabled(false);
     }
 
     private void setupPlugins() {
         this.dtwPlugin = new DTWPlugin();
-        this.spectrumPlugin = new FrequencySpectrumPlugin(250, 256);
-        this.reSnapshotPlugin = new SnapshotPlugin();
-        this.imSnapshotPlugin = new SnapshotPlugin();
 
         this.plotControl.addPluginToPlot(this.dtwPlugin);
-        this.plotControl.addPluginToPlot(this.spectrumPlugin);
+        this.plotControl.addPluginToPlot(this.trainingPanel.getFrequencySpectrumPlugin());
 
-        this.fftSpectrumPlot.addPlugin(this.reSnapshotPlugin);
-        this.dwtSpectrumPlot.addPlugin(this.imSnapshotPlugin);
-
-        this.fftSpectrumPlot.setDataSource(this.spectrumPlugin.getFFTDataSource());
-        this.dwtSpectrumPlot.setDataSource(this.spectrumPlugin.getDWTDataSource());
     }
 
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(600, 60f);
-        fftSpectrumPlot = new PlotView(60, 5f, 300, 125);
-        fftSpectrumPlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
-        dwtSpectrumPlot = new PlotView(60, 5f, 300, 125);
+        this.trainingPanel = new TrainingPanel();
+        this.fftSpectrumPlot = this.trainingPanel.getFFTSpectrumPlot();
+        this.dwtSpectrumPlot = this.trainingPanel.getDWTSpectrumPlot();
     }
 
     /**
@@ -419,22 +357,6 @@ public class MainForm extends JFrame {
         fftPanel = new JPanel();
         fftPanel.setLayout(new GridBagLayout());
         splitPane1.setRightComponent(fftPanel);
-        fftSnapshotBtn = new JButton();
-        fftSnapshotBtn.setEnabled(false);
-        fftSnapshotBtn.setText("Snapshot");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftSnapshotBtn, gbc);
-        freqSpectrumCheckBox = new JCheckBox();
-        freqSpectrumCheckBox.setText("Frequency Analysis");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(freqSpectrumCheckBox, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -456,6 +378,7 @@ public class MainForm extends JFrame {
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 4;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(reLbl, gbc);
         imLbl = new JLabel();
@@ -463,16 +386,9 @@ public class MainForm extends JFrame {
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.gridwidth = 4;
         gbc.anchor = GridBagConstraints.WEST;
         fftPanel.add(imLbl, gbc);
-        fftClearSnapsotBtn = new JButton();
-        fftClearSnapsotBtn.setEnabled(false);
-        fftClearSnapsotBtn.setText("Clear");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(fftClearSnapsotBtn, gbc);
         controlPanel = new JPanel();
         controlPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -487,7 +403,6 @@ public class MainForm extends JFrame {
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 1.5;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         controlPanel.add(leftPanel, gbc);
@@ -507,13 +422,6 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         channelPanel.add(tagsLbl, gbc);
-        final JPanel spacer1 = new JPanel();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 9;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        channelPanel.add(spacer1, gbc);
         loadCSVBtn = new JButton();
         loadCSVBtn.setText("Load CSV Data...");
         gbc = new GridBagConstraints();
@@ -538,6 +446,13 @@ public class MainForm extends JFrame {
         gbc.gridwidth = 9;
         gbc.fill = GridBagConstraints.BOTH;
         channelPanel.add(tagsPanel, gbc);
+        final JPanel spacer1 = new JPanel();
+        gbc = new GridBagConstraints();
+        gbc.gridx = 9;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        channelPanel.add(spacer1, gbc);
         dtwPanel = new JPanel();
         dtwPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -712,22 +627,20 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(a1to50HzFilterRadioBtn, gbc);
-        final JPanel spacer3 = new JPanel();
+        noneFilterRadioBtn = new JRadioButton();
+        noneFilterRadioBtn.setText("None");
         gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        filterPanel.add(spacer3, gbc);
-        centerPanel = new JPanel();
-        centerPanel.setLayout(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(noneFilterRadioBtn, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.weightx = 0.8;
+        gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        controlPanel.add(centerPanel, gbc);
+        controlPanel.add(trainingPanel, gbc);
     }
 
     /**
