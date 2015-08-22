@@ -13,7 +13,13 @@ public interface Filter {
             output.replacedBy(input, 0, input.intLength());
             return output;
         }
+
+        @Override
+        public int calculateLengthAfterFiltering(int originalLength) {
+            return originalLength;
+        }
     };
 
     public MutableFiniteStream filter(FiniteLengthStream input, MutableFiniteStream output);
+    public int calculateLengthAfterFiltering(int originalLength);
 }

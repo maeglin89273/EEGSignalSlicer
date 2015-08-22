@@ -36,6 +36,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
 
     private static final int ANIMATION_INTERVAL = 20;
     private int plotSlidingSpeed = DEFAULT_SLIDING_SPEED;
+    private JLabel speedLbl;
 
     public PlaybackPlotControl(int windowSize, float peakValue) {
         this(new InteractivePlotView(windowSize, peakValue));
@@ -81,6 +82,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
                 } else {
                     play();
                 }
+                updateSpeedLbl();
             }
         });
 
@@ -89,8 +91,9 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
                     plotSlidingSpeed += (plotSlidingSpeed == -1 ? 2 : 1);
+                    updateSpeedLbl();
                 } else {
-                    plot.moveX(-1);
+                    plot.moveX(1);
                 }
 
             }
@@ -101,8 +104,9 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
             public void actionPerformed(ActionEvent e) {
                 if (isPlaying()) {
                     plotSlidingSpeed -= (plotSlidingSpeed == 1 ? 2 : 1);
+                    updateSpeedLbl();
                 } else {
-                    plot.moveX(1);
+                    plot.moveX(-1);
                 }
             }
         });
@@ -116,6 +120,14 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
                 }
             }
         });
+    }
+
+    private void updateSpeedLbl() {
+        if (this.isPlaying()) {
+            this.speedLbl.setText(this.plotSlidingSpeed < 0? "<<" + (-this.plotSlidingSpeed): this.plotSlidingSpeed + ">>");
+        } else {
+            this.speedLbl.setText("||");
+        }
     }
 
     public void setDataSource(FiniteLengthDataSource dataSource) {
@@ -159,7 +171,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
     }
 
     private void setupUI(InteractivePlotView plot) {
-
+        
         this.setLayout(new GridBagLayout());
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), null));
         startLbl = new JLabel();
@@ -180,7 +192,6 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         gbc.anchor = GridBagConstraints.EAST;
         this.add(endLbl, gbc);
         this.plot = plot;
-        this.plot.setLayout(new GridBagLayout());
         this.plot.setBackground(new Color(-1));
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
@@ -236,19 +247,27 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         progressLbl.setText("0%");
         gbc = new GridBagConstraints();
         gbc.gridx = 3;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(progressLbl, gbc);
         playbackSlider = new JSlider();
         playbackSlider.setValue(0);
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.gridwidth = 5;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(playbackSlider, gbc);
-
+        speedLbl = new JLabel();
+        speedLbl.setHorizontalAlignment(0);
+        speedLbl.setHorizontalTextPosition(0);
+        speedLbl.setText("||");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(speedLbl, gbc);
     }
 
     @Override

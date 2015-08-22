@@ -15,16 +15,18 @@ import java.util.List;
  */
 public class DomainTransformFilter implements Filter {
 
-    public static final DomainTransformFilter FFT = new DomainTransformFilter("fft_transform");
-    public static final DomainTransformFilter DWT_COIF4 = new DomainTransformFilter("dwt_coif4_transform");
-    public static final DomainTransformFilter DWT_DB4 = new DomainTransformFilter("dwt_db4_transform");
+    public static final DomainTransformFilter FFT = new DomainTransformFilter("fft");
+    public static final DomainTransformFilter DWT_COIF4 = new DomainTransformFilter("dwt_coif4");
+    public static final DomainTransformFilter DWT_DB4 = new DomainTransformFilter("dwt_db4");
 
     private final PyroProxy oracle;
     private final FiniteListStream adapter;
+    private final String transformationLengthCalculator;
     private String transformationName;
 
     public DomainTransformFilter(String transformationName) {
-        this.transformationName = transformationName;
+        this.transformationName = transformationName + "_transform";
+        this.transformationLengthCalculator = "length_after_" + transformationName;
         this.oracle = PyOracle.getInstance().getOracle("transform");
         this.adapter = new FiniteListStream(0);
     }
@@ -36,11 +38,22 @@ public class DomainTransformFilter implements Filter {
     @Override
     public MutableFiniteStream filter(FiniteLengthStream input, MutableFiniteStream output) {
         try {
-            List<Double> result = (List<Double>) oracle.call(transformationName, input.toArray());
+            List<Double> result = (List<Double>) oracle.call(this.transformationName, input.toArray());
             output.replacedBy(adapter.setUnderlyingBuffer(result), 0);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
         return output;
+    }
+
+    @Override
+    public int calculateLengthAfterFiltering(int originalLength) {
+        try {
+            return (Integer) oracle.call(this.transformationLengthCalculator, originalLength);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return originalLength;
     }
 }

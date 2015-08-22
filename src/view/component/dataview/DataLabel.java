@@ -7,9 +7,6 @@ import model.datasource.FragmentDataSource;
 import model.filter.DomainTransformFilter;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Created by maeglin89273 on 8/19/15.

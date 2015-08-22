@@ -2,6 +2,7 @@ package model.datasource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -10,11 +11,9 @@ import java.util.List;
 public class FiniteListStream extends MutableFiniteStream {
 
     private List<Double> buffer;
-    private int validLength;
 
     public FiniteListStream(List<Double> buffer) {
-        this.buffer = buffer;
-        this.validLength = this.buffer.size();
+        setUnderlyingBuffer(buffer);
     }
 
     public FiniteListStream(int length) {
@@ -28,10 +27,26 @@ public class FiniteListStream extends MutableFiniteStream {
 
     @Override
     public void replacedBy(Stream stream, int start, int length) {
-        this.validLength = length > this.buffer.size()? this.buffer.size(): (int) length;
-        for (int i = 0; i < this.validLength; i++) {
-            this.set(i, stream.get(i + start));
+
+        int i = 0;
+        if (this.buffer.size() < length) {
+            if (this.buffer instanceof ArrayList) {
+                ((ArrayList<Double>)this.buffer).ensureCapacity(length);
+            }
+
+            for (; i < buffer.size(); i++) {
+                this.buffer.set(i, stream.get(i + start));
+            }
+            for (;i < length; i++) {
+                this.buffer.add(stream.get(i + start));
+            }
+        } else {
+            for (; i < length; i++) {
+                this.buffer.set(i, stream.get(i + start));
+            }
+            this.buffer.subList(i, this.buffer.size()).clear();
         }
+
     }
 
     @Override
@@ -42,8 +57,9 @@ public class FiniteListStream extends MutableFiniteStream {
     @Override
     public double[] toArray() {
         double[] target = new double[buffer.size()];
-        for (int i = 0; i < target.length; i++) {
-            target[i] = buffer.get(i);
+        int i = 0;
+        for (double value: buffer) {
+            target[i++] = value;
         }
 
         return target;
@@ -56,7 +72,6 @@ public class FiniteListStream extends MutableFiniteStream {
 
     public FiniteListStream setUnderlyingBuffer(List<Double> buffer) {
         this.buffer = buffer;
-        this.validLength = this.buffer.size();
         return this;
     }
 }

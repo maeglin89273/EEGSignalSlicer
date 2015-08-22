@@ -38,8 +38,8 @@ public class TrainingPanel extends JPanel {
     private JButton newActionBtn;
     private JCheckBox trainingCkBox;
     private JTextField actionField;
-    private SourceHidablePlotView fftSpectrumPlot;
-    private SourceHidablePlotView dwtSpectrumPlot;
+    private CustomPlotView fftSpectrumPlot;
+    private CustomPlotView dwtSpectrumPlot;
 
     private RangePlugin transformRange;
     private DatasetView selectedDatasetView;
@@ -183,7 +183,7 @@ public class TrainingPanel extends JPanel {
             }
         });
 
-        fftSpectrumPlot = new SourceHidablePlotView(60, 1250f, 300, 125);
+        fftSpectrumPlot = new CustomPlotView(60, 1250f, 300, 125);
         fftSpectrumPlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
         fftSpectrumPlot.setViewAllStreams(true);
         fftSpectrumPlot.setLineWidth(1.3f);
@@ -202,7 +202,7 @@ public class TrainingPanel extends JPanel {
 
         this.fftSpectrumPlot.setEnabled(false);
 
-        dwtSpectrumPlot = new SourceHidablePlotView(256, 50f, 256, 125);
+        dwtSpectrumPlot = new CustomPlotView(368, 50f, 300, 125);
         dwtSpectrumPlot.setViewAllStreams(true);
         dwtSpectrumPlot.setLineWidth(1.3f);
 
@@ -417,10 +417,16 @@ public class TrainingPanel extends JPanel {
         scrollPane.repaint();
     }
 
-    private class SourceHidablePlotView extends InteractivePlotView {
+    private class CustomPlotView extends InteractivePlotView {
         private boolean showSource = true;
-        public SourceHidablePlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
+        public CustomPlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
             super(windowSize, peakValue, plotWidth, plotHeight);
+        }
+
+        @Override
+        public void setDataSource(StreamingDataSource dataSource) {
+            super.setDataSource(dataSource);
+            this.setWindowSize((int) dataSource.getCurrentLength());
         }
 
         public void setShowSource(boolean show) {

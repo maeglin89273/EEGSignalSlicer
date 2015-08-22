@@ -62,4 +62,9 @@ public class ButterworthFilter implements Filter {
         }
         return output;
     }
+
+    @Override
+    public int calculateLengthAfterFiltering(int originalLength) {
+        return originalLength;
+    }
 }
