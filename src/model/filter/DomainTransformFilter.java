@@ -25,14 +25,18 @@ public class DomainTransformFilter implements Filter {
     private String transformationName;
 
     public DomainTransformFilter(String transformationName) {
-        this.transformationName = transformationName + "_transform";
+        this.setTransformation(transformationName);
         this.transformationLengthCalculator = "length_after_" + transformationName;
         this.oracle = PyOracle.getInstance().getOracle("transform");
         this.adapter = new FiniteListStream(0);
     }
 
     public void setTransformation(String transformationName) {
-        this.transformationName = transformationName;
+        this.transformationName = transformationName + "_transform";
+    }
+
+    public String getTransformation() {
+        return this.transformationName;
     }
 
     @Override

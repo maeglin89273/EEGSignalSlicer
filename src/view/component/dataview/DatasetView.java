@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -79,10 +79,12 @@ public class DatasetView extends JPanel {
         return this.dwtPlottingData;
     }
 
-    public List<FragmentDataSource> getAllData() {
-        LinkedList<FragmentDataSource> allData = new LinkedList<>();
-        for (int i = 0; i < this.datasetBox.getComponentCount(); i++) {
+    public Collection<FragmentDataSource> getAllData() {
+        Collection<FragmentDataSource> allData = new TreeSet<>((o1, o2) -> {
+            return (int) (o1.getStartingPosition() - o2.getStartingPosition());
+        });
 
+        for (int i = 0; i < this.datasetBox.getComponentCount(); i++) {
             allData.add(((DataLabel) this.datasetBox.getComponent(i)).getData());
         }
         return allData;

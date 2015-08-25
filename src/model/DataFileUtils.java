@@ -64,25 +64,23 @@ public class DataFileUtils {
         this.workingDirectory = this.workingFile.getParentFile();
     }
 
-    public void saveFragmentDataSources(String dirName, Map<String, Collection<FragmentDataSource>> data) {
+    public void saveFragmentDataSources(String dirName, Collection<FragmentDataSource> data) {
         goIntoDirectory(dirName);
         List<String[]> fragmentHeaders = new LinkedList<>();
         String tag;
         String[] header;
         int id;
-        for (Map.Entry<String, Collection<FragmentDataSource>> pair: data.entrySet()) {
-            tag = pair.getKey();
-            id = 0;
 
-            for (FragmentDataSource fragment: pair.getValue()) {
-                header = new String[3];
-                header[0] = tag;
-                header[1] = String.valueOf(id++);
-                header[2] = String.valueOf(fragment.getStartingPosition());
-                fragmentHeaders.add(header);
-                this.save(header[0] + "_" + header[1] + ".csv", fragment);
-            }
+        id = 0;
+        for (FragmentDataSource fragment: data) {
+            header = new String[3];
+            header[0] = fragment.getFragmentTag();
+            header[1] = String.valueOf(id++);
+            header[2] = String.valueOf(fragment.getStartingPosition());
+            fragmentHeaders.add(header);
+            this.save(header[0] + "_" + header[1] + ".csv", fragment);
         }
+
 
         File newFlie = new File(this.workingDirectory, "fragment_headers.csv");
         try {

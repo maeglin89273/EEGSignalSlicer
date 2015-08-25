@@ -82,7 +82,6 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
                 } else {
                     play();
                 }
-                updateSpeedLbl();
             }
         });
 
@@ -155,6 +154,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
             this.animator.start();
             this.playing = true;
             this.playBtn.setText("Pause");
+            this.updateSpeedLbl();
         }
     }
 
@@ -163,6 +163,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
             this.animator.stop();
             this.playing = false;
             this.playBtn.setText("Play");
+            this.updateSpeedLbl();
         }
     }
 

@@ -1,6 +1,7 @@
 package view.component.dataview;
 
 import model.DataFileUtils;
+import model.Learner;
 import model.datasource.FilteredFiniteDataSource;
 import model.datasource.FragmentDataSource;
 import model.datasource.StreamingDataSource;
@@ -20,10 +21,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by maeglin89273 on 8/20/15.
@@ -288,17 +286,8 @@ public class TrainingPanel extends JPanel {
         this.saveDatasetBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Map<String, Collection<FragmentDataSource>> fullDataset = CollectDatasets();
+                Collection<FragmentDataSource> fullDataset = collectDatasets();
                 DataFileUtils.getInstance().saveFragmentDataSources("traning data-" + new Date().toString(), fullDataset);
-            }
-
-            private Map<String, Collection<FragmentDataSource>> CollectDatasets() {
-                Map<String, Collection<FragmentDataSource>> fullDataset = new HashMap<>();
-                for (int i = 0; i < datasetBox.getComponentCount(); i++) {
-                    DatasetView view = (DatasetView) datasetBox.getComponent(i);
-                    fullDataset.put(view.getTag(), view.getAllData());
-                }
-                return fullDataset;
             }
         });
 
@@ -343,9 +332,28 @@ public class TrainingPanel extends JPanel {
         this.trainBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //todo: call training oracle
+                Learner learner = new Learner(collectDatasets(), dwtSpectrumPlot.getVisibleStreams(), new Learner.TrainingCompleteCallback() {
+                    @Override
+                    public void trainDone() {
+
+                    }
+
+                    @Override
+                    public void trainFail() {
+
+                    }
+                });
             }
         });
+    }
+
+    private Collection<FragmentDataSource> collectDatasets() {
+        Collection<FragmentDataSource> fullDataset = new LinkedList<>();
+        for (int i = 0; i < datasetBox.getComponentCount(); i++) {
+            DatasetView view = (DatasetView) datasetBox.getComponent(i);
+            fullDataset.addAll(view.getAllData());
+        }
+        return fullDataset;
     }
 
     public InteractivePlotView getFFTSpectrumPlot() {
