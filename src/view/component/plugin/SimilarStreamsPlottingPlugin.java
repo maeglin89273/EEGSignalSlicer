@@ -40,8 +40,6 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
     }
 
     public void setDataSource(SimilarStreamsDataSource dataSource) {
-
-        if (this.isEnabled()) {
             if (this.dataSource != null) {
                 this.dataSource.removePresentedDataChangedListener(this);
             }
@@ -51,6 +49,7 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
             if (this.dataSource != null) {
                 this.dataSource.addPresentedDataChangedListener(this);
             }
+        if (this.isEnabled()) {
             this.plot.refresh();
         }
     }

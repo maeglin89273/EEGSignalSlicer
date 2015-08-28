@@ -59,28 +59,38 @@ public class DataFileUtils {
 
     }
 
+    public void goOutDirectory() {
+        this.workingDirectory = this.workingDirectory.getParentFile();
+    }
+
     private void setWorkingFile(File file) {
         this.workingFile = file;
         this.workingDirectory = this.workingFile.getParentFile();
     }
 
     public void saveFragmentDataSources(String dirName, Collection<FragmentDataSource> data) {
-        goIntoDirectory(dirName);
+        this.goIntoDirectory(dirName);
+        File rootDir = this.workingDirectory;
         List<String[]> fragmentHeaders = new LinkedList<>();
+        Map<String, Integer> ids = new HashMap<>();
         String tag;
         String[] header;
         int id;
 
-        id = 0;
         for (FragmentDataSource fragment: data) {
             header = new String[3];
-            header[0] = fragment.getFragmentTag();
-            header[1] = String.valueOf(id++);
+            tag = header[0] = fragment.getFragmentTag();
+            id = ids.getOrDefault(header[0], 0);
+            header[1] = String.valueOf(id);
+            ids.put(tag, ++id);
             header[2] = String.valueOf(fragment.getStartingPosition());
             fragmentHeaders.add(header);
-            this.save(header[0] + "_" + header[1] + ".csv", fragment);
+
+            makeSureInSubDir(dirName, tag);
+            this.save(tag + "_" + header[1] + ".csv", fragment);
         }
 
+        this.workingDirectory = rootDir;
 
         File newFlie = new File(this.workingDirectory, "fragment_headers.csv");
         try {
@@ -103,10 +113,20 @@ public class DataFileUtils {
         this.workingDirectory = this.workingDirectory.getParentFile();
     }
 
+    private void makeSureInSubDir(String parentDirName, String subDirName) {
+        if (!this.workingDirectory.getName().equals(subDirName)) {
+            if (!this.workingDirectory.getName().equals(parentDirName)) {
+                this.goOutDirectory();
+            }
+            this.goIntoDirectory(subDirName);
+        }
+    }
+
     public Map<String, Collection<FragmentDataSource>> loadFragmentDataSource(File dirFile) {
         Map<String, Collection<FragmentDataSource>> result = new HashMap<>();
-
-        File headerFile = new File(dirFile, "fragment_headers.csv");
+        this.workingDirectory = dirFile;
+        String dirName = dirFile.getName();
+        File headerFile = new File(this.workingDirectory, "fragment_headers.csv");
         try {
             List<String> lines = Files.readAllLines(headerFile.toPath());
             lines = lines.subList(1, lines.size());
@@ -118,7 +138,8 @@ public class DataFileUtils {
                 if (!result.containsKey(tag)) {
                     result.put(tag, new LinkedList<>());
                 }
-                fragmentFile = new File(dirFile, tag + "_" + entries[1] + ".csv");
+                this.makeSureInSubDir(dirName, tag);
+                fragmentFile = new File(this.workingDirectory, tag + "_" + entries[1] + ".csv");
                 result.get(tag).add(new ReconstructedFragmentDataSource(tag, Long.parseLong(entries[2]), loadGeneralCSVFile(fragmentFile)));
             }
         } catch (IOException e) {

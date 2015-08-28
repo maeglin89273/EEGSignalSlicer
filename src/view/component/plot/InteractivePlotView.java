@@ -151,12 +151,12 @@ public class InteractivePlotView extends PlotView {
 
         @Override
         public void mouseEntered(MouseEvent e) {
-
+            fireMouseAction("mouseEntered", e);
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-
+            fireMouseAction("mouseExited", e);
         }
 
         @Override
@@ -166,7 +166,7 @@ public class InteractivePlotView extends PlotView {
 
         @Override
         public void mouseMoved(MouseEvent e) {
-
+            fireMouseAction("mouseMoved", e);
         }
 
         @Override

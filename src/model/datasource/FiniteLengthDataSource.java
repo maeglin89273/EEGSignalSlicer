@@ -10,7 +10,6 @@ public abstract class FiniteLengthDataSource implements StreamingDataSource {
 
     private List<PresentedDataChangedListener> listeners;
 
-
     public FiniteLengthDataSource() {
         this.listeners = new ArrayList<>();
     }

@@ -12,6 +12,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
 
     protected final FiniteLengthDataSource rawSource;
     protected LinkedList<Filter> filters;
+    private float xUnit;
     private int length;
     private int oldSourcelength;
 
@@ -26,21 +27,21 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     @Override
     public void addFilter(Filter filter) {
         this.filters.add(filter);
-        this.recalculateFilteredLength();
+        this.recalculateFilteredInfo();
         this.clearPresentedData();
     }
 
     @Override
     public void removeFilter(Filter filter) {
         this.filters.remove(filter);
-        this.recalculateFilteredLength();
+        this.recalculateFilteredInfo();
         this.clearPresentedData();
     }
 
     @Override
     public void replaceFilter(int i, Filter filter) {
         this.filters.set(i, filter);
-        this.recalculateFilteredLength();
+        this.recalculateFilteredInfo();
         this.clearPresentedData();
     }
 
@@ -122,11 +123,11 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     private void estimateLengthChanged() {
         if (this.rawSource.intLength() != this.oldSourcelength) {
             this.oldSourcelength = this.rawSource.intLength();
-            this.recalculateFilteredLength();
+            this.recalculateFilteredInfo();
         }
     }
 
-    private void recalculateFilteredLength() {
+    private void recalculateFilteredInfo() {
         this.length = rawSource.intLength();
         for (Filter filter: filters) {
             this.length = filter.calculateLengthAfterFiltering(this.length);

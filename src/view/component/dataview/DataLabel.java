@@ -18,6 +18,7 @@ public class DataLabel extends JPanel {
     private final FilteredFiniteDataSource dwtData;
 
     private JCheckBox labelCkBox;
+    private String tag;
 
     public DataLabel(FragmentDataSource data, DatasetView.DataLabelGroupManager groupManager) {
         this.data = data;
@@ -58,12 +59,16 @@ public class DataLabel extends JPanel {
         return this.data;
     }
 
-    public boolean isDataShowed() {
+    public boolean isDataSelected() {
         return this.labelCkBox.isSelected();
     }
 
 
     public void discard() {
         this.data.stopViewingSource();
+    }
+
+    public void setTag(String tag) {
+        this.data.setFrangmentTag(tag);
     }
 }

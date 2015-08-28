@@ -318,11 +318,12 @@ public class MainForm extends JFrame {
 
         this.plotControl.addPluginToPlot(this.dtwPlugin);
         this.plotControl.addPluginToPlot(this.trainingPanel.getFrequencySpectrumPlugin());
+        this.plotControl.addPluginToPlot(this.trainingPanel.getPointPositionPlugin());
 
     }
 
     private void createUIComponents() {
-        plotControl = new PlaybackPlotControl(600, 60f);
+        plotControl = new PlaybackPlotControl(800, 60f);
         this.trainingPanel = new TrainingPanel();
         this.fftSpectrumPlot = this.trainingPanel.getFFTSpectrumPlot();
         this.dwtSpectrumPlot = this.trainingPanel.getDWTSpectrumPlot();

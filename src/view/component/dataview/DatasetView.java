@@ -4,11 +4,9 @@ import model.datasource.*;
 import view.component.plugin.SimilarStreamsPlottingPlugin;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by maeglin89273 on 8/19/15.
@@ -79,13 +77,17 @@ public class DatasetView extends JPanel {
         return this.dwtPlottingData;
     }
 
-    public Collection<FragmentDataSource> getAllData() {
+    public Collection<FragmentDataSource> getAllData(boolean selectedDataOnly) {
         Collection<FragmentDataSource> allData = new TreeSet<>((o1, o2) -> {
             return (int) (o1.getStartingPosition() - o2.getStartingPosition());
         });
 
+        DataLabel label;
         for (int i = 0; i < this.datasetBox.getComponentCount(); i++) {
-            allData.add(((DataLabel) this.datasetBox.getComponent(i)).getData());
+            label = (DataLabel) this.datasetBox.getComponent(i);
+            if (!selectedDataOnly || label.isDataSelected()) {
+                allData.add(label.getData());
+            }
         }
         return allData;
     }
@@ -99,6 +101,14 @@ public class DatasetView extends JPanel {
         }
         datasetBox.removeAll();
 
+    }
+
+    public void setTag(String tag) {
+        this.headerRdoBtn.setText(tag);
+        for (int i = 0; i < datasetBox.getComponentCount(); i++) {
+            DataLabel label = (DataLabel) datasetBox.getComponent(i);
+            label.setTag(tag);
+        }
     }
 
 
@@ -130,7 +140,7 @@ public class DatasetView extends JPanel {
         public void actionPerformed(ActionEvent e) {
             DataLabel label = (DataLabel) ((JComponent)e.getSource()).getClientProperty(LABEL_KEY);
             if (e.getSource() instanceof JCheckBox) {
-                if (label.isDataShowed()) {
+                if (label.isDataSelected()) {
                     showDataSource(label);
                 } else {
                     hideDataSource(label);

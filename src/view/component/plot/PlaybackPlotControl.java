@@ -3,6 +3,7 @@ package view.component.plot;
 import model.datasource.FiniteLengthDataSource;
 import view.component.plugin.NavigationPlugin;
 import view.component.plugin.PlotPlugin;
+import view.component.plugin.PointPositionPlugin;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -48,7 +49,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         this.playing = false;
         setupUI(plot);
 
-        addPluginToPlot(new NavigationPlugin());
+        this.addPluginToPlot(new NavigationPlugin());
 
         setEnableControls(false);
         updateYDisplays(plot.getPeakValue(), -plot.getPeakValue());

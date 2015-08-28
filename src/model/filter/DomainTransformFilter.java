@@ -19,7 +19,7 @@ public class DomainTransformFilter implements Filter {
     public static final DomainTransformFilter DWT_COIF4 = new DomainTransformFilter("dwt_coif4");
     public static final DomainTransformFilter DWT_DB4 = new DomainTransformFilter("dwt_db4");
 
-    private final PyroProxy oracle;
+    private PyroProxy oracle;
     private final FiniteListStream adapter;
     private final String transformationLengthCalculator;
     private String transformationName;
@@ -41,6 +41,7 @@ public class DomainTransformFilter implements Filter {
 
     @Override
     public MutableFiniteStream filter(FiniteLengthStream input, MutableFiniteStream output) {
+
         try {
             List<Double> result = (List<Double>) oracle.call(this.transformationName, input.toArray());
             output.replacedBy(adapter.setUnderlyingBuffer(result), 0);
@@ -48,6 +49,7 @@ public class DomainTransformFilter implements Filter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         return output;
     }
 
@@ -58,6 +60,7 @@ public class DomainTransformFilter implements Filter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         return originalLength;
     }
 }

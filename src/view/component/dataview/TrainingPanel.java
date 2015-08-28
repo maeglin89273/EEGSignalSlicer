@@ -1,7 +1,7 @@
 package view.component.dataview;
 
 import model.DataFileUtils;
-import model.Learner;
+import model.LearnerProxy;
 import model.datasource.FilteredFiniteDataSource;
 import model.datasource.FragmentDataSource;
 import model.datasource.StreamingDataSource;
@@ -9,10 +9,7 @@ import model.filter.DomainTransformFilter;
 import view.component.plot.InteractivePlotView;
 import view.component.plot.PlotView;
 import view.component.plot.PlottingUtils;
-import view.component.plugin.NavigationPlugin;
-import view.component.plugin.PlotPlugin;
-import view.component.plugin.RangePlugin;
-import view.component.plugin.SimilarStreamsPlottingPlugin;
+import view.component.plugin.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -28,6 +25,14 @@ import java.util.*;
  */
 public class TrainingPanel extends JPanel {
 
+    private static final String ANALYSIS_SOURCE_AND_DATA = "source and data";
+    private static final String ANALYSIS_DATA = "data";
+    private static final String ANALYSIS_SOURCE = "source";
+
+    private static final String[] ANALYSIS_PLOT_MODES = new String[] {ANALYSIS_SOURCE_AND_DATA, ANALYSIS_DATA, ANALYSIS_SOURCE};
+
+    private int plotModeIdx =0;
+    private static final int SAMPLE_WINDOW_SIZE = 736;
     private final DatasetViewGroupManager datasetManager;
 
     private Box datasetBox;
@@ -44,11 +49,36 @@ public class TrainingPanel extends JPanel {
     private JScrollPane scrollPane;
     private SimilarStreamsPlottingPlugin fftBgPlugin;
     private SimilarStreamsPlottingPlugin dwtBgPlugin;
-    private JCheckBox showSourceCkBox;
+    private JButton plotModeBtn;
     private JButton saveDatasetBtn;
     private JButton loadDatasetBtn;
     private JSpinner rangeStartSpinner;
     private SpinnerNumberModel rangeSpinnerModel;
+    private JLabel msgLbl;
+    private JButton plot2DBtn;
+    private JButton plot3DBtn;
+    private JCheckBox predictCkBox;
+    private JButton renameBtn;
+    private JCheckBox coordinatesCkBox;
+
+    private boolean predicting = false;
+
+    LearnerProxy learner = new LearnerProxy(new LearnerProxy.TrainingCompleteCallback() {
+        @Override
+        public void trainDone(double score) {
+            msgLbl.setText("Train done. Score: " + String.format("%.2f%%", 100 * score));
+            predictCkBox.setEnabled(true);
+        }
+
+        @Override
+        public void trainFail() {
+            msgLbl.setText("Train fail");
+            closePrediction();
+        }
+    });
+    private PointPositionPlugin fftPPPlugin;
+    private PointPositionPlugin mainPlotPPPlugin;
+
 
     public TrainingPanel() {
         this.initComponents();
@@ -58,7 +88,6 @@ public class TrainingPanel extends JPanel {
     }
 
     private void initComponents() {
-
         this.setLayout(new GridBagLayout());
         actionField = new JTextField();
         actionField.setEnabled(false);
@@ -76,29 +105,13 @@ public class TrainingPanel extends JPanel {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         this.add(trainingCkBox, gbc);
-        trainBtn = new JButton();
-        trainBtn.setEnabled(false);
-        trainBtn.setText("train");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 8;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        this.add(trainBtn, gbc);
-        showSourceCkBox = new JCheckBox();
-        showSourceCkBox.setEnabled(false);
-        showSourceCkBox.setSelected(true);
-        showSourceCkBox.setText("show source");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        this.add(showSourceCkBox, gbc);
         scrollPane = new JScrollPane();
         scrollPane.setVerticalScrollBarPolicy(21);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 9;
+        gbc.gridwidth = 8;
+        gbc.gridheight = 8;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
@@ -114,7 +127,7 @@ public class TrainingPanel extends JPanel {
         rangeStartSpinner = new JSpinner();
         rangeStartSpinner.setEnabled(false);
         gbc = new GridBagConstraints();
-        gbc.gridx = 2;
+        gbc.gridx = 3;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -123,39 +136,101 @@ public class TrainingPanel extends JPanel {
         addDataBtn.setEnabled(false);
         addDataBtn.setText("add data");
         gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        this.add(addDataBtn, gbc);
-        final JPanel spacer1 = new JPanel();
-        gbc = new GridBagConstraints();
         gbc.gridx = 4;
         gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        this.add(addDataBtn, gbc);
+        msgLbl = new JLabel();
+        msgLbl.setText("");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 1;
+        gbc.gridwidth = 3;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(spacer1, gbc);
+        this.add(msgLbl, gbc);
+        trainBtn = new JButton();
+        trainBtn.setEnabled(false);
+        trainBtn.setText("train");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 8;
+        gbc.gridy = 8;
+        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(trainBtn, gbc);
+        predictCkBox = new JCheckBox();
+        predictCkBox.setEnabled(false);
+        predictCkBox.setText("predict");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 8;
+        gbc.gridy = 9;
+        gbc.anchor = GridBagConstraints.SOUTHWEST;
+        this.add(predictCkBox, gbc);
+        renameBtn = new JButton();
+        renameBtn.setEnabled(false);
+        renameBtn.setText("rename");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(renameBtn, gbc);
+        plotModeBtn = new JButton();
+        plotModeBtn.setEnabled(false);
+        plotModeBtn.setSelected(true);
+        plotModeBtn.setText("source and data");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        this.add(plotModeBtn, gbc);
+        coordinatesCkBox = new JCheckBox();
+        coordinatesCkBox.setEnabled(false);
+        coordinatesCkBox.setText("coordinates");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        this.add(coordinatesCkBox, gbc);
         loadDatasetBtn = new JButton();
         loadDatasetBtn.setEnabled(false);
         loadDatasetBtn.setText("load...");
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 1;
+        gbc.gridx = 8;
+        gbc.gridy = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(loadDatasetBtn, gbc);
         saveDatasetBtn = new JButton();
         saveDatasetBtn.setEnabled(false);
         saveDatasetBtn.setText("save");
         gbc = new GridBagConstraints();
-        gbc.gridx = 6;
-        gbc.gridy = 1;
+        gbc.gridx = 8;
+        gbc.gridy = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(saveDatasetBtn, gbc);
-        final JPanel spacer2 = new JPanel();
+        final JPanel spacer1 = new JPanel();
         gbc = new GridBagConstraints();
-        gbc.gridx = 7;
-        gbc.gridy = 1;
+        gbc.gridx = 8;
+        gbc.gridy = 4;
+        gbc.gridheight = 2;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        this.add(spacer1, gbc);
+        plot3DBtn = new JButton();
+        plot3DBtn.setEnabled(false);
+        plot3DBtn.setText("plot 3D");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 8;
+        gbc.gridy = 7;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(spacer2, gbc);
+        this.add(plot3DBtn, gbc);
+        plot2DBtn = new JButton();
+        plot2DBtn.setEnabled(false);
+        plot2DBtn.setText("plot 2D");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 8;
+        gbc.gridy = 6;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(plot2DBtn, gbc);
 
 
         datasetBox = SingleDirectionBox.createHorizontalBox();
@@ -166,12 +241,18 @@ public class TrainingPanel extends JPanel {
     }
 
     private void initPlots() {
-        this.transformRange = new RangePlugin(Color.CYAN, 256);
+        this.fftPPPlugin = new PointPositionPlugin(250.0 / SAMPLE_WINDOW_SIZE);
+        this.mainPlotPPPlugin = new PointPositionPlugin(0.004);
+
+        this.transformRange = new RangePlugin(Color.CYAN, SAMPLE_WINDOW_SIZE);
         this.transformRange.setRangeChangedListener(new RangePlugin.RangeChangedListener() {
             @Override
             public void onStartChanged(long lowerBound, long value, long upperBound) {
-                if ((Integer)rangeSpinnerModel.getValue() != value) {
-                    rangeSpinnerModel.setValue((int)(value));
+                if ((Integer) rangeSpinnerModel.getValue() != value) {
+                    rangeSpinnerModel.setValue((int) (value));
+                    if (predicting) {
+                        predictSignal();
+                    }
                 }
             }
 
@@ -190,9 +271,12 @@ public class TrainingPanel extends JPanel {
         fftSource.addFilter(DomainTransformFilter.FFT);
         fftSpectrumPlot.setDataSource(fftSource);
 
+
         NavigationPlugin navigationPlugin = new NavigationPlugin();
         fftSpectrumPlot.addPlugin(navigationPlugin);
         navigationPlugin.setZoomingMode(NavigationPlugin.ZoomingMode.ZOOM_Y);
+
+        fftSpectrumPlot.addPlugin(this.fftPPPlugin);
 
         this.fftBgPlugin = new SimilarStreamsPlottingPlugin();
         fftSpectrumPlot.addPlugin(this.fftBgPlugin);
@@ -200,7 +284,7 @@ public class TrainingPanel extends JPanel {
 
         this.fftSpectrumPlot.setEnabled(false);
 
-        dwtSpectrumPlot = new CustomPlotView(368, 50f, 300, 125);
+        dwtSpectrumPlot = new CustomPlotView(SAMPLE_WINDOW_SIZE, 50f, 300, 125);
         dwtSpectrumPlot.setViewAllStreams(true);
         dwtSpectrumPlot.setLineWidth(1.3f);
 
@@ -217,6 +301,8 @@ public class TrainingPanel extends JPanel {
         this.dwtBgPlugin.setEnabled(true);
 
         this.dwtSpectrumPlot.setEnabled(false);
+
+
     }
 
     private void setupListeners() {
@@ -232,17 +318,52 @@ public class TrainingPanel extends JPanel {
                 saveDatasetBtn.setEnabled(trainingOn);
                 trainBtn.setEnabled(trainingOn);
                 actionField.setEnabled(trainingOn);
-                showSourceCkBox.setEnabled(trainingOn);
+                plotModeBtn.setEnabled(trainingOn);
                 transformRange.setEnabled(trainingOn);
                 rangeStartSpinner.setEnabled(trainingOn);
+                plot2DBtn.setEnabled(trainingOn);
+                plot3DBtn.setEnabled(trainingOn);
+                renameBtn.setEnabled(trainingOn && selectedDatasetView != null);
+                predictCkBox.setEnabled(trainingOn && predicting);
+                coordinatesCkBox.setEnabled(trainingOn);
             }
         });
 
-        this.showSourceCkBox.addActionListener(new ActionListener() {
+        this.coordinatesCkBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fftSpectrumPlot.setShowSource(showSourceCkBox.isSelected());
-                dwtSpectrumPlot.setShowSource(showSourceCkBox.isSelected());
+                boolean enabled = coordinatesCkBox.isSelected();
+                fftPPPlugin.setEnabled(enabled);
+                mainPlotPPPlugin.setEnabled(enabled);
+            }
+        });
+
+        this.plotModeBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                plotModeIdx = (plotModeIdx + 1) % ANALYSIS_PLOT_MODES.length;
+                String mode = ANALYSIS_PLOT_MODES[plotModeIdx];
+                plotModeBtn.setText(mode);
+
+                switch (mode) {
+                    case ANALYSIS_SOURCE:
+                        fftSpectrumPlot.setShowSource(true);
+                        dwtSpectrumPlot.setShowSource(true);
+                        fftBgPlugin.setEnabled(false);
+                        dwtBgPlugin.setEnabled(false);
+                        break;
+                    case ANALYSIS_DATA:
+                        fftSpectrumPlot.setShowSource(false);
+                        dwtSpectrumPlot.setShowSource(false);
+                        fftBgPlugin.setEnabled(true);
+                        dwtBgPlugin.setEnabled(true);
+                        break;
+                    case ANALYSIS_SOURCE_AND_DATA:
+                        fftSpectrumPlot.setShowSource(true);
+                        dwtSpectrumPlot.setShowSource(true);
+                        fftBgPlugin.setEnabled(true);
+                        dwtBgPlugin.setEnabled(true);
+                }
             }
         });
 
@@ -254,6 +375,13 @@ public class TrainingPanel extends JPanel {
                     datasetBox.add(new DatasetView(newAction, datasetManager), 0);
                     layoutDatasetPanel();
                 }
+            }
+        });
+
+        this.renameBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selectedDatasetView.setTag(actionField.getText().trim());
             }
         });
 
@@ -273,12 +401,7 @@ public class TrainingPanel extends JPanel {
         this.addDataBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String tag = selectedDatasetView.getTag();
-                long startingPos = transformRange.getStartPosition();
-                int length = transformRange.getRange();
-                StreamingDataSource dataSource = transformRange.getPlot().getDataSource();
-
-                selectedDatasetView.addNewData(new FragmentDataSource(tag, startingPos, length, dataSource));
+                selectedDatasetView.addNewData(makeFragmentDataSource(selectedDatasetView.getTag()));
                 layoutDatasetPanel();
             }
         });
@@ -286,7 +409,7 @@ public class TrainingPanel extends JPanel {
         this.saveDatasetBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Collection<FragmentDataSource> fullDataset = collectDatasets();
+                Collection<FragmentDataSource> fullDataset = collectDatasets(false);
                 DataFileUtils.getInstance().saveFragmentDataSources("traning data-" + new Date().toString(), fullDataset);
             }
         });
@@ -329,29 +452,74 @@ public class TrainingPanel extends JPanel {
             }
         });
 
+        this.plot2DBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                learner.prepareData(collectDatasets(true), dwtSpectrumPlot.getVisibleStreams());
+                learner.pcaPlot2D();
+            }
+        });
+
+        this.plot3DBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                learner.prepareData(collectDatasets(true), dwtSpectrumPlot.getVisibleStreams());
+                learner.pcaPlot3D();
+            }
+        });
+
         this.trainBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Learner learner = new Learner(collectDatasets(), dwtSpectrumPlot.getVisibleStreams(), new Learner.TrainingCompleteCallback() {
-                    @Override
-                    public void trainDone() {
+                learner.prepareData(collectDatasets(true), dwtSpectrumPlot.getVisibleStreams());
+                msgLbl.setText("Training...");
+                learner.train();
+            }
+        });
 
-                    }
-
-                    @Override
-                    public void trainFail() {
-
-                    }
-                });
+        this.predictCkBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (predictCkBox.isSelected()) {
+                    predicting = true;
+                    predictSignal();
+                } else {
+                    predicting = false;
+                }
             }
         });
     }
 
-    private Collection<FragmentDataSource> collectDatasets() {
+    private void predictSignal() {
+        String result = learner.predict(makeFragmentDataSource("predict"));
+
+        if (result == null) {
+            msgLbl.setText("ERROR: please retrain the model");
+            closePrediction();
+        } else {
+            msgLbl.setText("predict result: " + result);
+        }
+    }
+
+    private void closePrediction() {
+        predicting = false;
+        predictCkBox.setSelected(false);
+        predictCkBox.setEnabled(false);
+    }
+
+
+    private FragmentDataSource makeFragmentDataSource(String tag) {
+        long startingPos = transformRange.getStartPosition();
+        int length = transformRange.getRange();
+        StreamingDataSource dataSource = transformRange.getPlot().getDataSource();
+        return new FragmentDataSource(tag, startingPos, length, dataSource);
+    }
+
+    private Collection<FragmentDataSource> collectDatasets(boolean selectedDataOnly) {
         Collection<FragmentDataSource> fullDataset = new LinkedList<>();
         for (int i = 0; i < datasetBox.getComponentCount(); i++) {
             DatasetView view = (DatasetView) datasetBox.getComponent(i);
-            fullDataset.addAll(view.getAllData());
+            fullDataset.addAll(view.getAllData(selectedDataOnly));
         }
         return fullDataset;
     }
@@ -366,6 +534,10 @@ public class TrainingPanel extends JPanel {
 
     public PlotPlugin getFrequencySpectrumPlugin() {
         return this.transformRange;
+    }
+
+    public PlotPlugin getPointPositionPlugin() {
+        return this.mainPlotPPPlugin;
     }
 
     class DatasetViewGroupManager implements ActionListener {
@@ -395,6 +567,7 @@ public class TrainingPanel extends JPanel {
             fftBgPlugin.setDataSource(view.getFFTDataSource());
             dwtBgPlugin.setDataSource(view.getDWTDataSource());
             addDataBtn.setEnabled(true);
+            renameBtn.setEnabled(true);
         }
 
         @Override
@@ -409,14 +582,19 @@ public class TrainingPanel extends JPanel {
                 view.discardDataset();
                 datasetBox.remove(view);
                 if (view == selectedDatasetView) {
-                    selectedDatasetView = null;
-                    fftBgPlugin.setDataSource(null);
-                    dwtBgPlugin.setDataSource(null);
-                    addDataBtn.setEnabled(false);
+                    this.handleDatasetUnselected();
                 }
                 layoutDatasetPanel();
             }
 
+        }
+
+        private void handleDatasetUnselected() {
+            selectedDatasetView = null;
+            fftBgPlugin.setDataSource(null);
+            dwtBgPlugin.setDataSource(null);
+            addDataBtn.setEnabled(false);
+            renameBtn.setEnabled(false);
         }
     }
 

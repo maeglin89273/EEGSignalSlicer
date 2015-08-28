@@ -30,7 +30,7 @@ public class TracerPlugin extends StreamPlottingPlugin implements InteractivePlo
     public TracerPlugin(float blur) {
         this.stroke = new BasicStroke(blur, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
 
-        this.interestedActions = new HashSet<>(1);
+        this.interestedActions = new HashSet<>(2);
         this.interestedActions.add("mouseDragged");
         this.interestedActions.add("mousePressed");
     }

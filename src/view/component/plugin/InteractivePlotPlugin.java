@@ -12,6 +12,7 @@ public interface InteractivePlotPlugin extends PlotPlugin {
     public Set<String> getInterestedActions();
 
     public interface MousePlugin extends InteractivePlotPlugin {
+        //return true for propagate
         public boolean onMouseEvent(String action, MouseEvent event);
     }
 }
