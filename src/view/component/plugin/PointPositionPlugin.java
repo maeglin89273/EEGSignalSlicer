@@ -44,9 +44,28 @@ public class PointPositionPlugin extends EmptyPlotPlugin implements InteractiveP
             g2.setStroke(LINE_STROKE);
             g2.drawLine(0, posY, plot.getWidth(), posY);
             g2.drawLine(posX, 0, posX, plot.getHeight());
+            String posText = this.positionText();
 
-            g2.drawString(this.positionText(), posX + TEXT_MARGIN, posY - TEXT_MARGIN);
+            g2.drawString(posText, this.computeTextX(g2, posText), this.computeTextY(g2));
         }
+    }
+
+    private int computeTextY(Graphics2D g2) {
+        FontMetrics metrics = g2.getFontMetrics();
+        int textHeight = metrics.getHeight() - metrics.getLeading();
+        if (posY - TEXT_MARGIN - textHeight <= 0) {
+            return posY + textHeight;
+        }
+        return posY - TEXT_MARGIN;
+    }
+
+    private int computeTextX(Graphics2D g2, String posText) {
+        FontMetrics metrics = g2.getFontMetrics();
+        int textWidth = metrics.stringWidth(posText);
+        if (posX - TEXT_MARGIN - textWidth <= 0) {
+            return posX + TEXT_MARGIN;
+        }
+        return posX - TEXT_MARGIN - textWidth;
     }
 
     private String positionText() {

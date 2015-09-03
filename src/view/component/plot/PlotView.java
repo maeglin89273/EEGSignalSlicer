@@ -47,7 +47,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         this.setOpaque(true);
     }
 
-
     public PlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
         this(windowSize, peakValue, new Dimension(plotWidth, plotHeight));
     }
@@ -69,9 +68,9 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         this.stroke = new BasicStroke(width, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
     }
 
-    public void setDataSource(StreamingDataSource dataSource) {
+    public StreamingDataSource setDataSource(StreamingDataSource dataSource) {
 
-        if (this.dataSource != null) {
+        if (this.isDataSourceSet()) {
             this.setXTo(0);
             this.dataSource.removePresentedDataChangedListener(this);
         }
@@ -81,6 +80,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
         this.fireSourceReplacedToPlugin(oldSource);
         this.refresh();
+        return oldSource;
     }
 
     public StreamingDataSource getDataSource() {
@@ -174,7 +174,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         this.refresh();
     }
 
-
     public int getWindowSize() {
         return this.xBuffer.length;
     }
@@ -192,13 +191,11 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         }
     }
 
-
     private void fireOnPresentedDataChanged() {
         for (int i = plugins.size() - 1; i >= 0; i--) {
             plugins.get(i).onPresentedDataChanged();
         }
     }
-
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -248,8 +245,6 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
         int length = PlottingUtils.loadYBuffer(this.baseline, this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), (int) this.getPlotLowerBound(), yBuffer);
         g2.drawPolyline(xBuffer, yBuffer, length);
     }
-
-
 
     private Graphics2D prepareGraphics(Graphics g) {
         if (!(g instanceof Graphics2D)) {
@@ -301,7 +296,7 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
     public Collection<String> getVisibleStreams() {
         if (!this.isDataSourceSet()) {
-            return new LinkedList<>();
+            return Collections.emptyList();
         }
         return this.dataSource.getTags();
     }

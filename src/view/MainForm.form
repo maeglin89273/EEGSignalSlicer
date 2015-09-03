@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="view.MainForm">
   <grid id="27dc6" binding="mainPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="20" width="1125" height="880"/>
+      <xy x="20" y="20" width="1305" height="880"/>
     </constraints>
     <properties/>
     <border type="empty">
@@ -18,7 +18,7 @@
         </constraints>
         <properties>
           <continuousLayout value="true"/>
-          <dividerLocation value="750"/>
+          <dividerLocation value="680"/>
           <dividerSize value="5"/>
           <resizeWeight value="0.5"/>
         </properties>
@@ -30,46 +30,13 @@
             </constraints>
             <properties/>
           </component>
-          <grid id="3b59d" binding="fftPanel" layout-manager="GridBagLayout">
+          <grid id="16729" binding="featurePanel" custom-create="true" layout-manager="GridBagLayout">
             <constraints>
               <splitpane position="right"/>
             </constraints>
             <properties/>
             <border type="none"/>
-            <children>
-              <component id="484dc" class="view.component.plot.InteractivePlotView" binding="fftSpectrumPlot" custom-create="true">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="1.0" weighty="1.0"/>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="d1a45" class="view.component.plot.InteractivePlotView" binding="dwtSpectrumPlot" custom-create="true">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="1.0" weighty="1.0"/>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="2a3ff" class="javax.swing.JLabel" binding="reLbl">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <text value="FFT"/>
-                </properties>
-              </component>
-              <component id="ad63a" class="javax.swing.JLabel" binding="imLbl">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="0.0" weighty="0.0"/>
-                </constraints>
-                <properties>
-                  <text value="DWT"/>
-                </properties>
-              </component>
-            </children>
+            <children/>
           </grid>
         </children>
       </splitpane>
@@ -300,7 +267,7 @@
                 <children>
                   <component id="92341" class="javax.swing.JRadioButton" binding="alphaFilterRadioBtn">
                     <constraints>
-                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -310,7 +277,7 @@
                   </component>
                   <component id="8f926" class="javax.swing.JRadioButton" binding="betaFilterRadioBtn">
                     <constraints>
-                      <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -319,7 +286,7 @@
                   </component>
                   <component id="b81c9" class="javax.swing.JRadioButton" binding="gammaFilterRadioBtn">
                     <constraints>
-                      <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -328,7 +295,7 @@
                   </component>
                   <component id="6e73c" class="javax.swing.JLabel" binding="filterLbl">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -337,7 +304,7 @@
                   </component>
                   <component id="7a583" class="javax.swing.JRadioButton" binding="thetaFilterRadioBtn">
                     <constraints>
-                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -364,6 +331,15 @@
                       <text value="None"/>
                     </properties>
                   </component>
+                  <component id="2304" class="javax.swing.JRadioButton" binding="a5to50HzFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="5~50Hz"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>
@@ -373,6 +349,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag weightx="1.0" weighty="1.0"/>
             </constraints>
+            <properties/>
           </component>
         </children>
       </grid>

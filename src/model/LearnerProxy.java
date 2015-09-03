@@ -18,13 +18,15 @@ public class LearnerProxy {
     private Collection<String> trainTags;
     private TrainingCompleteCallback callback;
     private PyroProxy oracle;
+    private String[] featureSelections;
 
     public LearnerProxy(TrainingCompleteCallback callback) {
         this.callback = callback;
         this.oracle = PyOracle.getInstance().getOracle("learning");
     }
 
-    public void prepareData(Collection<FragmentDataSource> data, Collection<String> trainTags) {
+    public void prepareData(String[] featureSelections, Collection<FragmentDataSource> data, Collection<String> trainTags) {
+        this.featureSelections = featureSelections;
         this.trainTags = new LinkedHashSet<>(trainTags);
         this.transferData = new LinkedList<>();
         this.transferTarget = new LinkedList<>();
@@ -44,7 +46,7 @@ public class LearnerProxy {
             @Override
             public void run() {
                 try {
-                    double score = (Double) oracle.call("train", transferData, transferTarget);
+                    Map<String, Object> score = (Map<String, Object>) oracle.call("train", featureSelections, transferData, transferTarget);
                     callback.trainDone(score);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -74,7 +76,7 @@ public class LearnerProxy {
 
     public void pcaPlot2D() {
         try {
-            this.oracle.call_oneway("pca_plot2d", this.transferData, this.transferTarget);
+            this.oracle.call_oneway("pca_plot2d", featureSelections, this.transferData, this.transferTarget);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,14 +84,14 @@ public class LearnerProxy {
 
     public void pcaPlot3D() {
         try {
-            this.oracle.call_oneway("pca_plot3d", this.transferData, this.transferTarget);
+            this.oracle.call_oneway("pca_plot3d", featureSelections, this.transferData, this.transferTarget);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public interface TrainingCompleteCallback {
-        public void trainDone(double score);
+        public void trainDone(Map<String, Object> trainingReport);
         public void trainFail();
     }
 }

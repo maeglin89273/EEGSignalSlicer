@@ -6,7 +6,7 @@ import model.filter.Filter;
  * Created by maeglin89273 on 7/28/15.
  */
 public interface FilteredDataSource extends StreamingDataSource {
-    void addFilter(Filter filter);
+    void addFilters(Filter... filters);
 
     void removeFilter(Filter filter);
 

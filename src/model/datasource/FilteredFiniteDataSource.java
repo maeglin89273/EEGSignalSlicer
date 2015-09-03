@@ -20,29 +20,32 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
         this.rawSource = rawSource;
         this.cachedDataSpace = new HashMap<>();
         this.filters = new LinkedList<>();
-        this.rawSource.addPresentedDataChangedListener(this);
+        this.setViewingSource(true);
         this.oldSourcelength = this.length = this.rawSource.intLength();
     }
 
     @Override
-    public void addFilter(Filter filter) {
-        this.filters.add(filter);
+    public void addFilters(Filter... filters) {
+        for (Filter filter: filters) {
+            this.filters.add(filter);
+        }
+
         this.recalculateFilteredInfo();
-        this.clearPresentedData();
+        this.refilterAllPresentedData();
     }
 
     @Override
     public void removeFilter(Filter filter) {
         this.filters.remove(filter);
         this.recalculateFilteredInfo();
-        this.clearPresentedData();
+        this.refilterAllPresentedData();
     }
 
     @Override
     public void replaceFilter(int i, Filter filter) {
         this.filters.set(i, filter);
         this.recalculateFilteredInfo();
-        this.clearPresentedData();
+        this.refilterAllPresentedData();
     }
 
     @Override
@@ -92,8 +95,10 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
 
 
 
-    private void clearPresentedData() {
-        this.cachedData.clear();
+    private void refilterAllPresentedData() {
+        for (String tag: this.cachedData.keySet()) {
+            filterOriginalData(tag);
+        }
         this.firePresentedDataChanged();
     }
 
@@ -110,13 +115,15 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     @Override
     public void onDataChanged(StreamingDataSource source) {
         this.estimateLengthChanged();
-        this.clearPresentedData();
+        this.refilterAllPresentedData();
     }
 
     @Override
     public void onDataChanged(StreamingDataSource source, String tag) {
         this.estimateLengthChanged();
-        this.cachedData.remove(tag);
+        if (source.getDataOf(tag) != null) {
+            filterOriginalData(tag);
+        }
         this.firePresentedDataChanged(tag);
     }
 
@@ -135,7 +142,13 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     }
 
     @Override
-    public void stopViewingSource() {
-        this.rawSource.removePresentedDataChangedListener(this);
+    public void setViewingSource(boolean viewing) {
+        if (viewing) {
+            this.rawSource.addPresentedDataChangedListener(this);
+            this.estimateLengthChanged();
+            this.refilterAllPresentedData();
+        } else {
+            this.rawSource.removePresentedDataChangedListener(this);
+        }
     }
 }

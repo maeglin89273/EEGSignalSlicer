@@ -17,7 +17,7 @@ import java.awt.event.*;
  */
 public class PlaybackPlotControl extends JPanel implements ActionListener {
     private static final int SPEEED_FACTOR = -1;
-    private static final int DEFAULT_SLIDING_SPEED = 3;
+    private static final int DEFAULT_SLIDING_SPEED = 4;
 
     private JLabel startLbl;
     private JLabel endLbl;

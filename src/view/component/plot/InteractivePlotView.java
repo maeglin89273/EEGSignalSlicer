@@ -46,9 +46,9 @@ public class InteractivePlotView extends PlotView {
     }
 
     @Override
-    public void setDataSource(StreamingDataSource dataSource) {
+    public StreamingDataSource setDataSource(StreamingDataSource dataSource) {
         this.visibleStreamTags.clear();
-        super.setDataSource(dataSource);
+        return super.setDataSource(dataSource);
     }
 
     @Override

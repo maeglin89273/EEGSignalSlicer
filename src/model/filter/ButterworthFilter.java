@@ -15,6 +15,10 @@ public class ButterworthFilter implements Filter {
     private static final double[] BANDPASS_1_50HZ_B = {2.001387256580685e-1, 0.0, -4.002774513161369e-1, 0.0, 2.001387256580685e-1};
     public static final ButterworthFilter BANDPASS_1_50HZ = new ButterworthFilter(BANDPASS_1_50HZ_A, BANDPASS_1_50HZ_B);
 
+    private static final double[] BANDPASS_5_50HZ_A = {1.0, -2.13743018017206, 2.03857800810852, -1.07014439920093, 2.94636527587915e-1};
+    private static final double[] BANDPASS_5_50HZ_B = {1.17351036724609e-1, 0.0, -2.34702073449218e-01, 0.0, 1.17351036724609e-01};
+    public static final ButterworthFilter BANDPASS_5_50HZ = new ButterworthFilter(BANDPASS_5_50HZ_A, BANDPASS_5_50HZ_B);
+
     private static final double[] BANDPASS_7_13HZ_A = {1.0, -3.678895469764040e+000, 5.179700413522124e+000, -3.305801890016702e+000, 8.079495914209149e-001};
     private static final double[] BANDPASS_7_13HZ_B = {5.129268366104263e-003, 0.0, -1.025853673220853e-002, 0.0, 5.129268366104263e-003};
     public static final ButterworthFilter BANDPASS_7_13HZ = new ButterworthFilter(BANDPASS_7_13HZ_A, BANDPASS_7_13HZ_B);

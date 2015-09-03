@@ -21,6 +21,7 @@ public class DatasetView extends JPanel {
     private final SimilarStreamsPlottingPlugin.SimilarStreamsDataSource dwtPlottingData;
     private final DataLabelGroupManager labelManager;
     private JScrollPane scrollPane;
+    private JLabel countLbl;
 
     public DatasetView(String tag, TrainingPanel.DatasetViewGroupManager datasetManager) {
         this.fftPlottingData = new SimilarStreamsPlottingPlugin.SimilarStreamsDataSource();
@@ -41,6 +42,10 @@ public class DatasetView extends JPanel {
         headerBox.add(this.headerRdoBtn);
 
         headerBox.add(Box.createHorizontalGlue());
+        this.countLbl = new JLabel("(0)");
+        countLbl.setAlignmentX(RIGHT_ALIGNMENT);
+
+        headerBox.add(this.countLbl);
 
         JButton removeBtn = new JButton();
         removeBtn.setText("×");
@@ -58,6 +63,10 @@ public class DatasetView extends JPanel {
 
     }
 
+    private void updateCountLabel() {
+        this.countLbl.setText(String.format("(%d)", datasetBox.getComponentCount()));
+    }
+
     public String getTag() {
         return this.headerRdoBtn.getText();
     }
@@ -65,6 +74,7 @@ public class DatasetView extends JPanel {
     public void addNewData(FragmentDataSource data) {
         data.setFrangmentTag(this.getTag());
         this.datasetBox.add(new DataLabel(data, this.labelManager));
+        this.updateCountLabel();
         this.layoutDatasetPanel();
     }
 
@@ -73,7 +83,7 @@ public class DatasetView extends JPanel {
         return this.fftPlottingData;
     }
 
-    public SimilarStreamsPlottingPlugin.SimilarStreamsDataSource getDWTDataSource() {
+    public SimilarStreamsPlottingPlugin.SimilarStreamsDataSource getSWTDataSource() {
         return this.dwtPlottingData;
     }
 
@@ -97,6 +107,7 @@ public class DatasetView extends JPanel {
             DataLabel label = (DataLabel) datasetBox.getComponent(i);
             this.fftPlottingData.removeDataSource(label.getFFTData());
             this.dwtPlottingData.removeDataSource(label.getDWTData());
+
             label.discard();
         }
         datasetBox.removeAll();
@@ -149,6 +160,7 @@ public class DatasetView extends JPanel {
                 hideDataSource(label);
                 label.discard();
                 datasetBox.remove(label);
+                updateCountLabel();
                 layoutDatasetPanel();
             }
         }

@@ -1,8 +1,6 @@
 package view.component.plugin;
 
-import model.datasource.Stream;
-import model.datasource.StreamingDataSource;
-import model.datasource.ViewDataSource;
+import model.datasource.*;
 import view.component.plot.PlotView;
 import view.component.plot.PlottingUtils;
 
@@ -14,23 +12,52 @@ import java.util.List;
  * Created by maeglin89273 on 8/20/15.
  */
 public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implements StreamingDataSource.PresentedDataChangedListener {
-    private static final Stroke STROKE = new BasicStroke(0.7f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);;
+    private static final Stroke STROKE = new BasicStroke(0.7f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);
+    private static final Stroke MEAN_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER);;
+
     private SimilarStreamsDataSource dataSource;
+    private boolean meanShowed;
+    private boolean samplesShowed = true;
 
     @Override
     public void drawBeforePlot(Graphics2D g2) {
 
-        if (this.dataSource == null) {
+        if (this.dataSource == null || dataSource.getTags().size() == 0) {
             return;
         }
 
         long startingPos = plot.getPlotLowerBound();
-        g2.setStroke(STROKE);
-        for (String tag: plot.getVisibleStreams()) {
-            g2.setColor(PlottingUtils.hashStringToColor(tag, true));
-            for (Stream data: dataSource.getSetofStreamsOf(tag)) {
-                this.plotStream(g2, data, startingPos);
+        if (this.samplesShowed) {
+            g2.setStroke(STROKE);
+            for (String tag : plot.getVisibleStreams()) {
+                g2.setColor(PlottingUtils.hashStringToColor(tag, PlottingUtils.COLOR_TRANSLUCENT));
+                for (Stream data : dataSource.getStreamsOf(tag)) {
+                    this.plotStream(g2, data, startingPos);
+                }
             }
+        }
+        if (this.meanShowed) {
+            g2.setStroke(MEAN_STROKE);
+            Stream meanStream;
+            for (String tag : plot.getVisibleStreams()) {
+                g2.setColor(PlottingUtils.hashStringToColor(tag, PlottingUtils.COLOR_DARKER));
+                this.plotStream(g2, dataSource.getMeanStream(tag), startingPos);
+
+            }
+        }
+    }
+
+    public void setMeanShowed(boolean show) {
+        if (this.isEnabled() && this.meanShowed != show) {
+            this.meanShowed = show;
+            plot.refresh();
+        }
+    }
+
+    public void setSamplesShowed(boolean show) {
+        if (this.isEnabled() && this.samplesShowed != show) {
+            this.samplesShowed = show;
+            plot.refresh();
         }
     }
 
@@ -40,6 +67,7 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
     }
 
     public void setDataSource(SimilarStreamsDataSource dataSource) {
+        if (this.isEnabled()) {
             if (this.dataSource != null) {
                 this.dataSource.removePresentedDataChangedListener(this);
             }
@@ -49,7 +77,7 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
             if (this.dataSource != null) {
                 this.dataSource.addPresentedDataChangedListener(this);
             }
-        if (this.isEnabled()) {
+
             this.plot.refresh();
         }
     }
@@ -84,10 +112,12 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
     public static class SimilarStreamsDataSource implements StreamingDataSource, ViewDataSource {
 
         private Map<String, Map<StreamingDataSource, Stream>> classifier;
+        private Map<String, MutableFiniteStream> meanStreams;
         private List<PresentedDataChangedListener> listeners;
 
         public SimilarStreamsDataSource() {
             this.classifier = new HashMap<>();
+            this.meanStreams = new HashMap<>();
             this.listeners = new ArrayList<>();
         }
 
@@ -96,7 +126,7 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
             throw new UnsupportedOperationException("there are multiple streams in this tag");
         }
 
-        public Collection<Stream> getSetofStreamsOf(String tag) {
+        public Collection<Stream> getStreamsOf(String tag) {
             Map<StreamingDataSource, Stream> map = this.classifier.get(tag);
             if (map == null) {
                 return Collections.emptySet();
@@ -128,20 +158,63 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
                 if (streams == null) {
                     streams = new HashMap<>();
                     this.classifier.put(tag, streams);
+                    //use SimpleArrayStream for the urgent
+                    this.meanStreams.put(tag, new SimpleArrayStream((int)data.getCurrentLength()));
                 }
-                streams.put(data, data.getDataOf(tag));
+                Stream stream = data.getDataOf(tag);
+                Stream old = streams.put(data, stream);
+                if (old != null) {
+                    this.removeFromMean(tag, old, streams.size() - 1);
+                }
+                this.addToMean(tag, stream, streams.size());
+            }
+        }
+
+        private void addToMean(String tag, Stream stream, int streamsAmount) {
+            MutableFiniteStream meanStream = this.meanStreams.get(tag);
+
+            double mean;
+            for (int i = 0; i < meanStream.intLength(); i++) {
+                mean = meanStream.get(i);
+                meanStream.set(i, mean + (stream.get(i) - mean) / streamsAmount);
             }
         }
 
         public void removeDataSource(StreamingDataSource data) {
-            removeDataSourceCore(data);
-            data.removePresentedDataChangedListener(this);
-            firePresentedDataChanged();
+            if (removeDataSourceCore(data)) {
+                data.removePresentedDataChangedListener(this);
+                firePresentedDataChanged();
+            }
         }
 
-        private void removeDataSourceCore(StreamingDataSource data) {
+        private boolean removeDataSourceCore(StreamingDataSource data) {
+            Map<StreamingDataSource, Stream> streams;
+            Stream stream;
+            boolean hasData = false;
             for (String tag: data.getTags()) {
-                this.classifier.get(tag).remove(data);
+                streams = this.classifier.get(tag);
+                stream = streams.remove(data);
+                if (stream != null) {
+                    hasData = true;
+                    this.removeFromMean(tag, stream, streams.size());
+                }
+            }
+
+            return hasData;
+        }
+
+        private void removeFromMean(String tag, Stream stream, int streamsAmount) {
+            MutableFiniteStream meanStream = this.meanStreams.get(tag);
+            double mean;
+            if (streamsAmount > 0) {
+                for (int i = 0; i < meanStream.intLength(); i++) {
+                    mean = meanStream.get(i);
+                    meanStream.set(i, mean + (mean - stream.get(i)) / streamsAmount);
+                }
+            } else {
+                for (int i = 0; i < meanStream.intLength(); i++) {
+                    meanStream.set(i, 0);
+                }
             }
         }
 
@@ -169,25 +242,44 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
 
         @Override
         public void onDataChanged(StreamingDataSource source) {
-            this.addDataSourceCore(source);
-            firePresentedDataChanged();
+            this.recalculateMean();
+            this.firePresentedDataChanged();
+        }
 
+        private void recalculateMean() {
+            for (Map.Entry<String, MutableFiniteStream> entry: meanStreams.entrySet()) {
+                MutableFiniteStream mean = entry.getValue();
+                for (int i = 0; i < mean.intLength(); i ++) {
+                    Collection<Stream> streams = this.classifier.get(entry.getKey()).values();
+                    double elementMean = 0;
+                    for (Stream stream: streams){
+                        elementMean += stream.get(i) / streams.size();
+                    }
+
+                    mean.set(i, elementMean);
+                }
+            }
         }
 
         @Override
         public void onDataChanged(StreamingDataSource source, String tag) {
+
             Stream stream = source.getDataOf(tag);
             if (stream != null) {
-                this.classifier.get(tag).replace(source, stream);
+                this.classifier.get(tag).put(source, stream);
             } else {
                 this.classifier.get(tag).remove(source);
             }
-            firePresentedDataChanged(tag);
+            this.firePresentedDataChanged(tag);
         }
 
         @Override
-        public void stopViewingSource() {
+        public void setViewingSource(boolean viewing) {
             //not support yet
+        }
+
+        public Stream getMeanStream(String tag) {
+            return this.meanStreams.get(tag);
         }
     }
 }

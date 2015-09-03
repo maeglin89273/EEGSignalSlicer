@@ -79,7 +79,6 @@ public class DTWPlugin extends RangePlugin implements InterestedStreamVisibility
             }
             return true;
         }
-
         return false;
     }
 

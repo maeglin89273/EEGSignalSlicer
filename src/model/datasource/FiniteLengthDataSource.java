@@ -30,7 +30,9 @@ public abstract class FiniteLengthDataSource implements StreamingDataSource {
 
     @Override
     public void addPresentedDataChangedListener(PresentedDataChangedListener listener) {
-        listeners.add(listener);
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
     }
 
     @Override

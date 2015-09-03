@@ -122,7 +122,7 @@ public class DataFileUtils {
         }
     }
 
-    public Map<String, Collection<FragmentDataSource>> loadFragmentDataSource(File dirFile) {
+    public Map<String, Collection<FragmentDataSource>> loadFragmentDataSources(File dirFile) {
         Map<String, Collection<FragmentDataSource>> result = new HashMap<>();
         this.workingDirectory = dirFile;
         String dirName = dirFile.getName();
@@ -178,8 +178,7 @@ public class DataFileUtils {
 
         FilteredFiniteDataSource bciData = new FilteredFiniteDataSource(new SimpleFiniteDataSource(convert2DArrayToMap(rawData)));
 
-        bciData.addFilter(ButterworthFilter.NOTCH_60HZ);
-        bciData.addFilter(ButterworthFilter.BANDPASS_1_50HZ);
+        bciData.addFilters(ButterworthFilter.NOTCH_60HZ, ButterworthFilter.BANDPASS_1_50HZ);
         return bciData;
     }
 
@@ -239,18 +238,15 @@ public class DataFileUtils {
     }
 
 
-    public String saveSlice(String sliceTag, FiniteLengthDataSource data, int start, int end) {
-        sliceTag = sliceTag.trim();
-        if (sliceTag.isEmpty()) {
-            return null;
-        }
+    public String saveSlice(FragmentDataSource data) {
 
+        String sliceTag = data.getFragmentTag();
         Integer recordNum = this.sliceRecord.get(sliceTag);
         recordNum = recordNum != null? recordNum + 1 : 0;
         this.sliceRecord.put(sliceTag, recordNum);
 
         String filename = sliceTag + "_" + recordNum + ".csv";
-        return saveDataSource(filename, data, start, end);
+        return this.save(filename, data);
     }
 
     private String saveDataSource(String filename, FiniteLengthDataSource data, int start, int end) {

@@ -6,6 +6,7 @@ import model.filter.ButterworthFilter;
 import model.DataFileUtils;
 import model.filter.EEGFilter;
 import model.filter.Filter;
+import view.component.dataview.FeaturePanel;
 import view.component.dataview.TrainingPanel;
 import view.component.plot.InteractivePlotView;
 import view.component.plot.PlaybackPlotControl;
@@ -56,15 +57,14 @@ public class MainForm extends JFrame {
     private JLabel templateLbl;
     private InteractivePlotView fftSpectrumPlot;
     private JPanel leftPanel;
-    private JPanel fftPanel;
     private JPanel controlPanel;
-    private InteractivePlotView dwtSpectrumPlot;
-    private JLabel reLbl;
-    private JLabel imLbl;
+    private InteractivePlotView swtSpectrumPlot;
     private JButton loadCSVBtn;
     private JPanel tagsPanel;
     private JRadioButton noneFilterRadioBtn;
     private TrainingPanel trainingPanel;
+    private JRadioButton a5to50HzFilterRadioBtn;
+    private JPanel featurePanel;
 
     private ButtonGroup filterChoiceGroup;
     private SpinnerNumberModel startSpinModel;
@@ -137,8 +137,8 @@ public class MainForm extends JFrame {
         this.sliceBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String filename = DataFileUtils.getInstance().saveSlice(tagField.getText(), data,
-                        ((Number) startSpinModel.getValue()).intValue(), ((Number) endSpinModel.getValue()).intValue());
+                String filename = DataFileUtils.getInstance().saveSlice(dtwPlugin.makeFragmentDataSource(tagField.getText()));
+
                 if (filename != null) {
                     savedHintLbl.setText(filename + " saved!");
                 } else {
@@ -302,12 +302,13 @@ public class MainForm extends JFrame {
         filterChoiceGroup.add(alphaFilterRadioBtn);
         filterChoiceGroup.add(betaFilterRadioBtn);
         filterChoiceGroup.add(gammaFilterRadioBtn);
+        filterChoiceGroup.add(a5to50HzFilterRadioBtn);
         filterChoiceGroup.add(a1to50HzFilterRadioBtn);
         filterChoiceGroup.add(noneFilterRadioBtn);
         this.filterTable = new HashMap<>(EEGFilter.EEG_BANDPASS_FILTER_TABLE);
         this.filterTable.put(noneFilterRadioBtn.getText(), Filter.EMPTY_FILTER);
         this.filterTable.put(a1to50HzFilterRadioBtn.getText(), ButterworthFilter.BANDPASS_1_50HZ);
-
+        this.filterTable.put(a5to50HzFilterRadioBtn.getText(), ButterworthFilter.BANDPASS_5_50HZ);
         this.startSpinModel.setValue((int) this.dtwPlugin.getStartPosition());
         this.endSpinModel.setValue((int) this.dtwPlugin.getEndPosition());
 
@@ -325,8 +326,7 @@ public class MainForm extends JFrame {
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(800, 60f);
         this.trainingPanel = new TrainingPanel();
-        this.fftSpectrumPlot = this.trainingPanel.getFFTSpectrumPlot();
-        this.dwtSpectrumPlot = this.trainingPanel.getDWTSpectrumPlot();
+        this.featurePanel = this.trainingPanel.getFeaturePanel();
     }
 
     /**
@@ -343,7 +343,7 @@ public class MainForm extends JFrame {
         mainPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), null));
         final JSplitPane splitPane1 = new JSplitPane();
         splitPane1.setContinuousLayout(true);
-        splitPane1.setDividerLocation(750);
+        splitPane1.setDividerLocation(680);
         splitPane1.setDividerSize(5);
         splitPane1.setResizeWeight(0.5);
         GridBagConstraints gbc;
@@ -355,41 +355,7 @@ public class MainForm extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(splitPane1, gbc);
         splitPane1.setLeftComponent(plotControl);
-        fftPanel = new JPanel();
-        fftPanel.setLayout(new GridBagLayout());
-        splitPane1.setRightComponent(fftPanel);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 4;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        fftPanel.add(fftSpectrumPlot, gbc);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 4;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        fftPanel.add(dwtSpectrumPlot, gbc);
-        reLbl = new JLabel();
-        reLbl.setText("FFT");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(reLbl, gbc);
-        imLbl = new JLabel();
-        imLbl.setText("DWT");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        fftPanel.add(imLbl, gbc);
+        splitPane1.setRightComponent(featurePanel);
         controlPanel = new JPanel();
         controlPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -587,21 +553,21 @@ public class MainForm extends JFrame {
         alphaFilterRadioBtn.setSelected(false);
         alphaFilterRadioBtn.setText("Alpha");
         gbc = new GridBagConstraints();
-        gbc.gridx = 3;
+        gbc.gridx = 4;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(alphaFilterRadioBtn, gbc);
         betaFilterRadioBtn = new JRadioButton();
         betaFilterRadioBtn.setText("Beta");
         gbc = new GridBagConstraints();
-        gbc.gridx = 4;
+        gbc.gridx = 5;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(betaFilterRadioBtn, gbc);
         gammaFilterRadioBtn = new JRadioButton();
         gammaFilterRadioBtn.setText("Gamma");
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
+        gbc.gridx = 6;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(gammaFilterRadioBtn, gbc);
@@ -610,13 +576,14 @@ public class MainForm extends JFrame {
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(filterLbl, gbc);
         thetaFilterRadioBtn = new JRadioButton();
         thetaFilterRadioBtn.setSelected(false);
         thetaFilterRadioBtn.setText("Theta");
         gbc = new GridBagConstraints();
-        gbc.gridx = 2;
+        gbc.gridx = 3;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(thetaFilterRadioBtn, gbc);
@@ -635,6 +602,13 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(noneFilterRadioBtn, gbc);
+        a5to50HzFilterRadioBtn = new JRadioButton();
+        a5to50HzFilterRadioBtn.setText("5~50Hz");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        filterPanel.add(a5to50HzFilterRadioBtn, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;

@@ -18,6 +18,7 @@ public class DomainTransformFilter implements Filter {
     public static final DomainTransformFilter FFT = new DomainTransformFilter("fft");
     public static final DomainTransformFilter DWT_COIF4 = new DomainTransformFilter("dwt_coif4");
     public static final DomainTransformFilter DWT_DB4 = new DomainTransformFilter("dwt_db4");
+    public static final DomainTransformFilter SWT_COIF4 = new DomainTransformFilter("swt_coif4");
 
     private PyroProxy oracle;
     private final FiniteListStream adapter;

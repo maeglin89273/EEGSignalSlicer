@@ -17,7 +17,7 @@ public class FragmentDataSource extends FiniteLengthDataSource implements ViewDa
         this.startingPos = startingPos;
         this.source = source;
         this.idealLength = length;
-        this.source.addPresentedDataChangedListener(this);
+        this.setViewingSource(true);
     }
 
     @Override
@@ -66,8 +66,12 @@ public class FragmentDataSource extends FiniteLengthDataSource implements ViewDa
     }
 
     @Override
-    public void stopViewingSource() {
-        this.source.removePresentedDataChangedListener(this);
+    public void setViewingSource(boolean viewing) {
+        if (viewing) {
+            this.source.addPresentedDataChangedListener(this);
+        } else {
+            this.source.removePresentedDataChangedListener(this);
+        }
     }
 
     private class FragmentStream extends FiniteLengthStream {

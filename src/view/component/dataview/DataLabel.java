@@ -1,6 +1,5 @@
 package view.component.dataview;
 
-import com.sun.media.sound.FFT;
 import model.datasource.FilteredFiniteDataSource;
 import model.datasource.FiniteLengthDataSource;
 import model.datasource.FragmentDataSource;
@@ -18,14 +17,13 @@ public class DataLabel extends JPanel {
     private final FilteredFiniteDataSource dwtData;
 
     private JCheckBox labelCkBox;
-    private String tag;
 
     public DataLabel(FragmentDataSource data, DatasetView.DataLabelGroupManager groupManager) {
         this.data = data;
         this.fftData = new FilteredFiniteDataSource(data);
-        this.fftData.addFilter(DomainTransformFilter.FFT);
+        this.fftData.addFilters(DomainTransformFilter.FFT);
         this.dwtData = new FilteredFiniteDataSource(data);
-        this.dwtData.addFilter(DomainTransformFilter.DWT_COIF4);
+        this.dwtData.addFilters(DomainTransformFilter.SWT_COIF4);
         this.initComponents("t=" + data.getStartingPosition(), groupManager);
     }
 
@@ -65,7 +63,7 @@ public class DataLabel extends JPanel {
 
 
     public void discard() {
-        this.data.stopViewingSource();
+        this.data.setViewingSource(false);
     }
 
     public void setTag(String tag) {

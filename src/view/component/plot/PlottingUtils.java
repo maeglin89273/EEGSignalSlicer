@@ -15,6 +15,9 @@ import java.util.Map;
 public final class PlottingUtils {
 
     private static Map<String, Color[]> colorMapping = new HashMap<>();
+    public static final int COLOR_NORMAL = 0;
+    public static final int COLOR_TRANSLUCENT = 1;
+    public static final int COLOR_DARKER = 2;
 
     public enum Baseline {
         BOTTOM, MIDDLE
@@ -60,7 +63,7 @@ public final class PlottingUtils {
         }
     }
 
-    public static Color hashStringToColor(String string, boolean translucent) {
+    public static Color hashStringToColor(String string, int type) {
         if (!colorMapping.containsKey(string)) {
 
             int hash = PlottingUtils.saltString(string).hashCode();
@@ -70,14 +73,14 @@ public final class PlottingUtils {
             int b = hash & 0x0000FF;
             Color newColor = new Color(r / 255f, g / 255f, b / 255f);
             Color translucentColor = new Color(r / 255f, g / 255f, b / 255f, 0.4f);
-            colorMapping.put(string, new Color[] {newColor, translucentColor});
+            colorMapping.put(string, new Color[] {newColor, translucentColor, newColor.darker()});
         }
 
-        return colorMapping.get(string)[translucent? 1: 0];
+        return colorMapping.get(string)[type];
     }
 
     public static Color hashStringToColor(String string) {
-        return hashStringToColor(string, false);
+        return hashStringToColor(string, COLOR_NORMAL);
     }
 
     private static String saltString(String string) {

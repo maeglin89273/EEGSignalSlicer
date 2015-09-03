@@ -106,6 +106,13 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         g2.drawLine(endKnifeX, 0, endKnifeX, plot.getHeight());
     }
 
+    public FragmentDataSource makeFragmentDataSource(String tag) {
+        long startingPos = this.getStartPosition();
+        int length = this.getRange();
+        StreamingDataSource dataSource = plot.getDataSource();
+        return new FragmentDataSource(tag, startingPos, length, dataSource);
+    }
+
     public long getStartPosition() {
         return this.startPos;
     }
@@ -477,8 +484,12 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         }
 
         @Override
-        public void stopViewingSource() {
-            plot.getDataSource().removePresentedDataChangedListener(this);
+        public void setViewingSource(boolean viewing) {
+            if (viewing) {
+                plot.getDataSource().addPresentedDataChangedListener(this);
+            } else {
+                plot.getDataSource().removePresentedDataChangedListener(this);
+            }
         }
 
         private class RangedStream extends FiniteLengthStream {
@@ -512,6 +523,5 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             }
         }
     }
-
 
 }
