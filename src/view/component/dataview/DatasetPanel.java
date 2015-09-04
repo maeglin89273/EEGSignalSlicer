@@ -5,6 +5,7 @@ import model.LearnerProxy;
 import model.datasource.FragmentDataSource;
 import view.component.plot.PlotView;
 import view.component.plugin.*;
+import view.component.trainingview.TrainingReportDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +17,10 @@ import java.util.*;
 /**
  * Created by maeglin89273 on 8/20/15.
  */
-public class TrainingPanel extends JPanel {
+public class DatasetPanel extends JPanel {
 
 
-    private final DatasetViewGroupManager datasetManager;
+    private final CategoryGroupManager datasetManager;
 
     private Box datasetBox;
     private JButton addDataBtn;
@@ -29,7 +30,7 @@ public class TrainingPanel extends JPanel {
     private JTextField actionField;
 
     private RangePlugin transformRange;
-    private DatasetView selectedDatasetView;
+    private CategoryPanel selectedCategoryPanel;
     private JScrollPane scrollPane;
     private JButton saveDatasetBtn;
     private JButton loadDatasetBtn;
@@ -64,12 +65,14 @@ public class TrainingPanel extends JPanel {
     private PointPositionPlugin fftPPPlugin;
     private PointPositionPlugin mainPlotPPPlugin;
 
+    private JButton moveLeftBtn;
+    private JButton moveRightBtn;
 
 
-    public TrainingPanel() {
+    public DatasetPanel() {
         this.initComponents();
         this.initPlots();
-        this.datasetManager = new DatasetViewGroupManager();
+        this.datasetManager = new CategoryGroupManager();
         this.setupListeners();
     }
 
@@ -97,7 +100,7 @@ public class TrainingPanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 9;
-        gbc.gridheight = 9;
+        gbc.gridheight = 4;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
@@ -110,27 +113,11 @@ public class TrainingPanel extends JPanel {
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(newCategoryBtn, gbc);
-        rangeStartSpinner = new JSpinner();
-        rangeStartSpinner.setEnabled(false);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(rangeStartSpinner, gbc);
-        addDataBtn = new JButton();
-        addDataBtn.setEnabled(false);
-        addDataBtn.setText("add data");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 4;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        this.add(addDataBtn, gbc);
         msgBar = new MessageBar();
         gbc = new GridBagConstraints();
-        gbc.gridx = 5;
+        gbc.gridx = 7;
         gbc.gridy = 1;
-        gbc.gridwidth = 5;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.BOTH;
         this.add(msgBar, gbc);
         renameBtn = new JButton();
@@ -147,48 +134,9 @@ public class TrainingPanel extends JPanel {
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
         gbc.gridy = 2;
+        gbc.anchor = GridBagConstraints.NORTH;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(loadDatasetBtn, gbc);
-        saveDatasetBtn = new JButton();
-        saveDatasetBtn.setEnabled(false);
-        saveDatasetBtn.setText("save");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 9;
-        gbc.gridy = 4;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(saveDatasetBtn, gbc);
-        final JPanel spacer1 = new JPanel();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 9;
-        gbc.gridy = 5;
-        gbc.gridheight = 3;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        this.add(spacer1, gbc);
-        trainBtn = new JButton();
-        trainBtn.setEnabled(false);
-        trainBtn.setText("train");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 9;
-        gbc.gridy = 10;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(trainBtn, gbc);
-        plot3DBtn = new JButton();
-        plot3DBtn.setEnabled(false);
-        plot3DBtn.setText("plot 3D");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 9;
-        gbc.gridy = 9;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(plot3DBtn, gbc);
-        plot2DBtn = new JButton();
-        plot2DBtn.setEnabled(false);
-        plot2DBtn.setText("plot 2D");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 9;
-        gbc.gridy = 8;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(plot2DBtn, gbc);
         coordinatesCkBox = new JCheckBox();
         coordinatesCkBox.setEnabled(false);
         coordinatesCkBox.setText("coordinates");
@@ -197,22 +145,64 @@ public class TrainingPanel extends JPanel {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         this.add(coordinatesCkBox, gbc);
-        predictCkBox = new JCheckBox();
-        predictCkBox.setEnabled(false);
-        predictCkBox.setText("predict");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(predictCkBox, gbc);
         addDatasetBtn = new JButton();
         addDatasetBtn.setEnabled(false);
         addDatasetBtn.setText("add...");
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
         gbc.gridy = 3;
+        gbc.anchor = GridBagConstraints.NORTH;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(addDatasetBtn, gbc);
+        saveDatasetBtn = new JButton();
+        saveDatasetBtn.setEnabled(false);
+        saveDatasetBtn.setText("save");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 9;
+        gbc.gridy = 4;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(saveDatasetBtn, gbc);
+        addDataBtn = new JButton();
+        addDataBtn.setEnabled(false);
+        addDataBtn.setText("add data");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 6;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        this.add(addDataBtn, gbc);
+        rangeStartSpinner = new JSpinner();
+        rangeStartSpinner.setEnabled(false);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(rangeStartSpinner, gbc);
+        predictCkBox = new JCheckBox();
+        predictCkBox.setEnabled(false);
+        predictCkBox.setText("predict");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(predictCkBox, gbc);
+        moveLeftBtn = new JButton();
+        moveLeftBtn.setEnabled(false);
+        moveLeftBtn.setText("<");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 3;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(moveLeftBtn, gbc);
+        moveRightBtn = new JButton();
+        moveRightBtn.setEnabled(false);
+        moveRightBtn.setText(">");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 4;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this.add(moveRightBtn, gbc);
 
 
         datasetBox = SingleDirectionBox.createHorizontalBox();
@@ -257,19 +247,21 @@ public class TrainingPanel extends JPanel {
             boolean trainingOn = trainingCkBox.isSelected();
             featurePanel.setEnabled(trainingOn);
             newCategoryBtn.setEnabled(trainingOn);
-            addDataBtn.setEnabled(trainingOn && selectedDatasetView != null);
+            addDataBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
             loadDatasetBtn.setEnabled(trainingOn);
             saveDatasetBtn.setEnabled(trainingOn);
-            trainBtn.setEnabled(trainingOn);
             actionField.setEnabled(trainingOn);
             transformRange.setEnabled(trainingOn);
             rangeStartSpinner.setEnabled(trainingOn);
-            plot2DBtn.setEnabled(trainingOn);
-            plot3DBtn.setEnabled(trainingOn);
-            renameBtn.setEnabled(trainingOn && selectedDatasetView != null);
+            renameBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
             predictCkBox.setEnabled(trainingOn && predicting);
             coordinatesCkBox.setEnabled(trainingOn);
             addDatasetBtn.setEnabled(trainingOn);
+            moveLeftBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
+            moveRightBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
+//            trainBtn.setEnabled(trainingOn);
+//            plot2DBtn.setEnabled(trainingOn);
+//            plot3DBtn.setEnabled(trainingOn);
         });
 
         this.coordinatesCkBox.addActionListener(e -> {
@@ -283,12 +275,12 @@ public class TrainingPanel extends JPanel {
         this.newCategoryBtn.addActionListener(e -> {
             String newAction = actionField.getText().trim();
             if (!newAction.isEmpty()) {
-                datasetBox.add(new DatasetView(newAction, datasetManager), 0);
+                datasetManager.addCategory(new CategoryPanel(newAction));
                 layoutDatasetPanel();
             }
         });
 
-        this.renameBtn.addActionListener(e -> selectedDatasetView.setTag(actionField.getText().trim()));
+        this.renameBtn.addActionListener(e -> selectedCategoryPanel.setCategory(actionField.getText().trim()));
 
         this.rangeSpinnerModel.addChangeListener(e -> {
             int newPos = rangeSpinnerModel.getNumber().intValue();
@@ -301,7 +293,7 @@ public class TrainingPanel extends JPanel {
         });
 
         this.addDataBtn.addActionListener(e -> {
-            selectedDatasetView.addNewData(transformRange.makeFragmentDataSource(selectedDatasetView.getTag()));
+            selectedCategoryPanel.addNewData(transformRange.makeFragmentDataSource(selectedCategoryPanel.getCategory()));
             layoutDatasetPanel();
         });
 
@@ -324,7 +316,7 @@ public class TrainingPanel extends JPanel {
         this.loadDatasetBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File dir = DataFileUtils.getInstance().loadFileDialog(TrainingPanel.this, "dir");
+                File dir = DataFileUtils.getInstance().loadFileDialog(DatasetPanel.this, "dir");
                 if (dir != null) {
                     Thread loader = new Thread() {
                         @Override
@@ -345,7 +337,7 @@ public class TrainingPanel extends JPanel {
         this.addDatasetBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File dir = DataFileUtils.getInstance().loadFileDialog(TrainingPanel.this, "dir");
+                File dir = DataFileUtils.getInstance().loadFileDialog(DatasetPanel.this, "dir");
                 if (dir != null) {
                     Thread loader = new Thread() {
                         @Override
@@ -361,21 +353,37 @@ public class TrainingPanel extends JPanel {
 
         });
 
-        this.plot2DBtn.addActionListener(e -> {
-            learner.prepareData(featurePanel.getFeatureSelections(), collectDatasets(true), transformRange.getPlot().getVisibleStreams());
-            learner.pcaPlot2D();
+        this.moveLeftBtn.addActionListener(e -> {
+            int index = datasetBox.getComponentZOrder(selectedCategoryPanel);
+            datasetBox.remove(index);
+            datasetBox.add(selectedCategoryPanel, --index);
+            updateMoveBtns(index);
+            layoutDatasetPanel();
         });
 
-        this.plot3DBtn.addActionListener(e -> {
-            learner.prepareData(featurePanel.getFeatureSelections(), collectDatasets(true), transformRange.getPlot().getVisibleStreams());
-            learner.pcaPlot3D();
+        this.moveRightBtn.addActionListener(e -> {
+            int index = datasetBox.getComponentZOrder(selectedCategoryPanel);
+            datasetBox.remove(index);
+            datasetBox.add(selectedCategoryPanel, ++index);
+            updateMoveBtns(index);
+            layoutDatasetPanel();
         });
 
-        this.trainBtn.addActionListener(e -> {
-            learner.prepareData(featurePanel.getFeatureSelections(), collectDatasets(true), transformRange.getPlot().getVisibleStreams());
-            msgBar.setMessage("Training...");
-            learner.train();
-        });
+//        this.plot2DBtn.addActionListener(e -> {
+//            learner.prepareData(featurePanel.getFeatureSelections(), collectDatasets(true), transformRange.getPlot().getVisibleStreams());
+//            learner.pcaPlot2D();
+//        });
+//
+//        this.plot3DBtn.addActionListener(e -> {
+//            learner.prepareData(featurePanel.getFeatureSelections(), collectDatasets(true), transformRange.getPlot().getVisibleStreams());
+//            learner.pcaPlot3D();
+//        });
+//
+//        this.trainBtn.addActionListener(e -> {
+//            learner.prepareData(featurePanel.getFeatureSelections(), collectDatasets(true), transformRange.getPlot().getVisibleStreams());
+//            msgBar.setMessage("Training...");
+//            learner.train();
+//        });
 
         this.predictCkBox.addActionListener(e -> {
             if (predictCkBox.isSelected()) {
@@ -385,47 +393,6 @@ public class TrainingPanel extends JPanel {
                 predicting = false;
             }
         });
-    }
-
-    private void discardAllDatasets() {
-        for (int i = 0; i < datasetBox.getComponentCount(); i++) {
-            DatasetView view = (DatasetView) datasetBox.getComponent(i);
-            view.discardDataset();
-        }
-
-        datasetBox.removeAll();
-        unselectDataset();
-    }
-
-    private void loadAndBuildDataset(File dir) {
-        Map<String, Collection<FragmentDataSource>> dataset = DataFileUtils.getInstance().loadFragmentDataSources(dir);
-        int dataAmount = 0;
-        int progress = 1;
-        for (Collection<FragmentDataSource> category: dataset.values()) {
-            dataAmount += category.size();
-        }
-        msgBar.setProgressMax(dataAmount);
-
-        for (Map.Entry<String, Collection<FragmentDataSource>> pair : dataset.entrySet()) {
-            DatasetView actionView = new DatasetView(pair.getKey(), datasetManager);
-
-            for (FragmentDataSource dataSource : pair.getValue()) {
-                msgBar.setProgress(progress);
-                actionView.addNewData(dataSource);
-                progress++;
-            }
-            datasetBox.add(actionView, 0);
-        }
-
-        layoutDatasetPanel();
-        msgBar.setMessage("");
-    }
-
-    private void unselectDataset() {
-        selectedDatasetView = null;
-        featurePanel.setDataset(null);
-        addDataBtn.setEnabled(false);
-        renameBtn.setEnabled(false);
     }
 
     private void predictSignal() {
@@ -445,11 +412,47 @@ public class TrainingPanel extends JPanel {
         predictCkBox.setEnabled(false);
     }
 
+    private void discardAllDatasets() {
+        for (int i = 0; i < datasetBox.getComponentCount(); i++) {
+            CategoryPanel category = (CategoryPanel) datasetBox.getComponent(i);
+            category.discardDataset();
+        }
+
+        datasetBox.removeAll();
+        unselectCategory();
+    }
+
+    private void loadAndBuildDataset(File dir) {
+        Map<String, Collection<FragmentDataSource>> dataset = DataFileUtils.getInstance().loadFragmentDataSources(dir);
+        int dataAmount = 0;
+        int progress = 1;
+        for (Collection<FragmentDataSource> category: dataset.values()) {
+            dataAmount += category.size();
+        }
+        msgBar.setProgressMax(dataAmount);
+
+        for (Map.Entry<String, Collection<FragmentDataSource>> pair : dataset.entrySet()) {
+            CategoryPanel categoryPanel = new CategoryPanel(pair.getKey());
+
+            for (FragmentDataSource dataSource : pair.getValue()) {
+                msgBar.setProgress(progress);
+                categoryPanel.addNewData(dataSource);
+                progress++;
+            }
+            datasetManager.addCategory(categoryPanel);
+        }
+
+        layoutDatasetPanel();
+        msgBar.setMessage("");
+    }
+
+
+
     private Collection<FragmentDataSource> collectDatasets(boolean selectedDataOnly) {
         Collection<FragmentDataSource> fullDataset = new LinkedList<>();
         for (int i = 0; i < datasetBox.getComponentCount(); i++) {
-            DatasetView view = (DatasetView) datasetBox.getComponent(i);
-            fullDataset.addAll(view.getAllData(selectedDataOnly));
+            CategoryPanel category = (CategoryPanel) datasetBox.getComponent(i);
+            fullDataset.addAll(category.getAllData(selectedDataOnly));
         }
         return fullDataset;
     }
@@ -462,55 +465,88 @@ public class TrainingPanel extends JPanel {
         return this.mainPlotPPPlugin;
     }
 
-    class DatasetViewGroupManager implements ActionListener {
-        private final String VIEW_KEY = "dataset_view";
+    class CategoryGroupManager implements ActionListener {
+        private final String CATEGORY_KEY = "dataset_category";
         private final String RDO_BTN_KEY = "tag_rdo_box";
 
-        private ButtonGroup datasetViewGroup;
+        private ButtonGroup categoryGroup;
 
-        private DatasetViewGroupManager() {
-            this.datasetViewGroup = new ButtonGroup();
+        private CategoryGroupManager() {
+            this.categoryGroup = new ButtonGroup();
         }
 
-        public void setupViewComponents(DatasetView view, JRadioButton tagRdoBox, JButton removeBtn) {
-            this.datasetViewGroup.add(tagRdoBox);
-            tagRdoBox.putClientProperty(VIEW_KEY, view);
-            removeBtn.putClientProperty(VIEW_KEY, view);
-            removeBtn.putClientProperty(RDO_BTN_KEY, tagRdoBox);
+        public void addCategory(CategoryPanel category) {
+            JRadioButton tagRdoBtn = category.getCategoryRdoBtn();
+            JButton removeBtn = category.getRemoveBtn();
+            this.categoryGroup.add(tagRdoBtn);
+            tagRdoBtn.putClientProperty(CATEGORY_KEY, category);
+            removeBtn.putClientProperty(CATEGORY_KEY, category);
+            removeBtn.putClientProperty(RDO_BTN_KEY, tagRdoBtn);
             removeBtn.addActionListener(this);
-            tagRdoBox.addActionListener(this);
-            tagRdoBox.setSelected(true);
-            this.handleDatasetSelected(view);
+            tagRdoBtn.addActionListener(this);
+            datasetBox.add(category, 0);
+            tagRdoBtn.setSelected(true);
+            selectCategory(category);
 
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             JComponent source = (JComponent) e.getSource();
-            DatasetView view = (DatasetView) source.getClientProperty(VIEW_KEY);
+            CategoryPanel category = (CategoryPanel) source.getClientProperty(CATEGORY_KEY);
             if (source instanceof JRadioButton) {
-                selectedDatasetView = view;
-                this.handleDatasetSelected(view);
+                selectedCategoryPanel = category;
+                selectCategory(category);
             } else {
-                this.datasetViewGroup.remove((AbstractButton) source.getClientProperty(RDO_BTN_KEY));
-                view.discardDataset();
-                datasetBox.remove(view);
-                if (view == selectedDatasetView) {
-                    unselectDataset();
+                this.categoryGroup.remove((AbstractButton) source.getClientProperty(RDO_BTN_KEY));
+                category.discardDataset();
+                datasetBox.remove(category);
+                if (category == selectedCategoryPanel) {
+                    unselectCategory();
                 }
                 layoutDatasetPanel();
             }
 
         }
+    }
 
-        private void handleDatasetSelected(DatasetView view) {
-            selectedDatasetView = view;
-            featurePanel.setDataset(view);
-            addDataBtn.setEnabled(true);
-            renameBtn.setEnabled(true);
+    private void updateMoveBtns(int datasetIndex) {
+        if (datasetIndex == 0) {
+            moveLeftBtn.setEnabled(false);
+            if (!moveRightBtn.isEnabled()) {
+                moveRightBtn.setEnabled(true);
+            }
+        } else if (datasetIndex == datasetBox.getComponentCount() - 1) {
+            moveRightBtn.setEnabled(false);
+            if (!moveLeftBtn.isEnabled()) {
+                moveLeftBtn.setEnabled(true);
+            }
+        } else {
+            if (!moveLeftBtn.isEnabled()) {
+                moveLeftBtn.setEnabled(true);
+            }
+
+            if (!moveRightBtn.isEnabled()) {
+                moveRightBtn.setEnabled(true);
+            }
         }
+    }
 
+    private void unselectCategory() {
+        selectedCategoryPanel = null;
+        featurePanel.setDataset(null);
+        addDataBtn.setEnabled(false);
+        renameBtn.setEnabled(false);
+        moveLeftBtn.setEnabled(false);
+        moveRightBtn.setEnabled(false);
+    }
 
+    private void selectCategory(CategoryPanel category) {
+        selectedCategoryPanel = category;
+        featurePanel.setDataset(category);
+        addDataBtn.setEnabled(true);
+        renameBtn.setEnabled(true);
+        updateMoveBtns(datasetBox.getComponentZOrder(category));
     }
 
     private void layoutDatasetPanel() {

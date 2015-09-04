@@ -16,7 +16,6 @@ public class PlotLayout {
     private JButton forthBtn;
     private JLabel negPeakLbl;
     private JLabel posPeakLbl;
-    private JLabel progressLbl;
     private JSlider playbackSlider;
     private JLabel speedLbl;
 
@@ -105,16 +104,6 @@ public class PlotLayout {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         componentHolder.add(posPeakLbl, gbc);
-        progressLbl = new JLabel();
-        progressLbl.setEnabled(true);
-        progressLbl.setHorizontalAlignment(0);
-        progressLbl.setHorizontalTextPosition(0);
-        progressLbl.setText("0%");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 5;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        componentHolder.add(progressLbl, gbc);
         playbackSlider = new JSlider();
         playbackSlider.setValue(0);
         gbc = new GridBagConstraints();

@@ -6,8 +6,7 @@ import model.filter.ButterworthFilter;
 import model.DataFileUtils;
 import model.filter.EEGFilter;
 import model.filter.Filter;
-import view.component.dataview.FeaturePanel;
-import view.component.dataview.TrainingPanel;
+import view.component.dataview.DatasetPanel;
 import view.component.plot.InteractivePlotView;
 import view.component.plot.PlaybackPlotControl;
 import view.component.plugin.*;
@@ -62,7 +61,7 @@ public class MainForm extends JFrame {
     private JButton loadCSVBtn;
     private JPanel tagsPanel;
     private JRadioButton noneFilterRadioBtn;
-    private TrainingPanel trainingPanel;
+    private DatasetPanel datasetPanel;
     private JRadioButton a5to50HzFilterRadioBtn;
     private JPanel featurePanel;
 
@@ -318,15 +317,15 @@ public class MainForm extends JFrame {
         this.dtwPlugin = new DTWPlugin();
 
         this.plotControl.addPluginToPlot(this.dtwPlugin);
-        this.plotControl.addPluginToPlot(this.trainingPanel.getFrequencySpectrumPlugin());
-        this.plotControl.addPluginToPlot(this.trainingPanel.getPointPositionPlugin());
+        this.plotControl.addPluginToPlot(this.datasetPanel.getFrequencySpectrumPlugin());
+        this.plotControl.addPluginToPlot(this.datasetPanel.getPointPositionPlugin());
 
     }
 
     private void createUIComponents() {
         plotControl = new PlaybackPlotControl(800, 60f);
-        this.trainingPanel = new TrainingPanel();
-        this.featurePanel = this.trainingPanel.getFeaturePanel();
+        this.datasetPanel = new DatasetPanel();
+        this.featurePanel = this.datasetPanel.getFeaturePanel();
     }
 
     /**
@@ -615,7 +614,7 @@ public class MainForm extends JFrame {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        controlPanel.add(trainingPanel, gbc);
+        controlPanel.add(datasetPanel, gbc);
     }
 
     /**

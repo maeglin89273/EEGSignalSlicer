@@ -11,33 +11,35 @@ import java.util.*;
 /**
  * Created by maeglin89273 on 8/19/15.
  */
-public class DatasetView extends JPanel {
+public class CategoryPanel extends JPanel {
 
     ;
     private JRadioButton headerRdoBtn;
     private Box datasetBox;
+    private JButton removeBtn;
 
     private final SimilarStreamsPlottingPlugin.SimilarStreamsDataSource fftPlottingData;
     private final SimilarStreamsPlottingPlugin.SimilarStreamsDataSource dwtPlottingData;
-    private final DataLabelGroupManager labelManager;
+    private final DataLabelGroupManager dataManager;
     private JScrollPane scrollPane;
     private JLabel countLbl;
 
-    public DatasetView(String tag, TrainingPanel.DatasetViewGroupManager datasetManager) {
+
+    public CategoryPanel(String category) {
         this.fftPlottingData = new SimilarStreamsPlottingPlugin.SimilarStreamsDataSource();
         this.dwtPlottingData = new SimilarStreamsPlottingPlugin.SimilarStreamsDataSource();
 
-        this.labelManager = new DataLabelGroupManager();
+        this.dataManager = new DataLabelGroupManager();
 
-        this.initComponents(tag, datasetManager);
+        this.initComponents(category);
     }
 
-    private void initComponents(String tag, TrainingPanel.DatasetViewGroupManager datasetManager) {
+    private void initComponents(String category) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         Box headerBox = Box.createHorizontalBox();
 
         this.headerRdoBtn = new JRadioButton();
-        this.headerRdoBtn.setText(tag);
+        this.headerRdoBtn.setText(category);
         this.headerRdoBtn.setAlignmentX(LEFT_ALIGNMENT);
         headerBox.add(this.headerRdoBtn);
 
@@ -47,7 +49,7 @@ public class DatasetView extends JPanel {
 
         headerBox.add(this.countLbl);
 
-        JButton removeBtn = new JButton();
+        removeBtn = new JButton();
         removeBtn.setText("×");
         removeBtn.setAlignmentX(RIGHT_ALIGNMENT);
         headerBox.add(removeBtn);
@@ -59,21 +61,28 @@ public class DatasetView extends JPanel {
 
         this.add(scrollPane);
 
-        datasetManager.setupViewComponents(this, headerRdoBtn, removeBtn);
 
+    }
+
+    public JRadioButton getCategoryRdoBtn() {
+        return this.headerRdoBtn;
+    }
+
+    public JButton getRemoveBtn() {
+        return this.removeBtn;
     }
 
     private void updateCountLabel() {
         this.countLbl.setText(String.format("(%d)", datasetBox.getComponentCount()));
     }
 
-    public String getTag() {
+    public String getCategory() {
         return this.headerRdoBtn.getText();
     }
 
     public void addNewData(FragmentDataSource data) {
-        data.setFrangmentTag(this.getTag());
-        this.datasetBox.add(new DataLabel(data, this.labelManager));
+        data.setFrangmentTag(this.getCategory());
+        this.dataManager.addDatum(new DatumLabel(data));
         this.updateCountLabel();
         this.layoutDatasetPanel();
     }
@@ -92,9 +101,9 @@ public class DatasetView extends JPanel {
             return (int) (o1.getStartingPosition() - o2.getStartingPosition());
         });
 
-        DataLabel label;
+        DatumLabel label;
         for (int i = 0; i < this.datasetBox.getComponentCount(); i++) {
-            label = (DataLabel) this.datasetBox.getComponent(i);
+            label = (DatumLabel) this.datasetBox.getComponent(i);
             if (!selectedDataOnly || label.isDataSelected()) {
                 allData.add(label.getData());
             }
@@ -104,7 +113,7 @@ public class DatasetView extends JPanel {
 
     public void discardDataset() {
         for (int i = 0; i < datasetBox.getComponentCount(); i++) {
-            DataLabel label = (DataLabel) datasetBox.getComponent(i);
+            DatumLabel label = (DatumLabel) datasetBox.getComponent(i);
             this.fftPlottingData.removeDataSource(label.getFFTData());
             this.dwtPlottingData.removeDataSource(label.getDWTData());
 
@@ -114,11 +123,11 @@ public class DatasetView extends JPanel {
 
     }
 
-    public void setTag(String tag) {
-        this.headerRdoBtn.setText(tag);
+    public void setCategory(String category) {
+        this.headerRdoBtn.setText(category);
         for (int i = 0; i < datasetBox.getComponentCount(); i++) {
-            DataLabel label = (DataLabel) datasetBox.getComponent(i);
-            label.setTag(tag);
+            DatumLabel label = (DatumLabel) datasetBox.getComponent(i);
+            label.setTag(category);
         }
     }
 
@@ -127,29 +136,32 @@ public class DatasetView extends JPanel {
 
         private final String LABEL_KEY = "data_label";
 
-        public void setupComponents(DataLabel label, JCheckBox showBox, JButton removeBtn) {
+        public void addDatum(DatumLabel label) {
+            JCheckBox showBox = label.getShowBtn();
+            JButton removeBtn = label.getRemoveBtn();
             showBox.putClientProperty(LABEL_KEY, label);
             removeBtn.putClientProperty(LABEL_KEY, label);
 
             showBox.addActionListener(this);
             removeBtn.addActionListener(this);
+            datasetBox.add(label);
             showBox.setSelected(true);
             showDataSource(label);
         }
 
-        private void showDataSource(DataLabel label) {
+        private void showDataSource(DatumLabel label) {
             fftPlottingData.addDataSource(label.getFFTData());
             dwtPlottingData.addDataSource(label.getDWTData());
         }
 
-        private void hideDataSource(DataLabel label) {
+        private void hideDataSource(DatumLabel label) {
             fftPlottingData.removeDataSource(label.getFFTData());
             dwtPlottingData.removeDataSource(label.getDWTData());
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            DataLabel label = (DataLabel) ((JComponent)e.getSource()).getClientProperty(LABEL_KEY);
+            DatumLabel label = (DatumLabel) ((JComponent)e.getSource()).getClientProperty(LABEL_KEY);
             if (e.getSource() instanceof JCheckBox) {
                 if (label.isDataSelected()) {
                     showDataSource(label);

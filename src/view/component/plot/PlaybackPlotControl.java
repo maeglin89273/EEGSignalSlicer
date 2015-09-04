@@ -28,7 +28,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
 
     private JLabel negPeakLbl;
     private JLabel posPeakLbl;
-    private JLabel progressLbl;
+
     private JSlider playbackSlider;
 
     private Timer animator;
@@ -173,7 +173,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
     }
 
     private void setupUI(InteractivePlotView plot) {
-        
+
         this.setLayout(new GridBagLayout());
         this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), null));
         startLbl = new JLabel();
@@ -194,7 +194,8 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         gbc.anchor = GridBagConstraints.EAST;
         this.add(endLbl, gbc);
         this.plot = plot;
-        this.plot.setBackground(new Color(-1));
+        plot.setLayout(new GridBagLayout());
+        plot.setBackground(new Color(-1));
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -203,7 +204,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        this.add(this.plot, gbc);
+        this.add(plot, gbc);
         playBtn = new JButton();
         playBtn.setEnabled(false);
         playBtn.setText("Play");
@@ -242,16 +243,6 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         this.add(posPeakLbl, gbc);
-        progressLbl = new JLabel();
-        progressLbl.setEnabled(true);
-        progressLbl.setHorizontalAlignment(0);
-        progressLbl.setHorizontalTextPosition(0);
-        progressLbl.setText("0%");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 3;
-        gbc.gridy = 5;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(progressLbl, gbc);
         playbackSlider = new JSlider();
         playbackSlider.setValue(0);
         gbc = new GridBagConstraints();
@@ -264,7 +255,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
         speedLbl = new JLabel();
         speedLbl.setHorizontalAlignment(0);
         speedLbl.setHorizontalTextPosition(0);
-        speedLbl.setText("||");
+        speedLbl.setText("");
         gbc = new GridBagConstraints();
         gbc.gridx = 3;
         gbc.gridy = 3;
@@ -292,7 +283,6 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
             this.playbackSlider.setMinimum(plot.getWindowSize() - 1);
         }
 
-        this.progressLbl.setText(String.format("%.1f%%", 100 * plotUpperBound / (double) this.playbackSlider.getMaximum()));
     }
 
     private void updateYDisplays(float topPeakValue, float bottomPeakValue) {

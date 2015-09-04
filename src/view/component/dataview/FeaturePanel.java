@@ -22,10 +22,11 @@ public class FeaturePanel extends JPanel {
     private static final String ANALYSIS_SOURCE_AND_DATA = "source and data";
     private static final String ANALYSIS_DATA = "data";
     private static final String ANALYSIS_SOURCE = "source";
+    private static final String NONE = "none";
 
-    private static final String[] ANALYSIS_PLOT_MODES = new String[] {ANALYSIS_SOURCE_AND_DATA, ANALYSIS_DATA, ANALYSIS_SOURCE};
+    private static final String[] ANALYSIS_PLOT_MODES = new String[] {NONE, ANALYSIS_SOURCE, ANALYSIS_DATA, ANALYSIS_SOURCE_AND_DATA};
     private final FiniteLengthDataSource analysisSource;
-    private int plotModeIdx = 0;
+    private int plotModeIdx = 3;
 
     private JCheckBox fftCkBox;
     private CustomPlotView fftPlot;
@@ -163,32 +164,20 @@ public class FeaturePanel extends JPanel {
 
         this.plotModeBtn.addActionListener(e -> {
             plotModeIdx = (plotModeIdx + 1) % ANALYSIS_PLOT_MODES.length;
-            String mode = ANALYSIS_PLOT_MODES[plotModeIdx];
-            plotModeBtn.setText(mode);
+            plotModeBtn.setText(ANALYSIS_PLOT_MODES[plotModeIdx]);
 
-            switch (mode) {
-                case ANALYSIS_SOURCE:
-                    fftPlot.setShowSource(true);
-                    swtPlot.setShowSource(true);
-                    fftBgPlugin.setSamplesShowed(false);
-                    swtBgPlugin.setSamplesShowed(false);
-                    break;
-                case ANALYSIS_DATA:
-                    fftPlot.setShowSource(false);
-                    swtPlot.setShowSource(false);
-                    fftBgPlugin.setSamplesShowed(true);
-                    swtBgPlugin.setSamplesShowed(true);
-                    break;
-                case ANALYSIS_SOURCE_AND_DATA:
-                    fftPlot.setShowSource(true);
-                    swtPlot.setShowSource(true);
-                    fftBgPlugin.setSamplesShowed(true);
-                    swtBgPlugin.setSamplesShowed(true);
-            }
+            boolean showSource = (plotModeIdx & 1) != 0;
+            boolean showSamples = (plotModeIdx & 2) != 0;
+
+            fftPlot.setShowSource(showSource);
+            swtPlot.setShowSource(showSource);
+            fftBgPlugin.setSamplesShowed(showSamples);
+            swtBgPlugin.setSamplesShowed(showSamples);
+
         });
     }
 
-    public void setDataset(DatasetView dataset) {
+    public void setDataset(CategoryPanel dataset) {
         if (dataset == null) {
             this.fftBgPlugin.setDataSource(null);
             this.swtBgPlugin.setDataSource(null);

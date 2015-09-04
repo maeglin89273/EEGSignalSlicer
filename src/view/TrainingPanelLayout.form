@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="view.TrainingPanelLayout">
   <grid id="27dc6" binding="this2015" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="20" width="910" height="483"/>
+      <xy x="20" y="20" width="910" height="505"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -29,7 +29,7 @@
       </component>
       <scrollpane id="956e9" binding="scrollPane">
         <constraints>
-          <grid row="2" column="0" row-span="9" col-span="9" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="4" col-span="9" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="1.0"/>
         </constraints>
         <properties>
@@ -48,30 +48,12 @@
           <text value="new category"/>
         </properties>
       </component>
-      <component id="4d1e6" class="javax.swing.JSpinner" binding="rangeStartSpinner">
-        <constraints>
-          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <enabled value="false"/>
-        </properties>
-      </component>
-      <component id="15f68" class="javax.swing.JButton" binding="addDataBtn">
-        <constraints>
-          <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <enabled value="false"/>
-          <text value="add data"/>
-        </properties>
-      </component>
       <component id="32687" class="view.component.dataview.MessageBar" binding="msgBar">
         <constraints>
-          <grid row="1" column="5" row-span="1" col-span="5" vsize-policy="1" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="7" row-span="1" col-span="2" vsize-policy="1" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
+        <properties/>
       </component>
       <component id="11193" class="javax.swing.JButton" binding="renameBtn">
         <constraints>
@@ -85,58 +67,12 @@
       </component>
       <component id="4e1fb" class="javax.swing.JButton" binding="loadDatasetBtn">
         <constraints>
-          <grid row="2" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <enabled value="false"/>
           <text value="load..."/>
-        </properties>
-      </component>
-      <component id="b9e54" class="javax.swing.JButton" binding="saveDatasetBtn">
-        <constraints>
-          <grid row="4" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <enabled value="false"/>
-          <text value="save"/>
-        </properties>
-      </component>
-      <vspacer id="a5b5e">
-        <constraints>
-          <grid row="5" column="9" row-span="3" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="1.0"/>
-        </constraints>
-      </vspacer>
-      <component id="93698" class="javax.swing.JButton" binding="trainBtn">
-        <constraints>
-          <grid row="10" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <enabled value="false"/>
-          <text value="train"/>
-        </properties>
-      </component>
-      <component id="1bd9b" class="javax.swing.JButton" binding="plot3DBtn">
-        <constraints>
-          <grid row="9" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <enabled value="false"/>
-          <text value="plot 3D"/>
-        </properties>
-      </component>
-      <component id="f7a8b" class="javax.swing.JButton" binding="plot2DBtn">
-        <constraints>
-          <grid row="8" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <enabled value="false"/>
-          <text value="plot 2D"/>
         </properties>
       </component>
       <component id="f4f8" class="javax.swing.JCheckBox" binding="coordinatesCkBox">
@@ -149,9 +85,48 @@
           <text value="coordinates"/>
         </properties>
       </component>
+      <component id="4cb2e" class="javax.swing.JButton" binding="addDatasetBtn">
+        <constraints>
+          <grid row="3" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+          <text value="add..."/>
+        </properties>
+      </component>
+      <component id="b9e54" class="javax.swing.JButton" binding="saveDatasetBtn">
+        <constraints>
+          <grid row="4" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+          <text value="save"/>
+        </properties>
+      </component>
+      <component id="15f68" class="javax.swing.JButton" binding="addDataBtn">
+        <constraints>
+          <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+          <text value="add data"/>
+        </properties>
+      </component>
+      <component id="4d1e6" class="javax.swing.JSpinner" binding="rangeStartSpinner">
+        <constraints>
+          <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+        </properties>
+      </component>
       <component id="e79e9" class="javax.swing.JCheckBox" binding="predictCkBox">
         <constraints>
-          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -159,14 +134,24 @@
           <text value="predict"/>
         </properties>
       </component>
-      <component id="4cb2e" class="javax.swing.JButton" binding="addDatasetBtn">
+      <component id="8dd98" class="javax.swing.JButton" binding="moveLeftBtn">
         <constraints>
-          <grid row="3" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <enabled value="false"/>
-          <text value="add..."/>
+          <text value="&lt;"/>
+        </properties>
+      </component>
+      <component id="6b6a4" class="javax.swing.JButton" binding="moveRightBtn">
+        <constraints>
+          <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+          <text value="&gt;"/>
         </properties>
       </component>
     </children>

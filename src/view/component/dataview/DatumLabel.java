@@ -10,24 +10,25 @@ import javax.swing.*;
 /**
  * Created by maeglin89273 on 8/19/15.
  */
-public class DataLabel extends JPanel {
+public class DatumLabel extends JPanel {
 
     private final FragmentDataSource data;
     private final FilteredFiniteDataSource fftData;
     private final FilteredFiniteDataSource dwtData;
 
     private JCheckBox labelCkBox;
+    private JButton removeBtn;
 
-    public DataLabel(FragmentDataSource data, DatasetView.DataLabelGroupManager groupManager) {
+    public DatumLabel(FragmentDataSource data) {
         this.data = data;
         this.fftData = new FilteredFiniteDataSource(data);
         this.fftData.addFilters(DomainTransformFilter.FFT);
         this.dwtData = new FilteredFiniteDataSource(data);
         this.dwtData.addFilters(DomainTransformFilter.SWT_COIF4);
-        this.initComponents("t=" + data.getStartingPosition(), groupManager);
+        this.initComponents("t=" + data.getStartingPosition());
     }
 
-    private void initComponents(String text, DatasetView.DataLabelGroupManager groupManager) {
+    private void initComponents(String text) {
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.labelCkBox = new JCheckBox(text);
 
@@ -36,12 +37,11 @@ public class DataLabel extends JPanel {
 
         this.add(Box.createHorizontalGlue());
 
-        JButton removeBtn = new JButton("×");
+        removeBtn = new JButton("×");
         removeBtn.setAlignmentX(LEFT_ALIGNMENT);
         this.add(removeBtn);
 
         this.setSize(this.getPreferredSize());
-        groupManager.setupComponents(this, this.labelCkBox, removeBtn);
     }
 
     public FiniteLengthDataSource getFFTData() {
@@ -68,5 +68,13 @@ public class DataLabel extends JPanel {
 
     public void setTag(String tag) {
         this.data.setFrangmentTag(tag);
+    }
+
+    public JCheckBox getShowBtn() {
+        return labelCkBox;
+    }
+
+    public JButton getRemoveBtn() {
+        return removeBtn;
     }
 }
