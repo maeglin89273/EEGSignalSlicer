@@ -49,7 +49,10 @@ public class TrainingPanelLayout {
         this2015 = new JPanel();
         this2015.setLayout(new GridBagLayout());
         actionField = new JTextField();
+        actionField.setColumns(8);
         actionField.setEnabled(false);
+        actionField.setHorizontalAlignment(10);
+        actionField.setText("");
         GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.gridx = 0;

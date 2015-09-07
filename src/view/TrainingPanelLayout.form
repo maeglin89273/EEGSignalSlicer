@@ -15,7 +15,10 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
+          <columns value="8"/>
           <enabled value="false"/>
+          <horizontalAlignment value="10"/>
+          <text value=""/>
         </properties>
       </component>
       <component id="885c8" class="javax.swing.JCheckBox" binding="trainingCkBox">

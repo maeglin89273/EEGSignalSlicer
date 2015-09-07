@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="view.component.trainingview.TrainingConfigurationDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="view.component.trainingview.TrainingDialog">
   <grid id="cbd77" binding="contentPane" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="48" y="54" width="515" height="449"/>
+      <xy x="48" y="54" width="515" height="457"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -24,15 +24,6 @@
               <text value="OK"/>
             </properties>
           </component>
-          <component id="5723f" class="javax.swing.JButton" binding="buttonCancel">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="1.0"/>
-            </constraints>
-            <properties>
-              <text value="Cancel"/>
-            </properties>
-          </component>
         </children>
       </grid>
       <grid id="e3588" layout-manager="GridBagLayout">
@@ -42,7 +33,26 @@
         </constraints>
         <properties/>
         <border type="none"/>
-        <children/>
+        <children>
+          <component id="a64a1" class="javax.swing.JList" binding="phaseList" custom-create="true">
+            <constraints>
+              <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="6" hsize-policy="2" anchor="8" fill="2" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="50"/>
+              </grid>
+              <gridbag weightx="0.0" weighty="1.0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <grid id="39a30" binding="phasePlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="0" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+        </children>
       </grid>
     </children>
   </grid>

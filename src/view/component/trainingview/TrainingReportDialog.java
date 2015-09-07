@@ -19,6 +19,7 @@ public class TrainingReportDialog extends JDialog {
         $$$setupUI$$$();
         setContentPane(contentPane);
         setModal(true);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         getRootPane().setDefaultButton(buttonOK);
         setTitle("Training Report");
         buttonOK.addActionListener(e -> onOK());
@@ -108,7 +109,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(label1, gbc);
         final JLabel label2 = new JLabel();
         label2.setFont(new Font(label2.getFont().getName(), Font.BOLD, label2.getFont().getSize()));
@@ -117,7 +118,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(label2, gbc);
         final JLabel label3 = new JLabel();
         label3.setFont(new Font(label3.getFont().getName(), Font.BOLD, label3.getFont().getSize()));
@@ -126,7 +127,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(label3, gbc);
         final JLabel label4 = new JLabel();
         label4.setFont(new Font(label4.getFont().getName(), Font.BOLD, label4.getFont().getSize()));
@@ -136,7 +137,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridy = 5;
         gbc.weighty = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(label4, gbc);
         gbc = new GridBagConstraints();
         gbc.gridx = 1;
@@ -144,7 +145,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(learnerProfilePanel, gbc);
         testScoreLbl = new JLabel();
         testScoreLbl.setText("0%");
@@ -153,7 +154,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(testScoreLbl, gbc);
         trainingSizeLbl = new JLabel();
         trainingSizeLbl.setText("0");
@@ -162,7 +163,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(trainingSizeLbl, gbc);
         cvaScoreLbl = new JLabel();
         cvaScoreLbl.setText("0%");
@@ -171,7 +172,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(cvaScoreLbl, gbc);
         final JLabel label5 = new JLabel();
         label5.setFont(new Font(label5.getFont().getName(), Font.BOLD, label5.getFont().getSize()));
@@ -180,6 +181,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(label5, gbc);
         featureSelectionLbl = new JLabel();
         featureSelectionLbl.setText("None");
@@ -187,7 +189,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(featureSelectionLbl, gbc);
         final JLabel label6 = new JLabel();
         label6.setFont(new Font(label6.getFont().getName(), Font.BOLD, label6.getFont().getSize()));
@@ -196,7 +198,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(label6, gbc);
         testingSizeLbl = new JLabel();
         testingSizeLbl.setText("0");
@@ -204,7 +206,7 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(5, 5, 5, 5);
         panel2.add(testingSizeLbl, gbc);
     }
 
