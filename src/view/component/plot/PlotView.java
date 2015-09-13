@@ -242,7 +242,8 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
     protected void drawStream(Graphics2D g2, String tag) {
         g2.setColor(PlottingUtils.hashStringToColor(tag));
 
-        int length = PlottingUtils.loadYBuffer(this.baseline, this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), (int) this.getPlotLowerBound(), yBuffer);
+        int length = xBuffer.length;
+        length = PlottingUtils.loadYBuffer(this.baseline, this.getPeakValue(), this.getHeight(), dataSource.getDataOf(tag), (int) this.getPlotLowerBound(), yBuffer, length);
         g2.drawPolyline(xBuffer, yBuffer, length);
     }
 

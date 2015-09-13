@@ -1,6 +1,7 @@
 package view.component.dataview;
 
 import model.datasource.*;
+import model.filter.DomainTransformFilter;
 import view.component.plugin.SimilarStreamsPlottingPlugin;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public class CategoryPanel extends JPanel {
     private JButton removeBtn;
 
     private final SimilarStreamsPlottingPlugin.SimilarStreamsDataSource fftPlottingData;
-    private final SimilarStreamsPlottingPlugin.SimilarStreamsDataSource dwtPlottingData;
+    private final SimilarStreamsPlottingPlugin.SimilarStreamsDataSource wtPlottingData;
     private final DataLabelGroupManager dataManager;
     private JScrollPane scrollPane;
     private JLabel countLbl;
@@ -27,8 +28,9 @@ public class CategoryPanel extends JPanel {
 
     public CategoryPanel(String category) {
         this.fftPlottingData = new SimilarStreamsPlottingPlugin.SimilarStreamsDataSource();
-        this.dwtPlottingData = new SimilarStreamsPlottingPlugin.SimilarStreamsDataSource();
-
+        this.fftPlottingData.addFilters(DomainTransformFilter.FFT);
+        this.wtPlottingData = new SimilarStreamsPlottingPlugin.SimilarStreamsDataSource();
+        this.wtPlottingData.addFilters(DomainTransformFilter.WT);
         this.dataManager = new DataLabelGroupManager();
 
         this.initComponents(category);
@@ -92,8 +94,8 @@ public class CategoryPanel extends JPanel {
         return this.fftPlottingData;
     }
 
-    public SimilarStreamsPlottingPlugin.SimilarStreamsDataSource getSWTDataSource() {
-        return this.dwtPlottingData;
+    public SimilarStreamsPlottingPlugin.SimilarStreamsDataSource getWTDataSource() {
+        return this.wtPlottingData;
     }
 
     public Collection<FragmentDataSource> getAllData(boolean selectedDataOnly) {
@@ -114,8 +116,8 @@ public class CategoryPanel extends JPanel {
     public void discardDataset() {
         for (int i = 0; i < datasetBox.getComponentCount(); i++) {
             DatumLabel label = (DatumLabel) datasetBox.getComponent(i);
-            this.fftPlottingData.removeDataSource(label.getFFTData());
-            this.dwtPlottingData.removeDataSource(label.getDWTData());
+            this.fftPlottingData.removeDataSource(label.getData());
+            this.wtPlottingData.removeDataSource(label.getData());
 
             label.discard();
         }
@@ -129,6 +131,10 @@ public class CategoryPanel extends JPanel {
             DatumLabel label = (DatumLabel) datasetBox.getComponent(i);
             label.setTag(category);
         }
+    }
+
+    public void refilterTransformationSoruce() {
+        this.wtPlottingData.replaceFilter(0, DomainTransformFilter.WT);
     }
 
 
@@ -150,13 +156,13 @@ public class CategoryPanel extends JPanel {
         }
 
         private void showDataSource(DatumLabel label) {
-            fftPlottingData.addDataSource(label.getFFTData());
-            dwtPlottingData.addDataSource(label.getDWTData());
+            fftPlottingData.addDataSource(label.getData());
+            wtPlottingData.addDataSource(label.getData());
         }
 
         private void hideDataSource(DatumLabel label) {
-            fftPlottingData.removeDataSource(label.getFFTData());
-            dwtPlottingData.removeDataSource(label.getDWTData());
+            fftPlottingData.removeDataSource(label.getData());
+            wtPlottingData.removeDataSource(label.getData());
         }
 
         @Override

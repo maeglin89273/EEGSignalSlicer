@@ -13,18 +13,12 @@ import javax.swing.*;
 public class DatumLabel extends JPanel {
 
     private final FragmentDataSource data;
-    private final FilteredFiniteDataSource fftData;
-    private final FilteredFiniteDataSource dwtData;
 
     private JCheckBox labelCkBox;
     private JButton removeBtn;
 
     public DatumLabel(FragmentDataSource data) {
         this.data = data;
-        this.fftData = new FilteredFiniteDataSource(data);
-        this.fftData.addFilters(DomainTransformFilter.FFT);
-        this.dwtData = new FilteredFiniteDataSource(data);
-        this.dwtData.addFilters(DomainTransformFilter.SWT_COIF4);
         this.initComponents("t=" + data.getStartingPosition());
     }
 
@@ -43,15 +37,6 @@ public class DatumLabel extends JPanel {
 
         this.setSize(this.getPreferredSize());
     }
-
-    public FiniteLengthDataSource getFFTData() {
-        return this.fftData;
-    }
-
-    public FiniteLengthDataSource getDWTData() {
-        return this.dwtData;
-    }
-
 
     public FragmentDataSource getData() {
         return this.data;

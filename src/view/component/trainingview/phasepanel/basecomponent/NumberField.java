@@ -42,9 +42,18 @@ public class NumberField<N extends Number & Comparable<N>> extends JFormattedTex
     }
 
     static <N extends Number> NumberFormatter makeFormatter(Class<N> nClass, N min, N max) {
-        NumberFormat format = nClass.equals(Double.class) || nClass.equals(Float.class)? NumberFormat.getNumberInstance(): NumberFormat.getIntegerInstance();
+        NumberFormat format;
+
+        if (isFloatClass(nClass)) {
+            format = NumberFormat.getNumberInstance();
+            format.setMaximumFractionDigits(20);
+        } else {
+            format = NumberFormat.getIntegerInstance();
+        }
         format.setGroupingUsed(false);
+
         NumberFormatter numFormatter = new NumberFormatter(format);
+
         numFormatter.setValueClass(nClass);
         if (min != null) {
             numFormatter.setMinimum((Comparable) min);
@@ -57,16 +66,23 @@ public class NumberField<N extends Number & Comparable<N>> extends JFormattedTex
         return numFormatter;
     }
 
-
-    public void setNumberValue(N value) {
-        super.setValue(value);
+    private static boolean isFloatClass(Class nClass) {
+        return nClass.equals(Double.class) || nClass.equals(Float.class);
     }
 
     public void setMinimum(N min) {
+        if (min.compareTo((N) this.getValue()) > 0) {
+            this.setValue(min);
+        }
+
         ((NumberFormatter) this.getFormatter()).setMinimum(min);
     }
 
     public void setMaximum(N max) {
+        if (max.compareTo((N) this.getValue()) < 0) {
+            this.setValue(max);
+        }
+
         ((NumberFormatter) this.getFormatter()).setMaximum(max);
     }
 

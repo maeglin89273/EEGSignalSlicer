@@ -16,9 +16,7 @@ import java.util.List;
 public class DomainTransformFilter implements Filter {
 
     public static final DomainTransformFilter FFT = new DomainTransformFilter("fft");
-    public static final DomainTransformFilter DWT_COIF4 = new DomainTransformFilter("dwt_coif4");
-    public static final DomainTransformFilter DWT_DB4 = new DomainTransformFilter("dwt_db4");
-    public static final DomainTransformFilter SWT_COIF4 = new DomainTransformFilter("swt_coif4");
+    public static final DomainTransformFilter WT = new DomainTransformFilter("wt");
 
     private PyroProxy oracle;
     private final FiniteListStream adapter;
@@ -30,6 +28,10 @@ public class DomainTransformFilter implements Filter {
         this.transformationLengthCalculator = "length_after_" + transformationName;
         this.oracle = PyOracle.getInstance().getOracle("transform");
         this.adapter = new FiniteListStream(0);
+    }
+
+    public PyroProxy getTransformationOracle() {
+        return this.oracle;
     }
 
     public void setTransformation(String transformationName) {

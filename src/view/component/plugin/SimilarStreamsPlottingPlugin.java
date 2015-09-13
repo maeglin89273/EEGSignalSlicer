@@ -1,6 +1,7 @@
 package view.component.plugin;
 
 import model.datasource.*;
+import model.filter.Filter;
 import view.component.plot.PlotView;
 import view.component.plot.PlottingUtils;
 
@@ -63,7 +64,7 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
 
     @Override
     public void onSourceReplaced(StreamingDataSource oldSource) {
-        this.setDataSource(null);
+//        this.setDataSource(null);
     }
 
     public void setDataSource(SimilarStreamsDataSource dataSource) {
@@ -109,16 +110,19 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
         }
     }
 
-    public static class SimilarStreamsDataSource implements StreamingDataSource, ViewDataSource {
+    public static class SimilarStreamsDataSource implements FilteredDataSource, ViewDataSource {
 
-        private Map<String, Map<StreamingDataSource, Stream>> classifier;
+        private Map<String, Map<FiniteLengthDataSource, MutableFiniteStream>> classifier;
         private Map<String, MutableFiniteStream> meanStreams;
         private List<PresentedDataChangedListener> listeners;
+
+        private LinkedList<Filter> filters;
 
         public SimilarStreamsDataSource() {
             this.classifier = new HashMap<>();
             this.meanStreams = new HashMap<>();
             this.listeners = new ArrayList<>();
+            this.filters = new LinkedList<>();
         }
 
         @Override
@@ -126,8 +130,8 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
             throw new UnsupportedOperationException("there are multiple streams in this tag");
         }
 
-        public Collection<Stream> getStreamsOf(String tag) {
-            Map<StreamingDataSource, Stream> map = this.classifier.get(tag);
+        public Collection<? extends Stream> getStreamsOf(String tag) {
+            Map<FiniteLengthDataSource, ? extends Stream> map = this.classifier.get(tag);
             if (map == null) {
                 return Collections.emptySet();
             }
@@ -146,27 +150,29 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
         }
 
 
-        public void addDataSource(StreamingDataSource data) {
+        public void addDataSource(FiniteLengthDataSource data) {
             addDataSourceCore(data);
             data.addPresentedDataChangedListener(this);
             firePresentedDataChanged();
         }
 
-        private void addDataSourceCore(StreamingDataSource data) {
+        private void addDataSourceCore(FiniteLengthDataSource data) {
             for (String tag: data.getTags()) {
-                Map<StreamingDataSource, Stream> streams = this.classifier.get(tag);
+                Map<FiniteLengthDataSource, MutableFiniteStream> streams = this.classifier.get(tag);
+                FiniteLengthStream stream = data.getFiniteDataOf(tag);
+                MutableFiniteStream newStream = filterStream(stream, this.claimFilteredStreamSpace(stream));
                 if (streams == null) {
                     streams = new HashMap<>();
                     this.classifier.put(tag, streams);
                     //use SimpleArrayStream for the urgent
-                    this.meanStreams.put(tag, new SimpleArrayStream((int)data.getCurrentLength()));
+                    this.meanStreams.put(tag, new FiniteListStream(newStream.intLength()));
                 }
-                Stream stream = data.getDataOf(tag);
-                Stream old = streams.put(data, stream);
+
+                Stream old = streams.put(data, newStream);
                 if (old != null) {
                     this.removeFromMean(tag, old, streams.size() - 1);
                 }
-                this.addToMean(tag, stream, streams.size());
+                this.addToMean(tag, newStream, streams.size());
             }
         }
 
@@ -180,15 +186,15 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
             }
         }
 
-        public void removeDataSource(StreamingDataSource data) {
+        public void removeDataSource(FiniteLengthDataSource data) {
             if (removeDataSourceCore(data)) {
                 data.removePresentedDataChangedListener(this);
                 firePresentedDataChanged();
             }
         }
 
-        private boolean removeDataSourceCore(StreamingDataSource data) {
-            Map<StreamingDataSource, Stream> streams;
+        private boolean removeDataSourceCore(FiniteLengthDataSource data) {
+            Map<FiniteLengthDataSource, MutableFiniteStream> streams;
             Stream stream;
             boolean hasData = false;
             for (String tag: data.getTags()) {
@@ -242,33 +248,74 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
 
         @Override
         public void onDataChanged(StreamingDataSource source) {
-            this.recalculateMean();
-            this.firePresentedDataChanged();
+            this.refilterAllPresentedDataAndFireEvent();
         }
+
+
+        private class TempStream extends FiniteLengthStream {
+           List<Double> delegate = new LinkedList<>();
+
+            @Override
+            public double get(long i) {
+                return delegate.get((int) i);
+            }
+
+            @Override
+            public int intLength() {
+                return delegate.size();
+            }
+
+            @Override
+            public double[] toArray() {
+                //not support
+                return null;
+            }
+
+        };
+
+        private TempStream tempStream = new TempStream();
 
         private void recalculateMean() {
             for (Map.Entry<String, MutableFiniteStream> entry: meanStreams.entrySet()) {
                 MutableFiniteStream mean = entry.getValue();
-                for (int i = 0; i < mean.intLength(); i ++) {
-                    Collection<Stream> streams = this.classifier.get(entry.getKey()).values();
+                Collection<MutableFiniteStream> streams = this.classifier.get(entry.getKey()).values();
+                long length = getOneStream(streams).getCurrentLength();
+                for (int i = 0; i < length; i ++) {
                     double elementMean = 0;
                     for (Stream stream: streams){
                         elementMean += stream.get(i) / streams.size();
                     }
-
-                    mean.set(i, elementMean);
+                    tempStream.delegate.add(elementMean);
                 }
+
+                mean.replacedBy(tempStream, 0);
+                tempStream.delegate.clear();
             }
+        }
+
+        private static Stream getOneStream(Collection<MutableFiniteStream> streams) {
+            return streams.iterator().next();
+
         }
 
         @Override
         public void onDataChanged(StreamingDataSource source, String tag) {
-
-            Stream stream = source.getDataOf(tag);
+            FiniteLengthDataSource finiteSource = (FiniteLengthDataSource) source;
+            FiniteLengthStream stream = finiteSource.getFiniteDataOf(tag);
+            Map<FiniteLengthDataSource, MutableFiniteStream> localStreams = this.classifier.get(tag);
             if (stream != null) {
-                this.classifier.get(tag).put(source, stream);
+                MutableFiniteStream filteredStream = localStreams.get(finiteSource);
+                if (filteredStream == null) {
+                    MutableFiniteStream newStream = this.filterStream(stream, this.claimFilteredStreamSpace(stream));
+                    localStreams.put(finiteSource, newStream);
+                    this.addToMean(tag, newStream, localStreams.size());
+                } else {
+                    this.removeFromMean(tag, filteredStream, localStreams.size() - 1);
+                    this.filterStream(stream, filteredStream);
+                    this.addToMean(tag, filteredStream, localStreams.size());
+                }
             } else {
-                this.classifier.get(tag).remove(source);
+                removeFromMean(tag, localStreams.remove(source), localStreams.size());
             }
             this.firePresentedDataChanged(tag);
         }
@@ -280,6 +327,62 @@ public class SimilarStreamsPlottingPlugin extends StreamPlottingPlugin implement
 
         public Stream getMeanStream(String tag) {
             return this.meanStreams.get(tag);
+        }
+
+        @Override
+        public void addFilters(Filter... filters) {
+            for (Filter filter: filters) {
+                this.filters.add(filter);
+            }
+            this.refilterAllPresentedDataAndFireEvent();
+        }
+
+
+        @Override
+        public void removeFilter(Filter filter) {
+            this.filters.remove(filter);
+            this.refilterAllPresentedDataAndFireEvent();
+        }
+
+        @Override
+        public void replaceFilter(int i, Filter filter) {
+            this.filters.set(i, filter);
+            this.refilterAllPresentedDataAndFireEvent();
+        }
+
+        private MutableFiniteStream filterStream(FiniteLengthStream originalStream, MutableFiniteStream filteredStream) {
+            if (filters.isEmpty()) {
+                filteredStream.replacedBy(originalStream, 0, originalStream.intLength());
+
+            } else {
+                filters.getFirst().filter(originalStream, filteredStream);
+
+                for (Filter filter: filters.subList(1, filters.size())) {
+                    filter.filter(filteredStream, filteredStream);
+                }
+            }
+            return filteredStream;
+        }
+
+        private void refilterAllPresentedDataAndFireEvent() {
+            for (Map.Entry<String, Map<FiniteLengthDataSource, MutableFiniteStream>> outerPair: classifier.entrySet()) {
+                for (Map.Entry<FiniteLengthDataSource, MutableFiniteStream> innerPair : outerPair.getValue().entrySet()) {
+                    this.filterStream(innerPair.getKey().getFiniteDataOf(outerPair.getKey()), innerPair.getValue());
+                }
+            }
+
+            this.recalculateMean();
+            this.firePresentedDataChanged();
+        }
+
+        private MutableFiniteStream claimFilteredStreamSpace(FiniteLengthStream rawStream) {
+            MutableFiniteStream streamCache = new FiniteListStream(rawStream.intLength());
+            return streamCache;
+        }
+
+        @Override
+        public Stream getOriginalDataOf(String tag) {
+            return null;
         }
     }
 }

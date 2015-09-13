@@ -26,6 +26,7 @@ public class TrainingPanelLayout {
     private JButton addDatasetBtn;
     private JButton moveLeftBtn;
     private JButton moveRightBtn;
+    private JButton trainBtn;
 
     private void createUIComponents() {
         // TODO: place custom component creation code here
@@ -176,6 +177,15 @@ public class TrainingPanelLayout {
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this2015.add(moveRightBtn, gbc);
+        trainBtn = new JButton();
+        trainBtn.setEnabled(false);
+        trainBtn.setText("Train");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 9;
+        gbc.gridy = 5;
+        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        this2015.add(trainBtn, gbc);
     }
 
     /**

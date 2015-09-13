@@ -22,7 +22,8 @@ public abstract class StreamPlottingPlugin extends EmptyPlotPlugin {
     }
 
     public void plotStream(Graphics2D g2, Stream stream, long startingPtr) {
-        int length = PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), stream, (int) startingPtr, yBuffer);
+        int length = this.plot.getXPoints().length;
+        length = PlottingUtils.loadYBuffer(plot.getBaseline(), plot.getPeakValue(), plot.getHeight(), stream, (int) startingPtr, yBuffer, length);
         g2.drawPolyline(this.plot.getXPoints(), this.yBuffer, length);
     }
 }

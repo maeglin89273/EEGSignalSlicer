@@ -3,6 +3,7 @@ package view.component.trainingview.phasepanel.basecomponent;
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.util.*;
 
 /**
  * Created by maeglin89273 on 9/6/15.
@@ -10,10 +11,14 @@ import java.awt.*;
 public class RangeFieldPair<N extends Number & Comparable<N>> extends CompoundStructuredValueComponent {
 
     private static final int TEXT_FILED_COLUMN = 3;
+    private final NumberFormatter startFormatter;
+    private final NumberFormatter endFormatter;
     private JFormattedTextField startField;
     private JFormattedTextField endField;
 
     private RangeFieldPair(NumberFormatter startFormatter, NumberFormatter endFormatter) {
+        this.startFormatter = startFormatter;
+        this.endFormatter = endFormatter;
         this.setupComponents(startFormatter, endFormatter);
         this.setupListeners();
     }
@@ -54,15 +59,13 @@ public class RangeFieldPair<N extends Number & Comparable<N>> extends CompoundSt
 
     private void setupListeners() {
         this.startField.addPropertyChangeListener("value", evt-> {
-            if (isFieldValid(startField)) {
-                setEndMin((N)startField.getValue());
-            }
+            setEndMin((N)startField.getValue());
+
         });
 
         this.endField.addPropertyChangeListener("value", evt-> {
-            if (isFieldValid(endField)) {
-                setStartMax((N) endField.getValue());
-            }
+            setStartMax((N) endField.getValue());
+
         });
     }
 
@@ -98,32 +101,77 @@ public class RangeFieldPair<N extends Number & Comparable<N>> extends CompoundSt
         return field.isEditValid() && field.getValue() != null;
     }
 
-    private void setStartMax(Comparable max) {
-        ((NumberFormatter)this.startField.getFormatter()).setMaximum(max);
+    private void setStartMax(Comparable<N> max) {
+        if (max.compareTo((N) this.startField.getValue()) < 0) {
+            this.startField.setValue(max);
+        }
+
+        this.startFormatter.setMaximum(max);
+
     }
 
-    private void setEndMin(Comparable min) {
-        ((NumberFormatter)this.endField.getFormatter()).setMinimum(min);
+    private N getStartMax() {
+        return (N) this.startFormatter.getMaximum();
     }
 
+    private void setEndMin(Comparable<N> min) {
+
+        if (min.compareTo((N) this.endField.getValue()) > 0) {
+            this.endField.setValue(min);
+        }
+
+        this.endFormatter.setMinimum(min);
+
+    }
+
+    private N getEndMin() {
+        return (N) this.endFormatter.getMinimum();
+    }
+
+    public N getMinimum() {
+        return (N) this.startFormatter.getMinimum();
+    }
+
+    public N getMaximum() {
+        return (N) this.endFormatter.getMaximum();
+    }
 
     public void setMinimum(N min) {
-        ((NumberFormatter)this.startField.getFormatter()).setMinimum(min);
+        if (min.compareTo(getMaximum()) > 0) {
+            return;
+        }
+
+        if (min.compareTo((N) this.startField.getValue()) > 0) {
+            this.startField.setValue(min);
+        }
+
+        this.startFormatter.setMinimum(min);
+
     }
 
     public void setMaximum(N max) {
-        ((NumberFormatter)this.endField.getFormatter()).setMaximum(max);
+        if (max.compareTo(getMinimum()) < 0) {
+            return;
+        }
+
+        if (max.compareTo((N) this.endField.getValue()) < 0) {
+            this.endField.setValue(max);
+        }
+
+        this.endFormatter.setMaximum(max);
     }
 
     @Override
     public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
         this.startField.setEnabled(enabled);
         this.endField.setEnabled(enabled);
     }
 
     @Override
     public Object getStructuredValue() {
-        return null;
+        java.util.List<Number> pair = new ArrayList<>(2);
+        pair.add((Number) startField.getValue());
+        pair.add((Number) endField.getValue());
+        return pair;
     }
 }

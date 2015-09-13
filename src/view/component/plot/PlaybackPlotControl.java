@@ -40,7 +40,7 @@ public class PlaybackPlotControl extends JPanel implements ActionListener {
     private JLabel speedLbl;
 
     public PlaybackPlotControl(int windowSize, float peakValue) {
-        this(new InteractivePlotView(windowSize, peakValue));
+        this(new InteractivePlotView("Main Plot", windowSize, peakValue));
     }
 
     public PlaybackPlotControl(InteractivePlotView plot) {

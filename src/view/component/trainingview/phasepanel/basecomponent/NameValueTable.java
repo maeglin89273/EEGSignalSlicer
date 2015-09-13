@@ -1,6 +1,7 @@
 package view.component.trainingview.phasepanel.basecomponent;
 
 import javax.swing.*;
+import javax.swing.text.html.parser.Entity;
 import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,9 +9,8 @@ import java.util.Map;
 /**
  * Created by maeglin89273 on 9/4/15.
  */
-public class NameValueTable extends BorderedCompoundStructuredValueComponent {
+public class NameValueTable extends BorderedCompoundStructuredValueComponent implements NamedStructuredValueComponent {
     private static Insets CELL_PADDING = SpacingStandard.AROUND_PADDING;
-    private int rowIndex = 0;
 
     private JPanel tablePanel;
     private Map<OptionLabel, HasStructuredValueComponent> tableModel;
@@ -48,45 +48,84 @@ public class NameValueTable extends BorderedCompoundStructuredValueComponent {
         this.add(new JPanel(), gbc);
     }
 
-    public <C extends JComponent & HasStructuredValueComponent> void addNameValue(String name, C component) {
-        this.addNameValue(OptionLabel.LabelType.LABEL, name, component);
-
+    public <C extends JComponent & HasStructuredValueComponent> OptionLabel addNameValue(String name, C component) {
+        return this.addNameValue(OptionLabel.LabelType.LABEL, name, component);
     }
 
-    public <C extends JComponent & HasStructuredValueComponent> void addNameValue(OptionLabel.LabelType type, String name, C component) {
-        OptionLabel label = this.makeOptionLabelCell(type, name, component);
-        this.makeValueCell(component);
+    public <C extends JComponent & HasStructuredValueComponent> OptionLabel addNameValue(OptionLabel.LabelType type, String name, C component) {
+        OptionLabel label = makeOptionLabel(type, name);
         this.tableModel.put(label, component);
-        rowIndex++;
+        this.checkIsRadioBtn(label);
+
+        this.makeOptionLabelCell(label, tableModel.size() - 1);
+        this.makeValueCell(component, tableModel.size() - 1);
+
+
+        return label;
 
     }
 
-    private OptionLabel makeOptionLabelCell(OptionLabel.LabelType type, String name, final JComponent valueComponent) {
-        OptionLabel label = OptionLabel.getInstance(type, name + ":");
-        label.addChangeListener(evt-> {
-            valueComponent.setEnabled(((OptionLabel)evt.getSource()).isSelected());
-        });
-        if (type == OptionLabel.LabelType.RADIO) {
+    private void checkIsRadioBtn(OptionLabel label) {
+        if (label instanceof JRadioButton) {
+            this.checkBtnGroupNotNull();
             this.optionGroup.add((AbstractButton) label);
             if (this.optionGroup.getButtonCount() == 1) {
                 label.setSelected(true);
+            } else {
+                this.tableModel.get(label).setEnabled(false);
             }
         }
+    }
+
+    public <C extends JComponent & HasStructuredValueComponent> void replaceValue(OptionLabel nameLabel, C newComponent) {
+        int i = 0;
+        HasStructuredValueComponent valueComponent = null;
+        for (Map.Entry<OptionLabel, HasStructuredValueComponent> pair: tableModel.entrySet()) {
+            if (pair.getKey().equals(nameLabel)) {
+                valueComponent = pair.getValue();
+                break;
+            }
+            i++;
+        }
+        if (valueComponent != null) {
+            this.tablePanel.remove((Component) valueComponent);
+            this.tableModel.replace(nameLabel, newComponent);
+            this.makeValueCell(newComponent, i);
+        }
+
+    }
+
+    private OptionLabel makeOptionLabel(OptionLabel.LabelType type, String name) {
+        OptionLabel label = OptionLabel.getInstance(type, name + ":");
+        label.addItemListener(evt -> {
+            tableModel.get(label).setEnabled(((OptionLabel) evt.getSource()).isSelected());
+        });
+
+        return label;
+    }
+
+    private void makeOptionLabelCell(OptionLabel label, int index) {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = rowIndex;
+        gbc.gridy = index;
         gbc.anchor = GridBagConstraints.WEST;
 
         gbc.insets = CELL_PADDING;
         this.tablePanel.add((Component) label, gbc);
-        return label;
+
     }
 
-    private void makeValueCell(JComponent component) {
+    private void checkBtnGroupNotNull() {
+        if (optionGroup == null) {
+            optionGroup = new ButtonGroup();
+        }
+    }
+
+    private void makeValueCell(JComponent component, int index) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 1;
-        gbc.gridy = rowIndex;
+        gbc.gridy = index;
         gbc.anchor = GridBagConstraints.WEST;
 
         gbc.insets = CELL_PADDING;
@@ -95,17 +134,17 @@ public class NameValueTable extends BorderedCompoundStructuredValueComponent {
 
     @Override
     public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
         for (Map.Entry<OptionLabel, HasStructuredValueComponent> pair: tableModel.entrySet()) {
-            pair.getKey().setEnabled(enabled);
-            pair.getValue().setEnabled(enabled);
+            OptionLabel key = pair.getKey();
+            key.setEnabled(enabled);
+            pair.getValue().setEnabled(enabled && key.isSelected());
         }
     }
 
     @Override
     public boolean isValueReady() {
-        for (HasStructuredValueComponent valueComponent: tableModel.values()) {
-            if (!valueComponent.isValueReady()) {
+        for (Map.Entry<OptionLabel, HasStructuredValueComponent> pair: tableModel.entrySet()) {
+            if (pair.getKey().isSelected() && !pair.getValue().isValueReady()) {
                 return false;
             }
         }
@@ -113,7 +152,15 @@ public class NameValueTable extends BorderedCompoundStructuredValueComponent {
     }
 
     @Override
-    public Object getStructuredValue() {
-        return null;
+    public Map<String, Object> getStructuredValue() {
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (Map.Entry<OptionLabel, HasStructuredValueComponent> pair: this.tableModel.entrySet()) {
+            OptionLabel key = pair.getKey();
+            if (key.isSelected()) {
+                values.put(HasStructuredValueComponent.encodeToDictKey(key.getText()), pair.getValue().getStructuredValue());
+            }
+        }
+
+        return values;
     }
 }

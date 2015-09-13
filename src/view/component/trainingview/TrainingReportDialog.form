@@ -26,130 +26,13 @@
           </component>
         </children>
       </grid>
-      <grid id="e3588" layout-manager="GridBagLayout">
+      <component id="bdeb3" class="view.component.trainingview.phasepanel.basecomponent.SectionPanel" binding="reportPanel" custom-create="true">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="1.0"/>
         </constraints>
         <properties/>
-        <border type="none"/>
-        <children>
-          <component id="11cac" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <font style="1"/>
-              <text value="Cross Validation Average Score"/>
-            </properties>
-          </component>
-          <component id="bbfed" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <font style="1"/>
-              <text value="Test Score"/>
-            </properties>
-          </component>
-          <component id="9cdc1" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <font style="1"/>
-              <text value="Size of Training Dataset"/>
-            </properties>
-          </component>
-          <component id="15115" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="1.0"/>
-            </constraints>
-            <properties>
-              <font style="1"/>
-              <text value="Classifier"/>
-            </properties>
-          </component>
-          <grid id="4de3e" binding="learnerProfilePanel" custom-create="true" layout-manager="GridBagLayout">
-            <constraints>
-              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="1.0" weighty="1.0"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
-          <component id="a730c" class="javax.swing.JLabel" binding="testScoreLbl">
-            <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="0%"/>
-            </properties>
-          </component>
-          <component id="896f4" class="javax.swing.JLabel" binding="trainingSizeLbl">
-            <constraints>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="0"/>
-            </properties>
-          </component>
-          <component id="46c5c" class="javax.swing.JLabel" binding="cvaScoreLbl">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="1.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="0%"/>
-            </properties>
-          </component>
-          <component id="f2333" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <font style="1"/>
-              <text value="Feature Selection"/>
-            </properties>
-          </component>
-          <component id="47804" class="javax.swing.JLabel" binding="featureSelectionLbl">
-            <constraints>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="None"/>
-            </properties>
-          </component>
-          <component id="cf018" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <font style="1"/>
-              <text value="Size of Testing Dataset"/>
-            </properties>
-          </component>
-          <component id="6094" class="javax.swing.JLabel" binding="testingSizeLbl">
-            <constraints>
-              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="0.0"/>
-            </constraints>
-            <properties>
-              <text value="0"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
+      </component>
     </children>
   </grid>
 </form>

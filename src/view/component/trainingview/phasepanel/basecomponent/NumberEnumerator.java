@@ -3,14 +3,15 @@ package view.component.trainingview.phasepanel.basecomponent;
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
-import java.text.NumberFormat;
+
+import java.util.List;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * Created by maeglin89273 on 9/5/15.
  */
-public class NumberEnumerator extends CompoundStructuredValueComponent {
+public class NumberEnumerator<N extends Number & Comparable<N>> extends CompoundStructuredValueComponent {
     private static final int TEXT_FILED_COLUMN = 5;
     private static final int SPINNER_COLUMN = 3;
     private static final int MAX_NUM_PRINT = 6;
@@ -51,25 +52,67 @@ public class NumberEnumerator extends CompoundStructuredValueComponent {
         }
     };
 
+    private static final SampleGenerator<Integer> INTEGER_GENERATOR = (calculation, startValue, endValue, sampleNum) -> {
+        LinkedList<Integer> result = new LinkedList<>();
+
+        if (sampleNum > 1) {
+
+            double spacing = calculation.calculateSpacing(startValue, endValue, sampleNum);
+            for (int i = 0; i < sampleNum - 1; i++) {
+                result.add((int) calculation.calculateSample(startValue, spacing, i));
+            }
+            result.add(endValue);
+
+        } else if (sampleNum == 1) {
+            result.add(startValue);
+        }
+
+        return result;
+    };
+
+    private static final SampleGenerator<Double> FLOAT_GENERATOR = (calculation, startValue, endValue, sampleNum) -> {
+        LinkedList<Double> result = new LinkedList<>();
+
+        if (sampleNum > 1) {
+
+            double spacing = calculation.calculateSpacing(startValue, endValue, sampleNum);
+            for (int i = 0; i < sampleNum - 1; i++) {
+                result.add(calculation.calculateSample(startValue, spacing, i));
+            }
+            result.add(endValue);
+        } else if (sampleNum == 1) {
+            result.add(startValue);
+        }
+        return result;
+    };
+
     private int modeIdx = 0;
-    private final boolean bePositive;
-    private final boolean limitInteger;
-    private int sampleNumLimit = 20;
+
+    private int sampleNumLimit = 100;
     private JFormattedTextField startField;
     private JFormattedTextField endField;
     private JSpinner sampleNumSpinner;
     private JButton spaceModeBtn;
     private JLabel enumLbl;
-    private Color defaultTextColor;
+
     private LinkedList<? extends Number> samples;
+    private final SampleGenerator<N> generator;
+    private NumberFormatter startFormatter;
+    private final NumberFormatter endFormatter;
+    private JLabel tildeLbl;
+    private JLabel numOfSamplesLbl;
 
 
-    public NumberEnumerator(boolean limitInteger, boolean bePositive) {
-        this.limitInteger = limitInteger;
-        this.bePositive = bePositive;
+    private NumberEnumerator(SampleGenerator<N> generator, NumberFormatter startFormatter, NumberFormatter endFormatter, N initValue) {
+        this.generator = generator;
+        this.startFormatter = startFormatter;
+        this.endFormatter = endFormatter;
 
-        this.setupComponents();
+        this.setupComponents(this.startFormatter, this.endFormatter);
         this.setupListeners();
+
+        this.startField.setValue(initValue);
+        this.endField.setValue(initValue);
     }
 
     private void setupListeners() {
@@ -88,40 +131,54 @@ public class NumberEnumerator extends CompoundStructuredValueComponent {
             updateSamples();
         });
     }
-    private NumberFormatter makeFormatter() {
-        if (this.limitInteger) {
-            return NumberField.makeFormatter(Integer.class, this.bePositive ? 0 : null, null);
-        } else {
-            return NumberField.makeFormatter(Double.class, this.bePositive ? 0.0 : null, null);
-        }
+
+    public static NumberEnumerator<Double> getFloatInstance(Double value) {
+        return getFloatInstance(null, value);
     }
 
-    public void setupComponents() {
+    public static NumberEnumerator<Double> getFloatInstance(Double min, Double value) {
+        NumberFormatter start = NumberField.makeFormatter(Double.class, min, null);
+        NumberFormatter end = NumberField.makeFormatter(Double.class, min, null);
+        return new NumberEnumerator<>(FLOAT_GENERATOR, start, end, value);
+    }
+
+    public static NumberEnumerator<Integer> getIntegerInstance(Integer value) {
+        return getIntegerInstance(null, value);
+    }
+
+    public static NumberEnumerator<Integer> getIntegerInstance(Integer min, Integer value) {
+        NumberFormatter start = NumberField.makeFormatter(Integer.class, min, null);
+        NumberFormatter end = NumberField.makeFormatter(Integer.class, min, null);
+        return new NumberEnumerator<>(INTEGER_GENERATOR, start, end, value);
+    }
+
+    public void setupComponents(NumberFormatter startFormatter, NumberFormatter endFormatter) {
         this.setLayout(new GridBagLayout());
 
-        this.startField = new JFormattedTextField(this.makeFormatter());
+        this.startField = new JFormattedTextField(startFormatter);
         this.startField.setHorizontalAlignment(JTextField.RIGHT);
         this.startField.setColumns(TEXT_FILED_COLUMN);
 
-        JLabel tildeLbl = new JLabel("~");
+        this.tildeLbl = new JLabel("~");
 
-        this.endField = new JFormattedTextField(this.makeFormatter());
+        this.endField = new JFormattedTextField(endFormatter);
         this.endField.setHorizontalAlignment(JTextField.RIGHT);
         this.endField.setColumns(TEXT_FILED_COLUMN);
 
-        JLabel numOfSamplesLbl = new JLabel(", number of samples:");
+        this.numOfSamplesLbl = new JLabel(", number of samples:");
 
         this.sampleNumSpinner = new JSpinner();
         SpinnerNumberModel model = (SpinnerNumberModel) this.sampleNumSpinner.getModel();
         model.setValue(1);
         model.setMinimum(1);
         model.setMaximum(sampleNumLimit);
-        ((JSpinner.DefaultEditor)this.sampleNumSpinner.getEditor()).getTextField().setColumns(SPINNER_COLUMN);
+        JFormattedTextField spinnerField = ((JSpinner.DefaultEditor) this.sampleNumSpinner.getEditor()).getTextField();
+        spinnerField.setHorizontalAlignment(JTextField.RIGHT);
+        spinnerField.setColumns(SPINNER_COLUMN);
 
         this.spaceModeBtn = new JButton(SPACE_MODES[this.modeIdx]);
         this.enumLbl = new JLabel();
         this.enumLbl.setVisible(false);
-        this.defaultTextColor = this.enumLbl.getForeground();
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -220,61 +277,27 @@ public class NumberEnumerator extends CompoundStructuredValueComponent {
     }
 
     private static String prettyFormat(Number sample) {
-        String sampleString = sample.toString();
-
-        if (sampleString.length() > 8) {
-            double dValue = Math.abs(sample.doubleValue());
-            if (dValue < 1 || dValue >= 100000) {
-                return String.format("%.3e", sample);
-            }
-            return String.format("%.3f", sample);
-
+        if (sample instanceof Integer) {
+            return sample.toString();
         }
-        return sampleString;
+        return String.format("%.3g", sample);
+//        String sampleString = sample.toString()
+//        if (sampleString.length() > 8) {
+//            double dValue = Math.abs(sample.doubleValue());
+//            if (dValue < 1 || dValue >= 100000) {
+//                return String.format("%.3g", sample);
+//            }
+//            return String.format("%.3f", sample);
+//
+//        }
+//        return sampleString;
     }
 
-    private LinkedList<Integer> generateIntegerSamples(Calculation calculation) {
-        LinkedList<Integer> result = new LinkedList<>();
-        int startValue = this.getStartValue().intValue();
-        int sampleNum = this.getSampleNum();
 
-        if (sampleNum > 1) {
-            int endValue = this.getEndValue().intValue();
-
-            double spacing = calculation.calculateSpacing(startValue, endValue, sampleNum);
-            for (int i = 0; i < sampleNum - 1; i++) {
-                result.add((int) calculation.calculateSample(startValue, spacing, i));
-            }
-            result.add(endValue);
-
-        } else if (sampleNum == 1) {
-            result.add(startValue);
-        }
-
-        return result;
-    }
-
-    private LinkedList<Double> generateFloatSamples(Calculation calculation) {
-        LinkedList<Double> result = new LinkedList<>();
-        double startValue = this.getStartValue().doubleValue();
-        int sampleNum = this.getSampleNum();
-
-        if (sampleNum > 1) {
-            double endValue = this.getEndValue().doubleValue();
-            double spacing = calculation.calculateSpacing(startValue, endValue, sampleNum);
-            for (int i = 0; i < sampleNum - 1; i++) {
-                result.add(calculation.calculateSample(startValue, spacing, i));
-            }
-            result.add(endValue);
-        } else if (sampleNum == 1) {
-            result.add(startValue);
-        }
-        return result;
-    }
 
     private LinkedList<? extends Number> generateSamples() {
         Calculation calculation = this.isLinear()? LINEAR_CALCULATION: LOG_CALCULATION;
-        return this.limitInteger? this.generateIntegerSamples(calculation): this.generateFloatSamples(calculation);
+        return this.generator.generate(calculation, this.getStartValue(), this.getEndValue(), this.getSampleNum());
     }
 
     private boolean isLinear() {
@@ -282,12 +305,12 @@ public class NumberEnumerator extends CompoundStructuredValueComponent {
     }
 
 
-    private Number getStartValue() {
-        return (Number) this.startField.getValue();
+    private N getStartValue() {
+        return (N) this.startField.getValue();
     }
 
-    private Number getEndValue() {
-        return (Number) this.endField.getValue();
+    private N getEndValue() {
+        return (N) this.endField.getValue();
     }
 
     private int getSampleNum() {
@@ -296,16 +319,18 @@ public class NumberEnumerator extends CompoundStructuredValueComponent {
 
     @Override
     public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
         this.startField.setEnabled(enabled);
         this.endField.setEnabled(enabled);
         this.sampleNumSpinner.setEnabled(enabled);
         this.spaceModeBtn.setEnabled(enabled);
+        this.tildeLbl.setEnabled(enabled);
+        this.numOfSamplesLbl.setEnabled(enabled);
+        this.enumLbl.setEnabled(enabled);
     }
 
     @Override
     public boolean isValueReady() {
-        return false;
+        return this.samples != null;
     }
 
     @Override
@@ -317,4 +342,10 @@ public class NumberEnumerator extends CompoundStructuredValueComponent {
         public abstract double calculateSpacing(double start, double end, int sampleNum);
         public abstract double calculateSample(double startValue, double spacing, int i);
     }
+
+    private interface SampleGenerator<N extends Number> {
+        public abstract LinkedList<N> generate(Calculation calculation, N startValue, N endValue, int sampleNum);
+    }
+
+
 }

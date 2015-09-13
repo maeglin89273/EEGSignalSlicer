@@ -24,22 +24,19 @@ public final class PlottingUtils {
     }
 
     public static void loadXBuffer(double coordinateWidth, int plotWidth, int[] xBuffer) {
-        double interval = plotWidth / coordinateWidth;
+        double interval = plotWidth / (coordinateWidth - 1);
         for (int i = 0; i < xBuffer.length; i++) {
             xBuffer[i] = (int) Math.round(i * interval);
         }
     }
 
-    public static void loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer, int length) {
+    public static int loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer, int length) {
+        long dataRemain = data.getCurrentLength() - startIndex;
+        length = dataRemain < length? (int) dataRemain : length;
         for (int i = 0; i < length; i++) {
             yBuffer[i] = mapY(baseline, coordinatePeak, plotHeight, data.get(i + startIndex));
         }
-    }
 
-    public static int loadYBuffer(Baseline baseline, double coordinatePeak, int plotHeight, Stream data, int startIndex, int[] yBuffer) {
-        int length = (int) (data.getCurrentLength() - startIndex);
-        length = length > yBuffer.length? yBuffer.length: length;
-        loadYBuffer(baseline, coordinatePeak, plotHeight, data, startIndex, yBuffer, length);
         return length;
     }
 

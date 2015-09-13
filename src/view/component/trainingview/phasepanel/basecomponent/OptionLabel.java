@@ -3,6 +3,7 @@ package view.component.trainingview.phasepanel.basecomponent;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ItemListener;
 
 /**
  * Created by maeglin89273 on 9/7/15.
@@ -18,7 +19,7 @@ public interface OptionLabel {
     public float getAlignmentY();
     public Font getFont();
     public void setFont(Font font);
-    public void addChangeListener(ChangeListener listener);
+    public void addItemListener(ItemListener listener);
     public void setEnabled(boolean enabled);
     public boolean isEnabled();
 
@@ -63,14 +64,10 @@ public interface OptionLabel {
         }
 
         @Override
-        public void addChangeListener(ChangeListener listener) {
+        public void addItemListener(ItemListener listener) {
             //ignore the operation
         }
 
-        @Override
-        public void setEnabled(boolean enabled) {
-            //ignore the operation
-        }
     }
 
     public static class OptionJRadioButton extends JRadioButton implements OptionLabel {

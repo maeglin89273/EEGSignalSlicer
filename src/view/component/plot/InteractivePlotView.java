@@ -1,15 +1,16 @@
 package view.component.plot;
 
+import model.DataFileUtils;
 import model.datasource.StreamingDataSource;
 import view.component.plugin.InteractivePlotPlugin;
 import view.component.plugin.InterestedStreamVisibilityPlugin;
 import view.component.plugin.PlotPlugin;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.awt.image.BufferedImage;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -17,24 +18,43 @@ import java.util.List;
  */
 public class InteractivePlotView extends PlotView {
     private final List<String> visibleStreamTags;
+    private final String plotName;
     private List<InteractivePlotPlugin.MousePlugin> mousePlugins;
     private List<InterestedStreamVisibilityPlugin> visibilityPlugins;
     private MouseEventHandler mouseHandler;
     private boolean viewAllStreams;
+    private JPopupMenu additionalOptions;
+    private OptionClickHandler optionClickHandler;
 
-    public InteractivePlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
-        this(windowSize, peakValue, new Dimension(plotWidth, plotHeight));
+    public InteractivePlotView(String plotName, int windowSize, float peakValue, int plotWidth, int plotHeight) {
+        this(plotName, windowSize, peakValue, new Dimension(plotWidth, plotHeight));
     }
 
-    public InteractivePlotView(int windowSize, float peakValue, Dimension dim) {
+    private void initAdditionalOptions() {
+        this.optionClickHandler = new OptionClickHandler();
+        this.additionalOptions = new JPopupMenu();
+        JMenuItem saveImageItem = this.makeMenuItem("save plot");
+        this.additionalOptions.add(saveImageItem);
+    }
+
+    private JMenuItem makeMenuItem(String text) {
+        JMenuItem menuItem = new JMenuItem(text);
+        menuItem.setActionCommand(menuItem.getText());
+        menuItem.addActionListener(this.optionClickHandler);
+        return menuItem;
+    }
+
+    public InteractivePlotView(String plotName, int windowSize, float peakValue, Dimension dim) {
         super(windowSize, peakValue, dim);
+        this.plotName = plotName;
         this.visibleStreamTags = new LinkedList<>();
         this.visibilityPlugins = new ArrayList<>();
+        this.initAdditionalOptions();
         this.prepareInteraction();
     }
 
-    public InteractivePlotView(int windowSize, float peakValue) {
-        this(windowSize, peakValue, PREFERRED_SIZE);
+    public InteractivePlotView(String plotName, int windowSize, float peakValue) {
+        this(plotName, windowSize, peakValue, PREFERRED_SIZE);
     }
 
     private void prepareInteraction() {
@@ -134,29 +154,50 @@ public class InteractivePlotView extends PlotView {
     }
 
     private class MouseEventHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
+        private boolean blockMouseEnter = false;
+
         @Override
         public void mouseClicked(MouseEvent e) {
+            this.checkAndShowPopupMenu(e);
 
+        }
+
+        private boolean checkAndShowPopupMenu(MouseEvent e) {
+            if (e.isPopupTrigger() && InteractivePlotView.this.isEnabled()) {
+                additionalOptions.show(InteractivePlotView.this, e.getX(), e.getY());
+                return true;
+            }
+            return false;
         }
 
         @Override
         public void mousePressed(MouseEvent e) {
-            fireMouseAction("mousePressed", e);
+            if (!this.checkAndShowPopupMenu(e)) {
+                fireMouseAction("mousePressed", e);
+            }
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-
+            this.checkAndShowPopupMenu(e);
         }
 
         @Override
         public void mouseEntered(MouseEvent e) {
-            fireMouseAction("mouseEntered", e);
+            if (!this.blockMouseEnter) {
+                fireMouseAction("mouseEntered", e);
+            } else {
+                this.blockMouseEnter = false;
+            }
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-            fireMouseAction("mouseExited", e);
+            if (!additionalOptions.isVisible()) {
+                fireMouseAction("mouseExited", e);
+            } else {
+                this.blockMouseEnter = true;
+            }
         }
 
         @Override
@@ -172,6 +213,26 @@ public class InteractivePlotView extends PlotView {
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
             fireMouseAction("mouseWheelMoved", e);
+        }
+    }
+
+    private class OptionClickHandler implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            switch(e.getActionCommand()) {
+                case "save plot":
+                    this.savePlot();
+            }
+        }
+
+        private void savePlot() {
+            BufferedImage buffer = this.createImageBuffer();
+            InteractivePlotView.this.paint(buffer.getGraphics());
+            DataFileUtils.getInstance().saveImage(buffer, plotName + "_" + new Date().toString());
+        }
+
+        private BufferedImage createImageBuffer() {
+            return new BufferedImage(InteractivePlotView.this.getWidth(), InteractivePlotView.this.getHeight(), BufferedImage.TYPE_INT_ARGB);
         }
     }
 }

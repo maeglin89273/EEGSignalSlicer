@@ -18,15 +18,15 @@ public class LearnerProxy {
     private Collection<String> trainTags;
     private TrainingCompleteCallback callback;
     private PyroProxy oracle;
-    private String[] featureSelections;
+    private Map<String, Object> trainingSettings;
 
     public LearnerProxy(TrainingCompleteCallback callback) {
         this.callback = callback;
         this.oracle = PyOracle.getInstance().getOracle("learning");
     }
 
-    public void prepareData(String[] featureSelections, Collection<FragmentDataSource> data, Collection<String> trainTags) {
-        this.featureSelections = featureSelections;
+    public void prepareData(Map<String, Object> trainingSettings, Collection<FragmentDataSource> data, Collection<String> trainTags) {
+        this.trainingSettings = trainingSettings;
         this.trainTags = new LinkedHashSet<>(trainTags);
         this.transferData = new LinkedList<>();
         this.transferTarget = new LinkedList<>();
@@ -41,13 +41,13 @@ public class LearnerProxy {
         }
     }
 
-    public void train() {
+    public void evaluate() {
         Thread worker = new Thread() {
             @Override
             public void run() {
                 try {
-                    Map<String, Object> score = (Map<String, Object>) oracle.call("train", featureSelections, transferData, transferTarget);
-                    callback.trainDone(score);
+                    Map<String, Object> report = (Map<String, Object>) oracle.call("evaluate", trainingSettings, transferData, transferTarget);
+                    callback.trainDone(report);
                 } catch (Exception e) {
                     e.printStackTrace();
                     callback.trainFail();
@@ -72,22 +72,6 @@ public class LearnerProxy {
         }
 
         return null;
-    }
-
-    public void pcaPlot2D() {
-        try {
-            this.oracle.call_oneway("pca_plot2d", featureSelections, this.transferData, this.transferTarget);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void pcaPlot3D() {
-        try {
-            this.oracle.call_oneway("pca_plot3d", featureSelections, this.transferData, this.transferTarget);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public interface TrainingCompleteCallback {

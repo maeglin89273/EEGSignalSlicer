@@ -3,9 +3,11 @@ package model;
 import model.datasource.*;
 import model.filter.ButterworthFilter;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
@@ -16,6 +18,7 @@ import java.util.List;
  */
 public class DataFileUtils {
     private static final int OPENBCI_COMMENTS_LINE_NUM = 5;
+    private static final String IMAGE_TYPE = "png";
     private File workingFile;
     private File workingDirectory;
     private Map<String, Integer> sliceRecord;
@@ -196,6 +199,7 @@ public class DataFileUtils {
         try {
             List<String> lines = Files.readAllLines(csvFile.toPath());
             String[] headers = lines.get(0).split(",");
+            tirmSpaces(headers);
             lines = lines.subList(1, lines.size());
 
             double[][] tmpData = new double[headers.length][lines.size()];
@@ -226,6 +230,12 @@ public class DataFileUtils {
         }
 
         return new SimpleFiniteDataSource(rawData);
+    }
+
+    private static void tirmSpaces(String[] texts) {
+        for (int i = 0; i < texts.length; i++) {
+            texts[i] = texts[i].trim();
+        }
     }
 
     public String save(String name, FiniteLengthDataSource data) {
@@ -290,4 +300,14 @@ public class DataFileUtils {
         return null;
     }
 
+    public void saveImage(BufferedImage buffer, String image) {
+        this.goIntoDirectory("image");
+        try {
+            ImageIO.write(buffer, IMAGE_TYPE, new File(this.workingDirectory, image + "." + IMAGE_TYPE));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.goOutDirectory();
+
+    }
 }

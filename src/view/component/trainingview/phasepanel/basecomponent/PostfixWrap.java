@@ -6,23 +6,26 @@ import java.awt.*;
 /**
  * Created by maeglin89273 on 9/6/15.
  */
-public class UnitWrap<C extends JComponent & HasStructuredValueComponent> extends CompoundStructuredValueComponent {
+public class PostfixWrap<C extends JComponent & HasStructuredValueComponent> extends CompoundStructuredValueComponent {
 
     private final C wrappedComponent;
-    private final String unit;
+    private final String postfix;
+    private JLabel postfixLbl;
 
-    public static <C extends JComponent & HasStructuredValueComponent> UnitWrap wrap(C wrappedComponent, String unit) {
-        return new UnitWrap<>(wrappedComponent, unit);
+    public static <C extends JComponent & HasStructuredValueComponent> PostfixWrap wrap(C wrappedComponent, String unit) {
+        return new PostfixWrap<>(wrappedComponent, unit);
     }
 
-    private UnitWrap(C wrappedComponent, String unit) {
+    private PostfixWrap(C wrappedComponent, String postfix) {
         this.wrappedComponent = wrappedComponent;
-        this.unit = unit;
+        this.postfix = postfix;
         this.setupLayout();
     }
 
     private void setupLayout() {
         this.setLayout(new GridBagLayout());
+        this.postfixLbl = new JLabel(postfix);
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -33,12 +36,16 @@ public class UnitWrap<C extends JComponent & HasStructuredValueComponent> extend
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
-        this.add(new JLabel(unit), gbc);
+        this.add(postfixLbl, gbc);
+    }
+
+    public JLabel getPostfixLabel() {
+        return this.postfixLbl;
     }
 
     @Override
     public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
+        this.postfixLbl.setEnabled(enabled);
         this.wrappedComponent.setEnabled(enabled);
     }
 

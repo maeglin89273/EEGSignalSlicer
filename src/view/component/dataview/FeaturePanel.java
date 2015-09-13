@@ -4,15 +4,19 @@ import model.datasource.FilteredFiniteDataSource;
 import model.datasource.FiniteLengthDataSource;
 import model.datasource.StreamingDataSource;
 import model.filter.DomainTransformFilter;
+import net.razorvine.pyro.PyroProxy;
 import view.component.plot.InteractivePlotView;
 import view.component.plot.PlottingUtils;
 import view.component.plugin.NavigationPlugin;
 import view.component.plugin.SimilarStreamsPlottingPlugin;
+import view.component.trainingview.phasepanel.FeatureExtractionPhase;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.List;
-import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Created by maeglin89273 on 9/1/15.
@@ -30,24 +34,24 @@ public class FeaturePanel extends JPanel {
 
     private JCheckBox fftCkBox;
     private CustomPlotView fftPlot;
-    private JCheckBox swtCkBox;
-    private CustomPlotView swtPlot;
+    private JCheckBox wtCkBox;
+    private CustomPlotView wtPlot;
     private JButton plotModeBtn;
     private JCheckBox meanCkBox;
     private SimilarStreamsPlottingPlugin fftBgPlugin;
-    private SimilarStreamsPlottingPlugin swtBgPlugin;
-    private FilteredFiniteDataSource swtSource;
+    private SimilarStreamsPlottingPlugin wtBgPlugin;
+    private FilteredFiniteDataSource wtSource;
     private FilteredFiniteDataSource fftSource;
-
 
     public FeaturePanel(FiniteLengthDataSource analysisSource) {
         this.analysisSource = analysisSource;
+
         this.initComponents();
         this.setupListeners();
     }
 
     private void initPlots() {
-        fftPlot = new CustomPlotView(60, 5f, 300, 125);
+        fftPlot = new CustomPlotView("Fast Fourier Transform Plot", 60, 5f, 300, 125);
         fftPlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
         fftPlot.setViewAllStreams(true);
         fftPlot.setLineWidth(1.3f);
@@ -66,23 +70,23 @@ public class FeaturePanel extends JPanel {
 
         this.fftPlot.setEnabled(false);
 
-        swtPlot = new CustomPlotView(SignalConstants.SAMPLE_WINDOW_SIZE, 50f, 300, 125);
-        swtPlot.setViewAllStreams(true);
-        swtPlot.setLineWidth(1.3f);
+        wtPlot = new CustomPlotView("Wavelet Transform Plot", SignalConstants.SAMPLE_WINDOW_SIZE, 50f, 300, 125);
+        wtPlot.setViewAllStreams(true);
+        wtPlot.setLineWidth(1.3f);
 
-        swtSource = new FilteredFiniteDataSource(analysisSource);
-        swtSource.addFilters(DomainTransformFilter.SWT_COIF4);
-        swtPlot.setDataSource(swtSource);
+        wtSource = new FilteredFiniteDataSource(analysisSource);
+        wtSource.addFilters(DomainTransformFilter.WT);
+        wtPlot.setDataSource(wtSource);
 
         navigationPlugin = new NavigationPlugin();
-        swtPlot.addPlugin(navigationPlugin);
+        wtPlot.addPlugin(navigationPlugin);
         navigationPlugin.setZoomingMode(NavigationPlugin.ZoomingMode.ZOOM_Y);
 
-        this.swtBgPlugin = new SimilarStreamsPlottingPlugin();
-        swtPlot.addPlugin(this.swtBgPlugin);
-        this.swtBgPlugin.setEnabled(true);
+        this.wtBgPlugin = new SimilarStreamsPlottingPlugin();
+        wtPlot.addPlugin(this.wtBgPlugin);
+        this.wtBgPlugin.setEnabled(true);
 
-        this.swtPlot.setEnabled(false);
+        this.wtPlot.setEnabled(false);
     }
 
     private void initComponents() {
@@ -109,17 +113,17 @@ public class FeaturePanel extends JPanel {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         this.add(fftPlot, gbc);
-        swtCkBox = new JCheckBox();
-        swtCkBox.setEnabled(false);
-        swtCkBox.setSelected(true);
-        swtCkBox.setText("Stationary Wavelet Transform");
+        wtCkBox = new JCheckBox();
+        wtCkBox.setEnabled(false);
+        wtCkBox.setSelected(true);
+        wtCkBox.setText("Stationary Wavelet Transform");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
-        this.add(swtCkBox, gbc);
-        swtPlot.setEnabled(false);
+        this.add(wtCkBox, gbc);
+        wtPlot.setEnabled(false);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -127,7 +131,7 @@ public class FeaturePanel extends JPanel {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        this.add(swtPlot, gbc);
+        this.add(wtPlot, gbc);
         plotModeBtn = new JButton();
         plotModeBtn.setEnabled(false);
         plotModeBtn.setText("source and data");
@@ -151,15 +155,15 @@ public class FeaturePanel extends JPanel {
             setFFTEnabled(fftCkBox.isSelected());
         });
 
-        this.swtCkBox.addActionListener(e -> {
-            setSWTEnabled(swtCkBox.isSelected());
+        this.wtCkBox.addActionListener(e -> {
+            setWTEnabled(wtCkBox.isSelected());
         });
 
 
         this.meanCkBox.addActionListener(e -> {
             boolean enabled = meanCkBox.isSelected();
             fftBgPlugin.setMeanShowed(enabled);
-            swtBgPlugin.setMeanShowed(enabled);
+            wtBgPlugin.setMeanShowed(enabled);
         });
 
         this.plotModeBtn.addActionListener(e -> {
@@ -170,9 +174,9 @@ public class FeaturePanel extends JPanel {
             boolean showSamples = (plotModeIdx & 2) != 0;
 
             fftPlot.setShowSource(showSource);
-            swtPlot.setShowSource(showSource);
+            wtPlot.setShowSource(showSource);
             fftBgPlugin.setSamplesShowed(showSamples);
-            swtBgPlugin.setSamplesShowed(showSamples);
+            wtBgPlugin.setSamplesShowed(showSamples);
 
         });
     }
@@ -180,65 +184,97 @@ public class FeaturePanel extends JPanel {
     public void setDataset(CategoryPanel dataset) {
         if (dataset == null) {
             this.fftBgPlugin.setDataSource(null);
-            this.swtBgPlugin.setDataSource(null);
+            this.wtBgPlugin.setDataSource(null);
         } else {
             this.fftBgPlugin.setDataSource(dataset.getFFTDataSource());
-            this.swtBgPlugin.setDataSource(dataset.getSWTDataSource());
+            this.wtBgPlugin.setDataSource(dataset.getWTDataSource());
         }
     }
 
     public void setEnabled(boolean enabled) {
         fftCkBox.setEnabled(enabled);
-        swtCkBox.setEnabled(enabled);
+        wtCkBox.setEnabled(enabled);
         meanCkBox.setEnabled(enabled);
         plotModeBtn.setEnabled(enabled);
         if (enabled) {
             this.setFFTEnabled(fftCkBox.isSelected());
-            this.setSWTEnabled(swtCkBox.isSelected());
+            this.setWTEnabled(wtCkBox.isSelected());
         } else {
             this.setFFTEnabled(false);
-            this.setSWTEnabled(false);
+            this.setWTEnabled(false);
         }
 
     }
 
-    private void setFFTEnabled(boolean enabled) {
+    void setFFTEnabled(boolean enabled) {
         fftPlot.setEnabled(enabled);
         fftSource.setViewingSource(enabled);
     }
 
 
-    private void setSWTEnabled(boolean enabled) {
-        swtPlot.setEnabled(enabled);
-        swtSource.setViewingSource(enabled);
-    }
-
-
-    public String[] getFeatureSelections() {
-        List<String> option = new LinkedList<>();
-        if (fftCkBox.isSelected()) {
-            option.add("fft");
-        }
-
-        if (swtCkBox.isSelected()) {
-            option.add("swt");
-        }
-
-        return option.toArray(new String[0]);
+    void setWTEnabled(boolean enabled) {
+        wtPlot.setEnabled(enabled);
+        wtSource.setViewingSource(enabled);
     }
 
     public InteractivePlotView getFFTPlot() {
         return this.fftPlot;
     }
 
-    public InteractivePlotView getSWTPlot() {
-        return this.swtPlot;
+    public InteractivePlotView getWTPlot() {
+        return this.wtPlot;
     }
+
+    private static String capitalize(final String line) {
+        return Character.toUpperCase(line.charAt(0)) + line.substring(1);
+    }
+
+    public boolean setTransformationSettings(FeatureExtractionPhase phase, Map<String, Object> oldSettings, Map<String, Object> newSettings) {
+        boolean updateFFT = false;
+        boolean updateWT = false;
+        if (oldSettings == null || !Objects.equals(oldSettings.get("window_size"), newSettings.get("window_size"))) {
+            updateFFT = updateWT = true;
+        } else {
+            if (!Objects.equals(oldSettings.get("fast_fourier_transform"), newSettings.get("fast_fourier_transform"))) {
+                updateFFT = true;
+            }
+
+            if (!Objects.equals(oldSettings.get("wavelet_transform"), newSettings.get("wavelet_transform"))) {
+                updateWT = true;
+            }
+        }
+
+        if (updateFFT) {
+            List<Integer> freqRange = phase.getFFTFreqRange();
+            int sampleRate = phase.getSampleRate();
+            int windowSize = phase.getWindowSize();
+
+            int plotFrom = (int) (freqRange.get(0) * windowSize / (double) sampleRate);
+            int plotTo = (int) (freqRange.get(1) * windowSize / (double) sampleRate);
+
+            fftPlot.setXTo(plotFrom);
+            fftPlot.setWindowSize(plotTo - plotFrom + 1);
+        }
+
+        if (updateWT) {
+            String wtType = phase.getWaveletTransformType();
+
+            wtCkBox.setText(capitalize(wtType) + " Wavelet Transform");
+            DomainTransformFilter wtFilter = DomainTransformFilter.WT;
+
+            wtSource.replaceFilter(0, wtFilter);
+            wtPlot.setWindowSize(wtSource.intLength());
+        }
+
+        return updateWT;
+    }
+
 
     private class CustomPlotView extends InteractivePlotView {
         private boolean showSource = true;
-        public CustomPlotView(int windowSize, float peakValue, int plotWidth, int plotHeight) {
-            super(windowSize, peakValue, plotWidth, plotHeight);
+        public CustomPlotView(String plotName, int windowSize, float peakValue, int plotWidth, int plotHeight) {
+            super(plotName, windowSize, peakValue, plotWidth, plotHeight);
+
         }
 
         @Override

@@ -250,8 +250,9 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
             return;
         }
 
+        this.setRenderRangeBackground(fixedRange);
         this.fixedRange = fixedRange;
-        this.setRenderRangeBackground(this.fixedRange);
+
         if (this.rangeOverPlot && !this.fixedRange) {
             this.initRelativePoses(0);
             this.syncRangeToPlot(plot.getPlotLowerBound(), plot.getPlotUpperBound(), plot.getWindowSize());

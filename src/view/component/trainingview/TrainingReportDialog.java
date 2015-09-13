@@ -1,19 +1,19 @@
 package view.component.trainingview;
 
+import view.component.trainingview.phasepanel.basecomponent.HasStructuredValueComponent;
+import view.component.trainingview.phasepanel.basecomponent.NameValueTable;
+import view.component.trainingview.phasepanel.basecomponent.SectionPanel;
+import view.component.trainingview.phasepanel.basecomponent.ValuedLabel;
+
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
 public class TrainingReportDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonOK;
-    private JPanel learnerProfilePanel;
-    private JLabel cvaScoreLbl;
-    private JLabel testScoreLbl;
-    private JLabel trainingSizeLbl;
-    private JLabel featureSelectionLbl;
-    private JLabel testingSizeLbl;
+    private SectionPanel reportPanel;
+    private NameValueTable reportTable;
 
     private TrainingReportDialog(Map<String, Object> report) {
         $$$setupUI$$$();
@@ -30,40 +30,58 @@ public class TrainingReportDialog extends JDialog {
     }
 
     private void fillReport(Map<String, Object> report) {
-        this.cvaScoreLbl.setText(String.format("%.2f%%(+/-%.2f%%, %d folds)", ((Double) report.get("cv_score_mean")) * 100, ((Double) report.get("cv_score_std")) * 100, report.get("cv_folds")));
-        this.testScoreLbl.setText(String.format("%.2f%%", ((Double) report.get("test_score")) * 100));
-        this.featureSelectionLbl.setText(report.get("feature_selections").toString());
-        this.trainingSizeLbl.setText(report.get("training_size").toString());
-        this.testingSizeLbl.setText(report.get("testing_size").toString());
-        this.fillLearnerInfo((List<Object[]>) report.get("learner_info"));
-
-    }
-
-    private void fillLearnerInfo(List<Object[]> learnerInfo) {
-        Box rowBox;
-
-        for (Object[] row : learnerInfo) {
-            rowBox = Box.createHorizontalBox();
-            rowBox.add(new JLabel(row[0].toString() + ":"));
-            rowBox.add(Box.createHorizontalStrut(10));
-            rowBox.add(new JLabel(row[1].toString()));
-            rowBox.add(Box.createHorizontalGlue());
-            this.learnerProfilePanel.add(rowBox);
+        if (reportTable != null) {
+            this.reportPanel.removeAppendedComponent(reportTable);
         }
+        this.reportTable = this.recursiveBuildTable(report);
+        this.reportPanel.append(reportTable);
     }
+
+    private static final TreeSet<Map.Entry<String, Object>> SORTER = new TreeSet<>((o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+
+    private NameValueTable recursiveBuildTable(Map<String, Object> model) {
+        Queue<Map.Entry<NameValueTable, Map<String, Object>>> tableLayers = new LinkedList<>();
+        NameValueTable rootTable = new NameValueTable();
+        tableLayers.offer(new AbstractMap.SimpleEntry<>(rootTable, model));
+        Map.Entry<NameValueTable, Map<String, Object>> tablePair;
+        NameValueTable table;
+
+        while (!tableLayers.isEmpty()) {
+            tablePair = tableLayers.poll();
+            table = tablePair.getKey();
+
+            SORTER.addAll(tablePair.getValue().entrySet());
+            for (Map.Entry<String, Object> nameValuePair : SORTER) {
+                Object value = nameValuePair.getValue();
+                if (value instanceof Map) {
+                    NameValueTable innerTable = new NameValueTable();
+                    tableLayers.offer(new AbstractMap.SimpleEntry<>(innerTable, (Map<String, Object>) value));
+                    table.addNameValue(nameValuePair.getKey(), innerTable);
+                } else if (value instanceof Double) {
+                    table.addNameValue(nameValuePair.getKey(), new ValuedLabel(String.format("%.2g", value)));
+                } else {
+                    table.addNameValue(nameValuePair.getKey(), new ValuedLabel(value.toString()));
+                }
+
+            }
+            SORTER.clear();
+        }
+        return rootTable;
+    }
+
 
     private void onOK() {
         dispose();
     }
 
-    public static void showReport(Map report) {
+    public static void showReport(Map<String, Object> report) {
         TrainingReportDialog dialog = new TrainingReportDialog(report);
         dialog.setVisible(true);
     }
 
+
     private void createUIComponents() {
-        learnerProfilePanel = new JPanel();
-        learnerProfilePanel.setLayout(new BoxLayout(learnerProfilePanel, BoxLayout.Y_AXIS));
+        this.reportPanel = new SectionPanel("Training Report");
     }
 
     /**
@@ -93,121 +111,13 @@ public class TrainingReportDialog extends JDialog {
         gbc.gridy = 0;
         gbc.insets = new Insets(5, 5, 5, 5);
         panel1.add(buttonOK, gbc);
-        final JPanel panel2 = new JPanel();
-        panel2.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        contentPane.add(panel2, gbc);
-        final JLabel label1 = new JLabel();
-        label1.setFont(new Font(label1.getFont().getName(), Font.BOLD, label1.getFont().getSize()));
-        label1.setText("Cross Validation Average Score");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(label1, gbc);
-        final JLabel label2 = new JLabel();
-        label2.setFont(new Font(label2.getFont().getName(), Font.BOLD, label2.getFont().getSize()));
-        label2.setText("Test Score");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(label2, gbc);
-        final JLabel label3 = new JLabel();
-        label3.setFont(new Font(label3.getFont().getName(), Font.BOLD, label3.getFont().getSize()));
-        label3.setText("Size of Training Dataset");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(label3, gbc);
-        final JLabel label4 = new JLabel();
-        label4.setFont(new Font(label4.getFont().getName(), Font.BOLD, label4.getFont().getSize()));
-        label4.setText("Classifier");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.weighty = 1.0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(label4, gbc);
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(learnerProfilePanel, gbc);
-        testScoreLbl = new JLabel();
-        testScoreLbl.setText("0%");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(testScoreLbl, gbc);
-        trainingSizeLbl = new JLabel();
-        trainingSizeLbl.setText("0");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(trainingSizeLbl, gbc);
-        cvaScoreLbl = new JLabel();
-        cvaScoreLbl.setText("0%");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(cvaScoreLbl, gbc);
-        final JLabel label5 = new JLabel();
-        label5.setFont(new Font(label5.getFont().getName(), Font.BOLD, label5.getFont().getSize()));
-        label5.setText("Feature Selection");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(label5, gbc);
-        featureSelectionLbl = new JLabel();
-        featureSelectionLbl.setText("None");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(featureSelectionLbl, gbc);
-        final JLabel label6 = new JLabel();
-        label6.setFont(new Font(label6.getFont().getName(), Font.BOLD, label6.getFont().getSize()));
-        label6.setText("Size of Testing Dataset");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(label6, gbc);
-        testingSizeLbl = new JLabel();
-        testingSizeLbl.setText("0");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        panel2.add(testingSizeLbl, gbc);
+        contentPane.add(reportPanel, gbc);
     }
 
     /**

@@ -12,7 +12,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
 
     protected final FiniteLengthDataSource rawSource;
     protected LinkedList<Filter> filters;
-    private float xUnit;
+
     private int length;
     private int oldSourcelength;
 
@@ -32,6 +32,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
 
         this.recalculateFilteredInfo();
         this.refilterAllPresentedData();
+        this.firePresentedDataChanged();
     }
 
     @Override
@@ -39,6 +40,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
         this.filters.remove(filter);
         this.recalculateFilteredInfo();
         this.refilterAllPresentedData();
+        this.firePresentedDataChanged();
     }
 
     @Override
@@ -46,6 +48,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
         this.filters.set(i, filter);
         this.recalculateFilteredInfo();
         this.refilterAllPresentedData();
+        this.firePresentedDataChanged();
     }
 
     @Override
@@ -99,7 +102,6 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
         for (String tag: this.cachedData.keySet()) {
             filterOriginalData(tag);
         }
-        this.firePresentedDataChanged();
     }
 
     @Override
@@ -115,7 +117,12 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     @Override
     public void onDataChanged(StreamingDataSource source) {
         this.estimateLengthChanged();
-        this.refilterAllPresentedData();
+        if (!source.getTags().equals(this.cachedData.keySet())) {
+            this.cachedData.clear();
+        } else {
+            this.refilterAllPresentedData();
+        }
+        this.firePresentedDataChanged();
     }
 
     @Override
@@ -147,6 +154,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
             this.rawSource.addPresentedDataChangedListener(this);
             this.estimateLengthChanged();
             this.refilterAllPresentedData();
+            this.firePresentedDataChanged();
         } else {
             this.rawSource.removePresentedDataChangedListener(this);
         }

@@ -9,23 +9,41 @@ public class IntegerValueSpinner extends JSpinner implements HasStructuredValueC
 
     private static final int SPINNER_COLUMN = 3;
 
-    public IntegerValueSpinner(Integer min, Integer max) {
+    public IntegerValueSpinner(Integer value, Integer min, Integer max) {
         if (min != null) {
             this.setMinimum(min);
         }
         if (max != null) {
             this.setMaximum(max);
         }
-        this.setValue(RangeFieldPair.boundNumber(0, min, max));
-        ((JSpinner.DefaultEditor)this.getEditor()).getTextField().setColumns(SPINNER_COLUMN);
+        this.setValue(RangeFieldPair.boundNumber(value == null? 0: value, min, max));
+        JTextField spinnerField = getSpinnerTextField(this);
+        spinnerField.setHorizontalAlignment(JTextField.RIGHT);
+        spinnerField.setColumns(SPINNER_COLUMN);
+    }
+
+    public static JTextField getSpinnerTextField(JSpinner spinner) {
+        return ((JSpinner.DefaultEditor)spinner.getEditor()).getTextField();
     }
 
     public void setMaximum(int max) {
+        if (max < this.getIntegerValue()) {
+            this.setValue(max);
+        }
+
         ((SpinnerNumberModel)this.getModel()).setMaximum(max);
     }
 
     public void setMinimum(int min) {
+        if (min > this.getIntegerValue()) {
+            this.setValue(min);
+        }
+
         ((SpinnerNumberModel)this.getModel()).setMinimum(min);
+    }
+
+    public int getIntegerValue() {
+        return (Integer) this.getValue();
     }
 
     @Override
