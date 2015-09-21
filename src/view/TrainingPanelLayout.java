@@ -62,7 +62,7 @@ public class TrainingPanelLayout {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this2015.add(actionField, gbc);
         trainingCkBox = new JCheckBox();
-        trainingCkBox.setText("Training");
+        trainingCkBox.setText("Analysis");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;

@@ -27,7 +27,7 @@
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Training"/>
+          <text value="Analysis"/>
         </properties>
       </component>
       <scrollpane id="956e9" binding="scrollPane">

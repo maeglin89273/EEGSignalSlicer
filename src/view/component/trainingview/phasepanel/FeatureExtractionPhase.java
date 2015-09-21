@@ -125,9 +125,9 @@ public class FeatureExtractionPhase extends PhasePanel {
         this.sectionlessTable = new NameValueTable();
 
         this.sampleRateField = NumberField.getBoundedIntegerInstance(1, null);
-        sectionlessTable.addNameValue("Sample-rate", PostfixWrap.wrap(this.sampleRateField, "Hz"));
+        sectionlessTable.addNameValue("Sample-rate", TextWrap.postfixWrap(this.sampleRateField, "Hz"));
         this.windowSizeField = NumberField.getBoundedIntegerInstance(1, null);
-        sectionlessTable.addNameValue("Window Size", PostfixWrap.wrap(this.windowSizeField, "samples"));
+        sectionlessTable.addNameValue("Window Size", TextWrap.postfixWrap(this.windowSizeField, "samples"));
         this.streamsList = new OptionList(OptionList.OptionType.MULTI, new String[0]);
         this.streamsLbl = sectionlessTable.addNameValue("Streams", this.streamsList);
         this.append(sectionlessTable);
@@ -137,7 +137,7 @@ public class FeatureExtractionPhase extends PhasePanel {
         fftSection = new SectionPanel("Fast Fourier Transform", OptionLabel.LabelType.CHECK_BOX);
         NameValueTable table = new NameValueTable();
         this.fftFreqRange = new RangeSpinnerPair(1, 60);
-        table.addNameValue("Frequency Range", PostfixWrap.wrap(this.fftFreqRange, "Hz"));
+        table.addNameValue("Frequency Range", TextWrap.postfixWrap(this.fftFreqRange, "Hz"));
         fftSection.append(table);
         this.append(fftSection);
 
@@ -161,7 +161,7 @@ public class FeatureExtractionPhase extends PhasePanel {
         table.addNameValue("Dimension", this.featureSizeLbl);
 
         table.addNameValue(OptionLabel.LabelType.CHECK_BOX, "Scaler", new OptionList(OptionList.OptionType.SINGLE, "Mean Std Scaler", "Min Max Scaler")).setSelected(false);
-        table.addNameValue(OptionLabel.LabelType.CHECK_BOX, "PCA", PostfixWrap.wrap(this.pcaValueSpinner, "components")).setSelected(false);
+        table.addNameValue(OptionLabel.LabelType.CHECK_BOX, "PCA", TextWrap.postfixWrap(this.pcaValueSpinner, "components")).setSelected(false);
 
         afterTransformationSection.append(table);
         this.append(afterTransformationSection);

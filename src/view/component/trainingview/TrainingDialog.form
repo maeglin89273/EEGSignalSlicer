@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="view.component.trainingview.TrainingDialog">
   <grid id="cbd77" binding="contentPane" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="48" y="54" width="515" height="457"/>
+      <xy x="48" y="54" width="515" height="459"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,13 +15,24 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="e7465" class="javax.swing.JButton" binding="buttonOK">
+          <component id="e7465" class="javax.swing.JButton" binding="okBtn">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-              <gridbag top="5" left="5" bottom="5" right="5" weightx="1.0" weighty="1.0"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="5" left="5" bottom="5" right="5" weightx="0.0" weighty="1.0"/>
             </constraints>
             <properties>
               <text value="OK"/>
+            </properties>
+          </component>
+          <component id="d8f14" class="javax.swing.JButton" binding="evalBtn">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <horizontalAlignment value="0"/>
+              <horizontalTextPosition value="11"/>
+              <text value="Evaluate"/>
             </properties>
           </component>
         </children>

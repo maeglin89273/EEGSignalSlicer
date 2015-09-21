@@ -43,7 +43,7 @@
       <grid id="f89ee" binding="controlPanel" layout-manager="GridBagLayout">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="0.0"/>
+          <gridbag weightx="1.0" weighty="0.5"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -58,8 +58,8 @@
             <children>
               <grid id="df145" binding="channelPanel" layout-manager="GridBagLayout">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="1.0" weighty="1.0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="0.0"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -93,7 +93,7 @@
                   </component>
                   <grid id="59266" binding="tagsPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
                     <constraints>
-                      <grid row="2" column="1" row-span="1" col-span="9" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <grid row="2" column="0" row-span="1" col-span="10" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties/>
@@ -108,9 +108,94 @@
                   </hspacer>
                 </children>
               </grid>
+              <grid id="3e337" binding="filterPanel" layout-manager="GridBagLayout">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="0.0"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="92341" class="javax.swing.JRadioButton" binding="alphaFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <selected value="false"/>
+                      <text value="Alpha"/>
+                    </properties>
+                  </component>
+                  <component id="8f926" class="javax.swing.JRadioButton" binding="betaFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Beta"/>
+                    </properties>
+                  </component>
+                  <component id="b81c9" class="javax.swing.JRadioButton" binding="gammaFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Gamma"/>
+                    </properties>
+                  </component>
+                  <component id="6e73c" class="javax.swing.JLabel" binding="filterLbl">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Filter"/>
+                    </properties>
+                  </component>
+                  <component id="7a583" class="javax.swing.JRadioButton" binding="thetaFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <selected value="false"/>
+                      <text value="Theta"/>
+                    </properties>
+                  </component>
+                  <component id="beb61" class="javax.swing.JRadioButton" binding="a1to50HzFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <selected value="true"/>
+                      <text value="1~50Hz"/>
+                    </properties>
+                  </component>
+                  <component id="73699" class="javax.swing.JRadioButton" binding="noneFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="None"/>
+                    </properties>
+                  </component>
+                  <component id="2304" class="javax.swing.JRadioButton" binding="a5to50HzFilterRadioBtn">
+                    <constraints>
+                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="5~50Hz"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
               <grid id="70e71" binding="dtwPanel" layout-manager="GridBagLayout">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties/>
@@ -192,15 +277,6 @@
                       <text value=""/>
                     </properties>
                   </component>
-                  <component id="b2a04" class="javax.swing.JLabel" binding="slicerLbl">
-                    <constraints>
-                      <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Slice range:"/>
-                    </properties>
-                  </component>
                   <component id="63b60" class="javax.swing.JLabel" binding="dtwDistanceLbl">
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
@@ -255,91 +331,6 @@
                       <gridbag weightx="1.0" weighty="0.0"/>
                     </constraints>
                   </hspacer>
-                </children>
-              </grid>
-              <grid id="3e337" binding="filterPanel" layout-manager="GridBagLayout">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                  <gridbag weightx="1.0" weighty="1.0"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <component id="92341" class="javax.swing.JRadioButton" binding="alphaFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <selected value="false"/>
-                      <text value="Alpha"/>
-                    </properties>
-                  </component>
-                  <component id="8f926" class="javax.swing.JRadioButton" binding="betaFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Beta"/>
-                    </properties>
-                  </component>
-                  <component id="b81c9" class="javax.swing.JRadioButton" binding="gammaFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Gamma"/>
-                    </properties>
-                  </component>
-                  <component id="6e73c" class="javax.swing.JLabel" binding="filterLbl">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Filter(EEG only)"/>
-                    </properties>
-                  </component>
-                  <component id="7a583" class="javax.swing.JRadioButton" binding="thetaFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <selected value="false"/>
-                      <text value="Theta"/>
-                    </properties>
-                  </component>
-                  <component id="beb61" class="javax.swing.JRadioButton" binding="a1to50HzFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <selected value="true"/>
-                      <text value="1~50Hz"/>
-                    </properties>
-                  </component>
-                  <component id="73699" class="javax.swing.JRadioButton" binding="noneFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="None"/>
-                    </properties>
-                  </component>
-                  <component id="2304" class="javax.swing.JRadioButton" binding="a5to50HzFilterRadioBtn">
-                    <constraints>
-                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag weightx="0.0" weighty="0.0"/>
-                    </constraints>
-                    <properties>
-                      <text value="5~50Hz"/>
-                    </properties>
-                  </component>
                 </children>
               </grid>
             </children>

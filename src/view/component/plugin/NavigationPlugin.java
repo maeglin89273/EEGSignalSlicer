@@ -76,6 +76,14 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
         }
     }
 
+    public void setMinimumZoomingWindowSize(int size) {
+        this.mouseHandler.setMinWindowSize(size);
+    }
+
+    public void setMaxZoomingWindowSize(int size) {
+        this.mouseHandler.setMaxWindowSize(size);
+    }
+
     @Override
     public Set<String> getInterestedActions() {
         return this.interestedActions;
@@ -83,8 +91,8 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
 
     private class MouseInteractionHandler extends MouseAdapter {
         private static final float SCALING_FACTOR = 1.1f;
-        private static final int MAX_WINDOW_SCALING_LEVEL = 7;
-        private static final int MIN_WINDOW_SCALING_LEVEL = -6;
+        private int maxWindowSize = 2000;
+        private int minWindowSize = 650;
 
         private int scalingLevel = 1;
 
@@ -112,9 +120,15 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
                     plot.setPeakValue((float) (this.originalPeakValue * scale));
                     break;
                 case ZOOM_XY:
-                    if (this.scalingLevel >= MIN_WINDOW_SCALING_LEVEL && scalingLevel <= MAX_WINDOW_SCALING_LEVEL) {
-                        plot.setWindowSize((int) (this.originalWindowSize * scale));
+                    int newWindowSize = (int) (plot.getWindowSize() * Math.pow(SCALING_FACTOR, e.getPreciseWheelRotation()));
+                    if (newWindowSize > maxWindowSize) {
+                        plot.setWindowSize(maxWindowSize);
+                    } else if (newWindowSize < minWindowSize) {
+                        plot.setWindowSize(minWindowSize);
+                    } else {
+                        plot.setWindowSize(newWindowSize);
                     }
+
                     plot.setPeakValue((float) (this.originalPeakValue * scale));
                     break;
             }
@@ -136,6 +150,21 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
             plot.setPeakValue(this.originalPeakValue);
             plot.setWindowSize(this.originalWindowSize);
             this.scalingLevel = 1;
+        }
+
+        public void setMinWindowSize(int minWindowSize) {
+
+            this.minWindowSize = minWindowSize;
+            if (this.minWindowSize > plot.getWindowSize()) {
+                plot.setWindowSize(this.minWindowSize);
+            }
+        }
+
+        public void setMaxWindowSize(int maxWindowSize) {
+            this.maxWindowSize = maxWindowSize;
+            if (this.maxWindowSize < plot.getWindowSize()) {
+                plot.setWindowSize(this.maxWindowSize);
+            }
         }
     }
 }

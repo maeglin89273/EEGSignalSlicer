@@ -2,31 +2,34 @@ package view.component.trainingview.phasepanel;
 
 import view.component.trainingview.phasepanel.basecomponent.*;
 
+import javax.lang.model.element.Name;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 /**
  * Created by maeglin89273 on 9/7/15.
  */
 public class EvaluationPhase extends PhasePanel {
-    public EvaluationPhase(ActionListener evaluator) {
+    public EvaluationPhase() {
         super("Evaluation");
 
-        this.setupComponents(evaluator);
+        this.setupComponents();
     }
 
-    private void setupComponents(ActionListener evaluator) {
+    private void setupComponents() {
 
         SectionPanel trainSection = new SectionPanel("Train", OptionLabel.LabelType.RADIO);
         NameValueTable datasetTable = new NameValueTable();
-        datasetTable.addNameValue("Training Partition", PostfixWrap.wrap(NumberField.getBoundedIntegerInstance(0, 100, 75), "%"));
-        datasetTable.addNameValue("Cross Validation", PostfixWrap.wrap(new IntegerValueSpinner(3, 2, null), "folds"));
+        final OptionLabel trainingPartitionCkBox = datasetTable.addNameValue(OptionLabel.LabelType.CHECK_BOX, "Training Partition", TextWrap.postfixWrap(NumberField.getBoundedIntegerInstance(0, 100, 75), "%"));
+        NameValueTable cvOptionTable = new NameValueTable();
+        cvOptionTable.addNameValue(OptionLabel.LabelType.RADIO, "k-fold", TextWrap.prefixWrap("k=", new IntegerValueSpinner(3, 2, null)));
+        cvOptionTable.addNameValue(OptionLabel.LabelType.RADIO, "leave-p-out", TextWrap.prefixWrap("p=", new IntegerValueSpinner(1, 1, null)));
+        datasetTable.addNameValue("Cross Validation", cvOptionTable);
 
         trainSection.append(datasetTable);
 
-
-        trainSection.append(new ValuedCheckBox("Evaluate test set"));
+        ValuedCheckBox testSetCkBox = new ValuedCheckBox("Evaluate test set");
+        trainSection.append(testSetCkBox);
         JLabel note = trainSection.appendDescription("NOTE: you should not modify any model parameters after seeing the test score");
         note.setFont(note.getFont().deriveFont(Font.BOLD));
         this.append(trainSection);
@@ -37,11 +40,13 @@ public class EvaluationPhase extends PhasePanel {
         plotSection.append(evalTable);
         this.append(plotSection);
 
-
-        JButton evalBtn = new JButton("Evaluate");
-        evalBtn.addActionListener(evaluator);
-        this.append(evalBtn);
-
+        trainingPartitionCkBox.addItemListener(evt-> {;
+            boolean selected = trainingPartitionCkBox.isSelected();
+            if (!selected) {
+                testSetCkBox.setSelected(false);
+            }
+            testSetCkBox.setEnabled(selected);
+        });
     }
 
 }

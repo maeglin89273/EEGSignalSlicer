@@ -51,21 +51,6 @@ public class DatasetPanel extends JPanel {
 
     private boolean predicting = false;
 
-    LearnerProxy learner = new LearnerProxy(new LearnerProxy.TrainingCompleteCallback() {
-        @Override
-        public void trainDone(Map<String, Object> trainingReport) {
-            msgBar.setMessage("");
-            TrainingReportDialog.showReport(trainingReport);
-
-            predictCkBox.setEnabled(true);
-        }
-
-        @Override
-        public void trainFail() {
-            msgBar.setMessage("ERROR: Train fail");
-            closePrediction();
-        }
-    });
     private PointPositionPlugin fftPPPlugin;
     private PointPositionPlugin mainPlotPPPlugin;
 
@@ -96,7 +81,7 @@ public class DatasetPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(actionField, gbc);
         trainingCkBox = new JCheckBox();
-        trainingCkBox.setText("Training");
+        trainingCkBox.setText("Analysis");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -271,7 +256,8 @@ public class DatasetPanel extends JPanel {
             transformRange.setEnabled(trainingOn);
             rangeStartSpinner.setEnabled(trainingOn);
             renameBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
-            predictCkBox.setEnabled(trainingOn && predicting);
+//            predictCkBox.setEnabled(trainingOn && predicting);
+            predictCkBox.setEnabled(trainingOn);
             coordinatesCkBox.setEnabled(trainingOn);
             addDatasetBtn.setEnabled(trainingOn);
             moveLeftBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
@@ -467,7 +453,7 @@ public class DatasetPanel extends JPanel {
     }
 
     private void predictSignal() {
-        String result = learner.predict(transformRange.makeFragmentDataSource("predict"));
+        String result = trainingDialog.getLearner().predict(transformRange.makeFragmentDataSource("predict"));
 
         if (result == null) {
             msgBar.setMessage("ERROR: please retrain the model");
@@ -480,7 +466,7 @@ public class DatasetPanel extends JPanel {
     private void closePrediction() {
         predicting = false;
         predictCkBox.setSelected(false);
-        predictCkBox.setEnabled(false);
+//        predictCkBox.setEnabled(false);
     }
 
     private void refilterCategorySource(BusyDialog blocker) {
