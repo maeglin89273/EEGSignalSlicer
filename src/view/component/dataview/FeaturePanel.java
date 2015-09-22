@@ -290,10 +290,11 @@ public class FeaturePanel extends JPanel {
                 this.refresh();
             }
         }
+
         @Override
-        protected void paintComponent(Graphics g) {
+        protected void drawStreams(Graphics2D g2) {
             if (this.showSource) {
-                super.paintComponent(g);
+                super.drawStreams(g2);
             }
         }
     }
