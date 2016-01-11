@@ -1,13 +1,13 @@
 package view.component.dataview;
 
 import model.DataFileUtils;
-import model.LearnerProxy;
+import model.PredictionStatistics;
+import model.PredictVoter;
 import model.datasource.FragmentDataSource;
 import view.component.BusyDialog;
 import view.component.plot.PlotView;
 import view.component.plugin.*;
 import view.component.trainingview.TrainingDialog;
-import view.component.trainingview.TrainingReportDialog;
 import view.component.trainingview.phasepanel.FeatureExtractionPhase;
 
 import javax.swing.*;
@@ -43,13 +43,11 @@ public class DatasetPanel extends JPanel {
     private SpinnerNumberModel rangeSpinnerModel;
     private MessageBar msgBar;
 
-    private JCheckBox predictCkBox;
     private JButton renameBtn;
     private JCheckBox coordinatesCkBox;
     private JButton addDatasetBtn;
     private FeaturePanel featurePanel;
-
-    private boolean predicting = false;
+    private PredictionPanel predictionPanel;
 
     private PointPositionPlugin fftPPPlugin;
     private PointPositionPlugin mainPlotPPPlugin;
@@ -134,7 +132,7 @@ public class DatasetPanel extends JPanel {
         coordinatesCkBox.setEnabled(false);
         coordinatesCkBox.setText("coordinates");
         gbc = new GridBagConstraints();
-        gbc.gridx = 1;
+        gbc.gridx = 5;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
         this.add(coordinatesCkBox, gbc);
@@ -172,14 +170,7 @@ public class DatasetPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this.add(rangeStartSpinner, gbc);
-        predictCkBox = new JCheckBox();
-        predictCkBox.setEnabled(false);
-        predictCkBox.setText("predict");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this.add(predictCkBox, gbc);
+
         moveLeftBtn = new JButton();
         moveLeftBtn.setEnabled(false);
         moveLeftBtn.setText("<");
@@ -218,6 +209,10 @@ public class DatasetPanel extends JPanel {
         return this.featurePanel;
     }
 
+    public JPanel getPredictionPanel() {
+        return this.predictionPanel;
+    }
+
     private void initPlots() {
         this.fftPPPlugin = new PointPositionPlugin(SignalConstants.OPENBCI_SAMPLING_RATE / SignalConstants.SAMPLE_WINDOW_SIZE);
         this.mainPlotPPPlugin = new PointPositionPlugin(1 / SignalConstants.OPENBCI_SAMPLING_RATE);
@@ -228,8 +223,8 @@ public class DatasetPanel extends JPanel {
             public void onStartChanged(long lowerBound, long value, long upperBound) {
                 if ((Integer) rangeSpinnerModel.getValue() != value) {
                     rangeSpinnerModel.setValue((int) (value));
-                    if (predicting) {
-                        predictSignal();
+                    if (predictionPanel.isPredicting()) {
+                        predictionPanel.predict(transformRange.makeFragmentDataSource("predict"));
                     }
                 }
             }
@@ -242,12 +237,16 @@ public class DatasetPanel extends JPanel {
 
         this.featurePanel = new FeaturePanel(this.transformRange.getRangedDataSource());
         this.featurePanel.getFFTPlot().addPlugin(this.fftPPPlugin);
+        this.predictionPanel = new PredictionPanel(this.trainingDialog.getLearner());
+        this.featurePanel.setEnabled(false);
+        this.predictionPanel.setEnabled(false);
     }
 
     private void setupListeners() {
         this.trainingCkBox.addActionListener(e -> {
             boolean trainingOn = trainingCkBox.isSelected();
             featurePanel.setEnabled(trainingOn);
+            predictionPanel.setEnabled(trainingOn);
             newCategoryBtn.setEnabled(trainingOn);
             addDataBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
             loadDatasetBtn.setEnabled(trainingOn);
@@ -256,8 +255,8 @@ public class DatasetPanel extends JPanel {
             transformRange.setEnabled(trainingOn);
             rangeStartSpinner.setEnabled(trainingOn);
             renameBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
-//            predictCkBox.setEnabled(trainingOn && predicting);
-            predictCkBox.setEnabled(trainingOn);
+
+
             coordinatesCkBox.setEnabled(trainingOn);
             addDatasetBtn.setEnabled(trainingOn);
             moveLeftBtn.setEnabled(trainingOn && selectedCategoryPanel != null);
@@ -308,8 +307,10 @@ public class DatasetPanel extends JPanel {
                 public void run() {
                     Collection<FragmentDataSource> fullDataset = collectDatasets(false);
                     String datasetName = "training data-" + new Date().toString();
-                    DataFileUtils.getInstance().saveFragmentDataSources(datasetName, fullDataset);
-                    msgBar.setMessage("Saved as \"" + datasetName + "\"");
+                    DataFileUtils utils = DataFileUtils.getInstance();
+                    String path = utils.saveFragmentDataSources(datasetName, fullDataset);
+                    msgBar.clear();
+                    utils.showSavedDialog(DatasetPanel.this, path);
                 }
             };
             saver.setDaemon(true);
@@ -373,14 +374,6 @@ public class DatasetPanel extends JPanel {
             updateMainUIBySettings();
         });
 
-        this.predictCkBox.addActionListener(e -> {
-            if (predictCkBox.isSelected()) {
-                predicting = true;
-                predictSignal();
-            } else {
-                predicting = false;
-            }
-        });
     }
 
     private void prepareTraining() {
@@ -452,22 +445,6 @@ public class DatasetPanel extends JPanel {
         return false;
     }
 
-    private void predictSignal() {
-        String result = trainingDialog.getLearner().predict(transformRange.makeFragmentDataSource("predict"));
-
-        if (result == null) {
-            msgBar.setMessage("ERROR: please retrain the model");
-            closePrediction();
-        } else {
-            msgBar.setMessage("predict result: " + result);
-        }
-    }
-
-    private void closePrediction() {
-        predicting = false;
-        predictCkBox.setSelected(false);
-//        predictCkBox.setEnabled(false);
-    }
 
     private void refilterCategorySource(BusyDialog blocker) {
         blocker.setMaxProgress(datasetBox.getComponentCount());;

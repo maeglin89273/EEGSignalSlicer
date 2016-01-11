@@ -7,21 +7,20 @@ import java.util.*;
 /**
  * Created by maeglin89273 on 7/22/15.
  */
-public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengthStream> implements FilteredDataSource, ViewDataSource {
-    private final HashMap<String, MutableFiniteStream> cachedDataSpace;
+public class FilteredFiniteDataSource extends FiniteCachedDataSource<FiniteLengthStream> implements FilteredDataSource, ViewDataSource {
+    private final HashMap<String, MutableFiniteStream> backupDataSpace;
 
     protected final FiniteLengthDataSource rawSource;
     protected LinkedList<Filter> filters;
 
-    private int length;
-    private int oldSourcelength;
+    private int oldSourceLength;
 
     public FilteredFiniteDataSource(FiniteLengthDataSource rawSource) {
         this.rawSource = rawSource;
-        this.cachedDataSpace = new HashMap<>();
+        this.backupDataSpace = new HashMap<>();
         this.filters = new LinkedList<>();
         this.setViewingSource(true);
-        this.oldSourcelength = this.length = this.rawSource.intLength();
+        this.currentLength = this.oldSourceLength = this.rawSource.intLength();
     }
 
     @Override
@@ -52,11 +51,11 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     }
 
     @Override
-    public FiniteLengthStream getFiniteDataOf(String tag) {
+    public FiniteLengthStream getTypedDataOf(String tag) {
         if (!this.cachedData.containsKey(tag)) {
             this.cachedData.put(tag, filterOriginalData(tag));
         }
-        return super.getFiniteDataOf(tag);
+        return super.getTypedDataOf(tag);
     }
 
     @Override
@@ -65,7 +64,7 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     }
 
     private FiniteLengthStream filterOriginalData(String streamTag) {
-        MutableFiniteStream filteredStream = claimCachedSpace(streamTag);
+        MutableFiniteStream filteredStream = claimBackupSpace(streamTag);
         FiniteLengthStream originalStream = this.rawSource.getFiniteDataOf(streamTag);
 
         filterStream(originalStream, filteredStream);
@@ -87,12 +86,12 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
 
     }
 
-    private MutableFiniteStream claimCachedSpace(String streamTag) {
-        if (this.cachedDataSpace.containsKey(streamTag)) {
-            return this.cachedDataSpace.get(streamTag);
+    private MutableFiniteStream claimBackupSpace(String streamTag) {
+        if (this.backupDataSpace.containsKey(streamTag)) {
+            return this.backupDataSpace.get(streamTag);
         }
         MutableFiniteStream streamCache = new FiniteListStream(this.rawSource.getFiniteDataOf(streamTag).intLength());
-        this.cachedDataSpace.put(streamTag, streamCache);
+        this.backupDataSpace.put(streamTag, streamCache);
         return streamCache;
     }
 
@@ -102,11 +101,6 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
         for (String tag: this.cachedData.keySet()) {
             filterOriginalData(tag);
         }
-    }
-
-    @Override
-    public int intLength() {
-        return this.length;
     }
 
     @Override
@@ -135,17 +129,19 @@ public class FilteredFiniteDataSource extends CachedFiniteDataSource<FiniteLengt
     }
 
     private void estimateLengthChanged() {
-        if (this.rawSource.intLength() != this.oldSourcelength) {
-            this.oldSourcelength = this.rawSource.intLength();
+        if (this.rawSource.intLength() != this.oldSourceLength) {
+            this.oldSourceLength = this.rawSource.intLength();
             this.recalculateFilteredInfo();
         }
     }
 
     private void recalculateFilteredInfo() {
-        this.length = rawSource.intLength();
+        int tempLength = rawSource.intLength();
         for (Filter filter: filters) {
-            this.length = filter.calculateLengthAfterFiltering(this.length);
+            tempLength = filter.calculateLengthAfterFiltering(tempLength);
         }
+
+        this.currentLength = tempLength;
     }
 
     @Override

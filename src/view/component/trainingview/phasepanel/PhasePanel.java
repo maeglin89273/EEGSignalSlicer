@@ -49,7 +49,6 @@ public class PhasePanel extends SectionPanel {
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
-//        gbc.insets = CONTENT_INDENT;
         this.add(scrollPane, gbc);
 
     }

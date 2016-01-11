@@ -16,13 +16,18 @@ public class LearnerProxy {
     private List<Map<String, double[]>> transferData;
     private List<String> transferTarget;
     private Collection<String> trainTags;
-    private TrainingCompleteCallback callback;
+    private List<EvaluationCompleteCallback> callbacks;
     private PyroProxy oracle;
     private Map<String, Object> trainingSettings;
+    private Thread worker;
 
-    public LearnerProxy(TrainingCompleteCallback callback) {
-        this.callback = callback;
+    public LearnerProxy() {
+        this.callbacks = new LinkedList<>();
         this.oracle = PyOracle.getInstance().getOracle("learning");
+    }
+
+    public void addTrainingCompleteCallback(EvaluationCompleteCallback callback) {
+        this.callbacks.add(callback);
     }
 
     public void prepareData(Map<String, Object> trainingSettings, Collection<FragmentDataSource> data, Collection<String> trainTags) {
@@ -42,15 +47,16 @@ public class LearnerProxy {
     }
 
     public void evaluate() {
-        Thread worker = new Thread() {
+        this.worker = new Thread() {
             @Override
             public void run() {
                 try {
                     Map<String, Object> report = (Map<String, Object>) oracle.call("evaluate", trainingSettings, transferData, transferTarget);
-                    callback.trainDone(report);
+                    callbacks.forEach(callback -> callback.evaluationDone(report));
                 } catch (Exception e) {
                     e.printStackTrace();
-                    callback.trainFail();
+                    callbacks.forEach(callback -> callback.evaluationFail());
+
                 }
             }
         };
@@ -60,12 +66,11 @@ public class LearnerProxy {
 
     public String predict(FiniteLengthDataSource data) {
 
-        Map<String, double[]> unknownSignal = new HashMap<>();
-        for (String tag: this.trainTags) {
-            unknownSignal.put(tag, data.getFiniteDataOf(tag).toArray());
-        }
-
         try {
+            Map<String, double[]> unknownSignal = new HashMap<>();
+            for (String tag: this.trainTags) {
+                unknownSignal.put(tag, data.getFiniteDataOf(tag).toArray());
+            }
             return (String) this.oracle.call("predict", unknownSignal);
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,8 +79,17 @@ public class LearnerProxy {
         return null;
     }
 
-    public interface TrainingCompleteCallback {
-        public void trainDone(Map<String, Object> trainingReport);
-        public void trainFail();
+    public boolean hasTrainedModel() {
+        try {
+            return (boolean) this.oracle.call("hasModel");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public interface EvaluationCompleteCallback {
+        public void evaluationDone(Map<String, Object> evaluationReport);
+        public void evaluationFail();
     }
 }

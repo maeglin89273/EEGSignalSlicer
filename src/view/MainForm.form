@@ -14,7 +14,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="200" height="200"/>
           </grid>
-          <gridbag weightx="1.0" weighty="2.0"/>
+          <gridbag weightx="1.0" weighty="1.4"/>
         </constraints>
         <properties>
           <continuousLayout value="true"/>
@@ -43,7 +43,7 @@
       <grid id="f89ee" binding="controlPanel" layout-manager="GridBagLayout">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="1.0" weighty="0.5"/>
+          <gridbag weightx="1.0" weighty="0.6"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -51,7 +51,7 @@
           <grid id="5d533" binding="leftPanel" layout-manager="GridBagLayout">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-              <gridbag weightx="0.0" weighty="1.0"/>
+              <gridbag weightx="0.8" weighty="1.0"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -193,9 +193,18 @@
                   </component>
                 </children>
               </grid>
-              <grid id="70e71" binding="dtwPanel" layout-manager="GridBagLayout">
+              <grid id="4f879" binding="predictionPanel" custom-create="true" layout-manager="GridBagLayout">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <grid id="70e71" binding="dtwPanel" layout-manager="GridBagLayout">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties/>
@@ -340,7 +349,6 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag weightx="1.0" weighty="1.0"/>
             </constraints>
-            <properties/>
           </component>
         </children>
       </grid>

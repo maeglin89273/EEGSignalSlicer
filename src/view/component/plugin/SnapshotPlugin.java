@@ -40,7 +40,7 @@ public class SnapshotPlugin extends StreamPlottingPlugin {
         return this.plotSnapshot;
     }
 
-    public FiniteLengthDataSource getCapturedData() {
+    public AbstractDataSource getCapturedData() {
         return this.capturedData;
     }
 
@@ -95,7 +95,7 @@ public class SnapshotPlugin extends StreamPlottingPlugin {
         this.plot.refresh();
     }
 
-    private class CapturedDataSource extends CachedFiniteDataSource<MutableFiniteStream> {
+    private class CapturedDataSource extends FiniteCachedDataSource<MutableFiniteStream> {
         private Collection<String> capturedTags;
         private int length;
 

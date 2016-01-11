@@ -14,7 +14,7 @@ import java.util.List;
  * Created by maeglin89273 on 7/22/15.
  */
 public class PlotView extends JComponent implements StreamingDataSource.PresentedDataChangedListener {
-    protected static final Dimension PREFERRED_SIZE = new Dimension(750, 300);
+    protected static final Dimension PREFERRED_SIZE = new Dimension(750, 280);
 
     private float peakValue;
 
@@ -134,10 +134,14 @@ public class PlotView extends JComponent implements StreamingDataSource.Presente
 
         this.xBuffer = new int[windowSize];
         this.yBuffer = new int[windowSize];
-
         updateXBuffer();
-        fireOnXRangeChanged();
-        this.refresh();
+
+        if (dataSource != null && windowSize < dataSource.getCurrentLength() && getPlotLowerBound() + windowSize > dataSource.getCurrentLength()) {
+            setXTo(dataSource.getCurrentLength() - this.getWindowSize());
+        } else {
+            fireOnXRangeChanged();
+            this.refresh();
+        }
     }
 
     public void moveX(int delta) {

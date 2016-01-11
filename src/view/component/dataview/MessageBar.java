@@ -50,6 +50,10 @@ public class MessageBar extends JPanel {
         this.msgLbl.setText(text);
     }
 
+    public void clear() {
+        this.setMessage("");
+    }
+
     private void hideMessageLbl() {
         if (this.msgLbl.isVisible()) {
             this.msgLbl.setVisible(false);

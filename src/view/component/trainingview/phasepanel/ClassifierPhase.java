@@ -29,22 +29,22 @@ public class ClassifierPhase extends PhasePanel {
         group.add(polySection.getCaptionLabel());
 
         NameValueTable parameterTable = new NameValueTable();
-        NumberEnumerator<Double> linearC = NumberEnumerator.getFloatInstance(SMALLEST_NUM, 1.0);
+        NumberEnumerator<Double> linearC = NumberEnumerator.getFloatInstance(SMALLEST_NUM, null, 1.0);
         parameterTable.addNameValue("C", linearC);
         linearSection.append(parameterTable);
 
         parameterTable = new NameValueTable();
-        NumberEnumerator<Double> rbfC = NumberEnumerator.getFloatInstance(SMALLEST_NUM, 1.0);
-        NumberEnumerator<Double> rbfGamma = NumberEnumerator.getFloatInstance(SMALLEST_NUM, 0.001);
+        NumberEnumerator<Double> rbfC = NumberEnumerator.getFloatInstance(SMALLEST_NUM, null, 1.0);
+        NumberEnumerator<Double> rbfGamma = NumberEnumerator.getFloatInstance(SMALLEST_NUM, null, 0.001);
         parameterTable.addNameValue("C", rbfC);
         parameterTable.addNameValue("gamma", rbfGamma);
         rbfSection.append(parameterTable);
 
         parameterTable = new NameValueTable();
-        NumberEnumerator<Double> polyC = NumberEnumerator.getFloatInstance(SMALLEST_NUM, 1.0);
-        NumberEnumerator<Double> polyGamma = NumberEnumerator.getFloatInstance(SMALLEST_NUM, 0.001);
-        NumberEnumerator<Integer> polyDegree = NumberEnumerator.getIntegerInstance(1, 3);
-        NumberEnumerator<Double> polyCoef0 = NumberEnumerator.getFloatInstance(0.0, 0.0);
+        NumberEnumerator<Double> polyC = NumberEnumerator.getFloatInstance(SMALLEST_NUM, null, 1.0);
+        NumberEnumerator<Double> polyGamma = NumberEnumerator.getFloatInstance(SMALLEST_NUM, null, 0.001);
+        NumberEnumerator<Integer> polyDegree = NumberEnumerator.getIntegerInstance(1, 0, 3);
+        NumberEnumerator<Double> polyCoef0 = NumberEnumerator.getFloatInstance(0.0, null, 0.0);
         parameterTable.addNameValue("C", polyC);
         parameterTable.addNameValue("gamma", polyGamma);
         parameterTable.addNameValue("degree", polyDegree);

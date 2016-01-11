@@ -1,5 +1,6 @@
 package view;
 
+import model.datasource.AbstractDataSource;
 import model.datasource.FilteredDataSource;
 import model.datasource.FiniteLengthDataSource;
 import model.filter.ButterworthFilter;
@@ -63,6 +64,7 @@ public class MainForm extends JFrame {
     private DatasetPanel datasetPanel;
     private JRadioButton a5to50HzFilterRadioBtn;
     private JPanel featurePanel;
+    private JPanel predictionPanel;
 
     private ButtonGroup filterChoiceGroup;
     private SpinnerNumberModel startSpinModel;
@@ -327,6 +329,7 @@ public class MainForm extends JFrame {
         plotControl = new PlaybackPlotControl(800, 60f);
         this.datasetPanel = new DatasetPanel();
         this.featurePanel = this.datasetPanel.getFeaturePanel();
+        this.predictionPanel = this.datasetPanel.getPredictionPanel();
     }
 
     /**
@@ -351,7 +354,7 @@ public class MainForm extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
-        gbc.weighty = 2.0;
+        gbc.weighty = 1.4;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(splitPane1, gbc);
         splitPane1.setLeftComponent(plotControl);
@@ -363,7 +366,7 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
-        gbc.weighty = 0.5;
+        gbc.weighty = 0.6;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(controlPanel, gbc);
         leftPanel = new JPanel();
@@ -371,6 +374,7 @@ public class MainForm extends JFrame {
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 0.8;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         controlPanel.add(leftPanel, gbc);
@@ -490,11 +494,18 @@ public class MainForm extends JFrame {
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
         filterPanel.add(a5to50HzFilterRadioBtn, gbc);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        leftPanel.add(predictionPanel, gbc);
         dtwPanel = new JPanel();
         dtwPanel.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;

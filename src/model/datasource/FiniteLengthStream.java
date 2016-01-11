@@ -17,20 +17,8 @@ public abstract class FiniteLengthStream implements Stream {
 
     @Override
     public Iterator<Double> iterator() {
-        return new IteratorImpl();
+        return new RandomAccessIteratorImpl(this);
     }
 
-    protected class IteratorImpl implements Iterator<Double> {
-        int ptr = 0;
 
-        @Override
-        public boolean hasNext() {
-            return ptr < intLength() - 1;
-        }
-
-        @Override
-        public Double next() {
-            return get(ptr++);
-        }
-    }
 }

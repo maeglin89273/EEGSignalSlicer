@@ -4,7 +4,6 @@ import model.datasource.FilteredFiniteDataSource;
 import model.datasource.FiniteLengthDataSource;
 import model.datasource.StreamingDataSource;
 import model.filter.DomainTransformFilter;
-import net.razorvine.pyro.PyroProxy;
 import view.component.plot.InteractivePlotView;
 import view.component.plot.PlottingUtils;
 import view.component.plugin.NavigationPlugin;
@@ -13,7 +12,6 @@ import view.component.trainingview.phasepanel.FeatureExtractionPhase;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,15 +26,15 @@ public class FeaturePanel extends JPanel {
     private static final String ANALYSIS_SOURCE = "source";
     private static final String NONE = "none";
 
-    private static final String[] ANALYSIS_PLOT_MODES = new String[] {NONE, ANALYSIS_SOURCE, ANALYSIS_DATA, ANALYSIS_SOURCE_AND_DATA};
+    private static final String[] ANALYSIS_PLOT_MODES = new String[] {ANALYSIS_SOURCE_AND_DATA, ANALYSIS_SOURCE, ANALYSIS_DATA, NONE};
     private final FiniteLengthDataSource analysisSource;
-    private int plotModeIdx = 3;
+
 
     private JCheckBox fftCkBox;
     private CustomPlotView fftPlot;
     private JCheckBox wtCkBox;
     private CustomPlotView wtPlot;
-    private JButton plotModeBtn;
+    private JComboBox plotModeCombo;
     private JCheckBox meanCkBox;
     private SimilarStreamsPlottingPlugin fftBgPlugin;
     private SimilarStreamsPlottingPlugin wtBgPlugin;
@@ -51,7 +49,7 @@ public class FeaturePanel extends JPanel {
     }
 
     private void initPlots() {
-        fftPlot = new CustomPlotView("Fast Fourier Transform Plot", 60, 5f, 300, 125);
+        fftPlot = new CustomPlotView("Fast Fourier Transform Plot", 60, 5f, 300, 110);
         fftPlot.setBaseline(PlottingUtils.Baseline.BOTTOM);
         fftPlot.setViewAllStreams(true);
         fftPlot.setLineWidth(1.3f);
@@ -68,9 +66,7 @@ public class FeaturePanel extends JPanel {
         fftPlot.addPlugin(this.fftBgPlugin);
         this.fftBgPlugin.setEnabled(true);
 
-        this.fftPlot.setEnabled(false);
-
-        wtPlot = new CustomPlotView("Wavelet Transform Plot", SignalConstants.SAMPLE_WINDOW_SIZE, 50f, 300, 125);
+        wtPlot = new CustomPlotView("Wavelet Transform Plot", SignalConstants.SAMPLE_WINDOW_SIZE, 50f, 300, 110);
         wtPlot.setViewAllStreams(true);
         wtPlot.setLineWidth(1.3f);
 
@@ -86,7 +82,6 @@ public class FeaturePanel extends JPanel {
         wtPlot.addPlugin(this.wtBgPlugin);
         this.wtBgPlugin.setEnabled(true);
 
-        this.wtPlot.setEnabled(false);
     }
 
     private void initComponents() {
@@ -104,7 +99,7 @@ public class FeaturePanel extends JPanel {
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         this.add(fftCkBox, gbc);
-        fftPlot.setEnabled(false);
+
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -123,7 +118,7 @@ public class FeaturePanel extends JPanel {
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         this.add(wtCkBox, gbc);
-        wtPlot.setEnabled(false);
+
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -132,14 +127,15 @@ public class FeaturePanel extends JPanel {
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         this.add(wtPlot, gbc);
-        plotModeBtn = new JButton();
-        plotModeBtn.setEnabled(false);
-        plotModeBtn.setText("source and data");
+        plotModeCombo = new JComboBox<>(ANALYSIS_PLOT_MODES);
+        plotModeCombo.setEditable(false);
+
+
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.anchor = GridBagConstraints.WEST;
-        this.add(plotModeBtn, gbc);
+        this.add(plotModeCombo, gbc);
         meanCkBox = new JCheckBox();
         meanCkBox.setEnabled(false);
         meanCkBox.setText("mean");
@@ -166,18 +162,18 @@ public class FeaturePanel extends JPanel {
             wtBgPlugin.setMeanShowed(enabled);
         });
 
-        this.plotModeBtn.addActionListener(e -> {
-            plotModeIdx = (plotModeIdx + 1) % ANALYSIS_PLOT_MODES.length;
-            plotModeBtn.setText(ANALYSIS_PLOT_MODES[plotModeIdx]);
+        this.plotModeCombo.addActionListener(e -> {
 
-            boolean showSource = (plotModeIdx & 1) != 0;
-            boolean showSamples = (plotModeIdx & 2) != 0;
+            int plotModeIdx = this.plotModeCombo.getSelectedIndex();
 
-            fftPlot.setShowSource(showSource);
-            wtPlot.setShowSource(showSource);
+
+            boolean showSamples = (plotModeIdx & 1) == 0;
+            boolean showSource = (plotModeIdx & 2) == 0;
+
             fftBgPlugin.setSamplesShowed(showSamples);
             wtBgPlugin.setSamplesShowed(showSamples);
-
+            fftPlot.setShowSource(showSource);
+            wtPlot.setShowSource(showSource);
         });
     }
 
@@ -191,11 +187,12 @@ public class FeaturePanel extends JPanel {
         }
     }
 
+    @Override
     public void setEnabled(boolean enabled) {
         fftCkBox.setEnabled(enabled);
         wtCkBox.setEnabled(enabled);
         meanCkBox.setEnabled(enabled);
-        plotModeBtn.setEnabled(enabled);
+        plotModeCombo.setEnabled(enabled);
         if (enabled) {
             this.setFFTEnabled(fftCkBox.isSelected());
             this.setWTEnabled(wtCkBox.isSelected());

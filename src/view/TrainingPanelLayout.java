@@ -20,7 +20,6 @@ public class TrainingPanelLayout {
     private JButton loadDatasetBtn;
     private JSpinner rangeStartSpinner;
     private MessageBar msgBar;
-    private JCheckBox predictCkBox;
     private JButton renameBtn;
     private JCheckBox coordinatesCkBox;
     private JButton addDatasetBtn;
@@ -111,14 +110,6 @@ public class TrainingPanelLayout {
         gbc.anchor = GridBagConstraints.NORTH;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this2015.add(loadDatasetBtn, gbc);
-        coordinatesCkBox = new JCheckBox();
-        coordinatesCkBox.setEnabled(false);
-        coordinatesCkBox.setText("coordinates");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        this2015.add(coordinatesCkBox, gbc);
         addDatasetBtn = new JButton();
         addDatasetBtn.setEnabled(false);
         addDatasetBtn.setText("add...");
@@ -153,14 +144,6 @@ public class TrainingPanelLayout {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this2015.add(rangeStartSpinner, gbc);
-        predictCkBox = new JCheckBox();
-        predictCkBox.setEnabled(false);
-        predictCkBox.setText("predict");
-        gbc = new GridBagConstraints();
-        gbc.gridx = 5;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        this2015.add(predictCkBox, gbc);
         moveLeftBtn = new JButton();
         moveLeftBtn.setEnabled(false);
         moveLeftBtn.setText("<");
@@ -186,6 +169,14 @@ public class TrainingPanelLayout {
         gbc.anchor = GridBagConstraints.SOUTH;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         this2015.add(trainBtn, gbc);
+        coordinatesCkBox = new JCheckBox();
+        coordinatesCkBox.setEnabled(false);
+        coordinatesCkBox.setText("coordinates");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 5;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        this2015.add(coordinatesCkBox, gbc);
     }
 
     /**

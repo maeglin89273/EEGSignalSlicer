@@ -1,12 +1,12 @@
 package view.component.trainingview.phasepanel.basecomponent;
 
 import javax.swing.*;
+import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 
+import java.util.*;
 import java.util.List;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Created by maeglin89273 on 9/5/15.
@@ -21,34 +21,26 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
 
 
     private static final Calculation LINEAR_CALCULATION = new Calculation() {
-
-        @Override
-        public double calculateSpacing(double start, double end, int sampleNum) {
-            if (sampleNum <= 1) {
-                return 0;
-            }
-            return (end - start) / (sampleNum - 1);
-        }
-
         @Override
         public double calculateSample(double startValue, double spacing, int i) {
             return startValue + spacing * i;
         }
+
+        @Override
+        public double calculateEndValue(double endValue) {
+            return endValue;
+        }
     };
 
     private static final Calculation LOG_CALCULATION = new Calculation() {
-
         @Override
-        public double calculateSpacing(double start, double end, int sampleNum) {
-            if (sampleNum <= 1) {
-                return 1;
-            }
-            return Math.pow(end / start, 1.0 / (sampleNum - 1));
+        public double calculateSample(double startValue, double spacing, int i) {
+            return Math.pow(10, startValue + spacing * i);
         }
 
         @Override
-        public double calculateSample(double startValue, double spacing, int i) {
-            return startValue * Math.pow(spacing, i);
+        public double calculateEndValue(double endValue) {
+            return Math.pow(10, endValue);
         }
     };
 
@@ -56,15 +48,25 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
         LinkedList<Integer> result = new LinkedList<>();
 
         if (sampleNum > 1) {
+            double spacing = (endValue - startValue) / (sampleNum - 1);
+            if (sampleNum <= MAX_NUM_PRINT) {
+                for (int i = 0; i < sampleNum - 1; i++) {
+                    result.add((int) calculation.calculateSample(startValue, spacing, i));
+                }
 
-            double spacing = calculation.calculateSpacing(startValue, endValue, sampleNum);
-            for (int i = 0; i < sampleNum - 1; i++) {
-                result.add((int) calculation.calculateSample(startValue, spacing, i));
+            } else {
+                int halfNum = MAX_NUM_PRINT / 2;
+                for (int i = 0; i <= halfNum; i++) {
+                    result.add((int) calculation.calculateSample(startValue, spacing, i));
+                }
+                for (int i = sampleNum - halfNum; i < sampleNum - 1; i++) {
+                    result.add((int) calculation.calculateSample(startValue, spacing, i));
+                }
             }
-            result.add(endValue);
 
+            result.add((int)calculation.calculateEndValue(endValue));
         } else if (sampleNum == 1) {
-            result.add(startValue);
+            result.add((int)calculation.calculateSample(startValue, 0, 0));
         }
 
         return result;
@@ -74,14 +76,25 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
         LinkedList<Double> result = new LinkedList<>();
 
         if (sampleNum > 1) {
+            double spacing = (endValue - startValue) / (sampleNum - 1);
+            if (sampleNum <= MAX_NUM_PRINT) {
+                for (int i = 0; i < sampleNum - 1; i++) {
+                    result.add(calculation.calculateSample(startValue, spacing, i));
+                }
 
-            double spacing = calculation.calculateSpacing(startValue, endValue, sampleNum);
-            for (int i = 0; i < sampleNum - 1; i++) {
-                result.add(calculation.calculateSample(startValue, spacing, i));
+            } else {
+                int halfNum = MAX_NUM_PRINT / 2;
+                for (int i = 0; i <= halfNum; i++) {
+                    result.add(calculation.calculateSample(startValue, spacing, i));
+                }
+                for (int i = sampleNum - halfNum; i < sampleNum - 1; i++) {
+                    result.add(calculation.calculateSample(startValue, spacing, i));
+                }
             }
-            result.add(endValue);
+
+            result.add(calculation.calculateEndValue(endValue));
         } else if (sampleNum == 1) {
-            result.add(startValue);
+            result.add(calculation.calculateSample(startValue, 0, 0));
         }
         return result;
     };
@@ -97,18 +110,24 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
 
     private LinkedList<? extends Number> samples;
     private final SampleGenerator<N> generator;
-    private NumberFormatter startFormatter;
-    private final NumberFormatter endFormatter;
+    private NumberFormatter linStartFormatter;
+    private NumberFormatter linEndFormatter;
+    private NumberFormatter logStartFormatter;
+    private NumberFormatter logEndFormatter;
+
     private JLabel tildeLbl;
     private JLabel numOfSamplesLbl;
 
 
-    private NumberEnumerator(SampleGenerator<N> generator, NumberFormatter startFormatter, NumberFormatter endFormatter, N initValue) {
+    private NumberEnumerator(SampleGenerator<N> generator, NumberFormatter linStartFormatter, NumberFormatter linEndFormatter, NumberFormatter logStartFormatter, NumberFormatter logEndFormatter, N initValue) {
         this.generator = generator;
-        this.startFormatter = startFormatter;
-        this.endFormatter = endFormatter;
+        this.linStartFormatter = linStartFormatter;
+        this.linEndFormatter = linEndFormatter;
+        this.logStartFormatter = logStartFormatter;
+        this.logEndFormatter = logEndFormatter;
 
-        this.setupComponents(this.startFormatter, this.endFormatter);
+
+        this.setupComponents(this.linStartFormatter, this.linEndFormatter);
         this.setupListeners();
 
         this.startField.setValue(initValue);
@@ -127,29 +146,40 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
         });
         spaceModeBtn.addActionListener(evt -> {
             this.modeIdx = (this.modeIdx + 1) % 2;
-            spaceModeBtn.setText(SPACE_MODES[this.modeIdx]);
+            spaceModeBtn.setText(this.getSpaceMode());
+            if (isLinear()) {
+                startField.setFormatterFactory(new DefaultFormatterFactory(linStartFormatter));
+                endField.setFormatterFactory(new DefaultFormatterFactory(linEndFormatter));
+            } else {
+                startField.setFormatterFactory(new DefaultFormatterFactory(logStartFormatter));
+                endField.setFormatterFactory(new DefaultFormatterFactory(logEndFormatter));
+            }
             updateSamples();
         });
     }
 
     public static NumberEnumerator<Double> getFloatInstance(Double value) {
-        return getFloatInstance(null, value);
+        return getFloatInstance(null, null, value);
     }
 
-    public static NumberEnumerator<Double> getFloatInstance(Double min, Double value) {
-        NumberFormatter start = NumberField.makeFormatter(Double.class, min, null);
-        NumberFormatter end = NumberField.makeFormatter(Double.class, min, null);
-        return new NumberEnumerator<>(FLOAT_GENERATOR, start, end, value);
+    public static NumberEnumerator<Double> getFloatInstance(Double linMin, Double logMin, Double value) {
+        NumberFormatter linStart = NumberField.makeFormatter(Double.class, linMin, null);
+        NumberFormatter linEnd = NumberField.makeFormatter(Double.class, linMin, null);
+        NumberFormatter logStart = NumberField.makeFormatter(Double.class, logMin, null);
+        NumberFormatter logEnd = NumberField.makeFormatter(Double.class, logMin, null);
+        return new NumberEnumerator<>(FLOAT_GENERATOR, linStart, linEnd, logStart, logEnd, value);
     }
 
     public static NumberEnumerator<Integer> getIntegerInstance(Integer value) {
-        return getIntegerInstance(null, value);
+        return getIntegerInstance(null, null, value);
     }
 
-    public static NumberEnumerator<Integer> getIntegerInstance(Integer min, Integer value) {
-        NumberFormatter start = NumberField.makeFormatter(Integer.class, min, null);
-        NumberFormatter end = NumberField.makeFormatter(Integer.class, min, null);
-        return new NumberEnumerator<>(INTEGER_GENERATOR, start, end, value);
+    public static NumberEnumerator<Integer> getIntegerInstance(Integer linMin, Integer logMin, Integer value) {
+        NumberFormatter linStart = NumberField.makeFormatter(Integer.class, linMin, null);
+        NumberFormatter linEnd = NumberField.makeFormatter(Integer.class, linMin, null);
+        NumberFormatter logStart = NumberField.makeFormatter(Integer.class, logMin, null);
+        NumberFormatter logEnd = NumberField.makeFormatter(Integer.class, logMin, null);
+        return new NumberEnumerator<>(INTEGER_GENERATOR, linStart, linEnd, logStart, logEnd, value);
     }
 
     public void setupComponents(NumberFormatter startFormatter, NumberFormatter endFormatter) {
@@ -281,16 +311,6 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
             return sample.toString();
         }
         return String.format("%.3g", sample);
-//        String sampleString = sample.toString()
-//        if (sampleString.length() > 8) {
-//            double dValue = Math.abs(sample.doubleValue());
-//            if (dValue < 1 || dValue >= 100000) {
-//                return String.format("%.3g", sample);
-//            }
-//            return String.format("%.3f", sample);
-//
-//        }
-//        return sampleString;
     }
 
 
@@ -304,6 +324,9 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
         return modeIdx == 0;
     }
 
+    private String getSpaceMode() {
+        return SPACE_MODES[this.modeIdx];
+    }
 
     private N getStartValue() {
         return (N) this.startField.getValue();
@@ -335,12 +358,17 @@ public class NumberEnumerator<N extends Number & Comparable<N>> extends Compound
 
     @Override
     public Object getStructuredValue() {
-        return this.samples;
+        Map<String, Object> settings = new LinkedHashMap<>();
+        settings.put("start", this.getStartValue());
+        settings.put("stop", this.getEndValue());
+        settings.put("num", this.getSampleNum());
+        settings.put("mode", this.getSpaceMode());
+        return settings;
     }
 
     private interface Calculation {
-        public abstract double calculateSpacing(double start, double end, int sampleNum);
         public abstract double calculateSample(double startValue, double spacing, int i);
+        public abstract double calculateEndValue(double endValue);
     }
 
     private interface SampleGenerator<N extends Number> {

@@ -1,6 +1,7 @@
 package view.component.plot;
 
 import model.DataFileUtils;
+import model.datasource.FragmentDataSource;
 import model.datasource.StreamingDataSource;
 import view.component.plugin.InteractivePlotPlugin;
 import view.component.plugin.InterestedStreamVisibilityPlugin;
@@ -33,8 +34,10 @@ public class InteractivePlotView extends PlotView {
     private void initAdditionalOptions() {
         this.optionClickHandler = new OptionClickHandler();
         this.additionalOptions = new JPopupMenu();
-        JMenuItem saveImageItem = this.makeMenuItem("save plot");
+        JMenuItem saveImageItem = this.makeMenuItem("save plot image");
+        JMenuItem saveSignalItem = this.makeMenuItem("save signals");
         this.additionalOptions.add(saveImageItem);
+        this.additionalOptions.add(saveSignalItem);
     }
 
     private JMenuItem makeMenuItem(String text) {
@@ -220,19 +223,31 @@ public class InteractivePlotView extends PlotView {
         @Override
         public void actionPerformed(ActionEvent e) {
             switch(e.getActionCommand()) {
-                case "save plot":
-                    this.savePlot();
+                case "save plot image":
+                    this.savePlotImage();
+                    break;
+                case "save signals":
+                    this.saveSignal();
             }
         }
 
-        private void savePlot() {
+        private void savePlotImage() {
             BufferedImage buffer = this.createImageBuffer();
             InteractivePlotView.this.paint(buffer.getGraphics());
-            DataFileUtils.getInstance().saveImage(buffer, plotName + "_" + new Date().toString());
+            DataFileUtils.getInstance().saveImage(buffer, getFileName());
         }
 
         private BufferedImage createImageBuffer() {
             return new BufferedImage(InteractivePlotView.this.getWidth(), InteractivePlotView.this.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        }
+
+        private void saveSignal() {
+            StreamingDataSource source = getDataSource();
+            DataFileUtils.getInstance().saveDataSource("signal from " + getFileName() + ".csv", new FragmentDataSource("signal", 0, (int) source.getCurrentLength(), source));
+        }
+
+        private String getFileName() {
+            return plotName + "_" + new Date().toString();
         }
     }
 }

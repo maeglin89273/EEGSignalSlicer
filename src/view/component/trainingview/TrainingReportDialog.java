@@ -8,6 +8,7 @@ import view.component.trainingview.phasepanel.basecomponent.ValuedLabel;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class TrainingReportDialog extends JDialog {
     private JPanel contentPane;
@@ -57,6 +58,8 @@ public class TrainingReportDialog extends JDialog {
                     NameValueTable innerTable = new NameValueTable();
                     tableLayers.offer(new AbstractMap.SimpleEntry<>(innerTable, (Map<String, Object>) value));
                     table.addNameValue(nameValuePair.getKey(), innerTable);
+                } else if (value instanceof List) {
+                    table.addNameValue(nameValuePair.getKey(), new ValuedLabel(String.join(", ", (List<String>) value)));
                 } else if (value instanceof Double) {
                     table.addNameValue(nameValuePair.getKey(), new ValuedLabel(String.format("%.2g", value)));
                 } else {

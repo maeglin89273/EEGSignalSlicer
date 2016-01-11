@@ -447,7 +447,7 @@ public class RangePlugin extends EmptyPlotPlugin implements InteractivePlotPlugi
         public void onEndChanged(long lowerBound, long value, long upperBound);
     }
 
-    private class RangedDataSource extends FiniteLengthDataSource implements ViewDataSource {
+    private class RangedDataSource extends AbstractFiniteDataSource implements ViewDataSource {
 
         @Override
         public FiniteLengthStream getFiniteDataOf(String tag) {

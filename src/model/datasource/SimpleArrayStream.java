@@ -29,10 +29,15 @@ public class SimpleArrayStream extends MutableFiniteStream {
 
     @Override
     public void set(int i, double value) {
-        if (i >= this.validLength) {
-            this.validLength = i + 1;
+//        if (i >= this.validLength) {
+//            this.validLength = i + 1;
+//        }
+
+        if (i < this.validLength) {
+            this.buffer[i] = value;
+            return;
         }
-        this.buffer[i] = value;
+        throw new IndexOutOfBoundsException("invalid index to stream: " + i);
     }
 
     @Override

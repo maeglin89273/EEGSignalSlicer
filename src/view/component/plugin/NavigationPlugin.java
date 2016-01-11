@@ -80,7 +80,7 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
         this.mouseHandler.setMinWindowSize(size);
     }
 
-    public void setMaxZoomingWindowSize(int size) {
+    public void setMaximumZoomingWindowSize(int size) {
         this.mouseHandler.setMaxWindowSize(size);
     }
 
@@ -109,30 +109,25 @@ public class NavigationPlugin extends EmptyPlotPlugin implements InteractivePlot
         @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
 
-            this.scalingLevel = this.scalingLevel + e.getWheelRotation();
-            double scale = Math.pow(SCALING_FACTOR, this.scalingLevel);
-
-            switch (zoomingMode) {
-                case ZOOM_X:
-                    plot.setWindowSize((int) (this.originalWindowSize * scale));
-                    break;
-                case ZOOM_Y:
-                    plot.setPeakValue((float) (this.originalPeakValue * scale));
-                    break;
-                case ZOOM_XY:
-                    int newWindowSize = (int) (plot.getWindowSize() * Math.pow(SCALING_FACTOR, e.getPreciseWheelRotation()));
-                    if (newWindowSize > maxWindowSize) {
-                        plot.setWindowSize(maxWindowSize);
-                    } else if (newWindowSize < minWindowSize) {
-                        plot.setWindowSize(minWindowSize);
-                    } else {
-                        plot.setWindowSize(newWindowSize);
-                    }
-
-                    plot.setPeakValue((float) (this.originalPeakValue * scale));
-                    break;
+            if(zoomingMode != ZoomingMode.ZOOM_X) {
+                this.scalingLevel = this.scalingLevel + e.getWheelRotation();
+                double scale = Math.pow(SCALING_FACTOR, this.scalingLevel);
+                plot.setPeakValue((float) (this.originalPeakValue * scale));
             }
 
+            if(zoomingMode != ZoomingMode.ZOOM_Y) {
+                plot.setWindowSize(limitWindowSize((int) (plot.getWindowSize() * Math.pow(SCALING_FACTOR, e.getPreciseWheelRotation()))));
+            }
+
+        }
+
+        private int limitWindowSize(int newWindowSize) {
+            if (newWindowSize > maxWindowSize) {
+                return this.maxWindowSize;
+            } else if (newWindowSize < minWindowSize) {
+                return this.minWindowSize;
+            }
+            return newWindowSize;
         }
 
         @Override

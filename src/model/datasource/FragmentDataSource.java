@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  * Created by maeglin89273 on 8/19/15.
  */
-public class FragmentDataSource extends FiniteLengthDataSource implements ViewDataSource {
+public class FragmentDataSource extends AbstractFiniteDataSource implements FiniteLengthDataSource, ViewDataSource {
     private String tag;
     private final long startingPos;
 

@@ -1,8 +1,8 @@
 package view.component.trainingview;
 
+import model.DataFileUtils;
 import model.LearnerProxy;
 import model.datasource.FragmentDataSource;
-import view.component.BusyDialog;
 import view.component.trainingview.phasepanel.ClassifierPhase;
 import view.component.trainingview.phasepanel.EvaluationPhase;
 import view.component.trainingview.phasepanel.FeatureExtractionPhase;
@@ -10,18 +10,22 @@ import view.component.trainingview.phasepanel.basecomponent.SectionPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TrainingDialog extends JDialog {
     private final DatasetGetter datasetGetter;
-    private final BusyDialog trainingDialog;
+
     private JPanel contentPane;
     private JButton okBtn;
     private JList phaseList;
     private JPanel phasePlaceholder;
     private JButton evalBtn;
+    private JButton saveProfileBtn;
+    private JButton loadProfileBtn;
 
     private Map<String, Object> profile;
 
@@ -39,21 +43,22 @@ public class TrainingDialog extends JDialog {
         setModal(true);
         getRootPane().setDefaultButton(okBtn);
         this.setTitle("Training Configuration");
-        this.trainingDialog = new BusyDialog("Evaluating...");
+
         this.datasetGetter = getter;
         this.profileProxy = new TrainingProfile();
-        this.learner = new LearnerProxy(new LearnerProxy.TrainingCompleteCallback() {
+        this.learner = new LearnerProxy();
+        this.learner.addTrainingCompleteCallback(new LearnerProxy.EvaluationCompleteCallback() {
             @Override
-            public void trainDone(Map<String, Object> trainingReport) {
-                trainingDialog.setVisible(false);
-                if (trainingReport != null) {
-                    TrainingReportDialog.showReport(trainingReport);
+            public void evaluationDone(Map<String, Object> evaluationReport) {
+                evalBtn.setEnabled(true);
+                if (evaluationReport != null) {
+                    TrainingReportDialog.showReport(evaluationReport);
                 }
             }
 
             @Override
-            public void trainFail() {
-                trainingDialog.setVisible(false);
+            public void evaluationFail() {
+                evalBtn.setEnabled(true);
                 JOptionPane.showConfirmDialog(TrainingDialog.this, "There are some errors when training, please check out any value that is inappropriate.", "Error", JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -72,26 +77,33 @@ public class TrainingDialog extends JDialog {
         phasesTable.put("Classifier", new ClassifierPhase());
     }
 
-    private void evaluate() {
-        this.profile = this.buildProfile();
+    private synchronized void evaluate(Map<String, Object> profile) {
 
-        learner.prepareData(this.profile, datasetGetter.getDataset(), (Collection<String>) this.profileProxy.structuredGet("feature_extraction", "streams"));
+        this.profile = profile;
+        Collection<FragmentDataSource> dataset = datasetGetter.getDataset();
+        if (dataset.isEmpty()) {
+            JOptionPane.showConfirmDialog(TrainingDialog.this, "Please supply the training data.", "Error", JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        learner.prepareData(this.profile, dataset, (Collection<String>) this.profileProxy.structuredGet("feature_extraction", "streams"));
+
         learner.evaluate();
-        this.trainingDialog.setVisible(true);
+        evalBtn.setEnabled(false);
+
     }
 
-    private Map<String, Object> buildProfile() {
-        Map<String, Object> fullParameters = new LinkedHashMap<>();
+    private Map<String, Object> buildProfileFromPanels() {
+        Map<String, Object> fullConfigurations = new LinkedHashMap<>();
         for (SectionPanel phase : phasesTable.values()) {
             if (phase.isValueReady()) {
-                fullParameters.putAll(phase.getStructuredValue());
+                fullConfigurations.putAll(phase.getStructuredValue());
             } else {
                 JOptionPane.showConfirmDialog(this, phase.getCaptionLabel().getText() + " phase is not ready", "Error", JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
                 return null;
             }
         }
 
-        return fullParameters;
+        return fullConfigurations;
     }
 
     public FeatureExtractionPhase getFeatureExtractionPhase() {
@@ -99,9 +111,30 @@ public class TrainingDialog extends JDialog {
     }
 
     private void setupListeners() {
-        evalBtn.addActionListener(e -> this.evaluate());
+        loadProfileBtn.addActionListener(e -> this.loadProfileToPanels());
+        saveProfileBtn.addActionListener(e -> this.saveProfile());
+        evalBtn.addActionListener(e -> this.evaluate(this.buildProfileFromPanels()));
         okBtn.addActionListener(e -> this.onOK());
         phaseList.addListSelectionListener(e -> this.PhaseSelected((String) phaseList.getSelectedValue()));
+    }
+
+    private void loadProfileToPanels() {
+        DataFileUtils utils = DataFileUtils.getInstance();
+        File profileFile = utils.loadFileDialog(this, "json");
+        if (profileFile == null) {
+            return;
+        }
+
+        Map<String, Object> profile = utils.loadJsonAsStructure(profileFile);
+
+        //todo: should present configs on UI
+        this.evaluate(profile);
+    }
+
+    private void saveProfile() {
+        DataFileUtils utils = DataFileUtils.getInstance();
+        String path = utils.saveStructureAsJson(this.buildProfileFromPanels(), "training_profiles", "profile_" + new Date().toString());
+        DataFileUtils.getInstance().showSavedDialog(this, path);
     }
 
     private void PhaseSelected(String phaseName) {
@@ -113,14 +146,13 @@ public class TrainingDialog extends JDialog {
     }
 
     private void onOK() {
-        this.profile = this.buildProfile();
+        this.profile = this.buildProfileFromPanels();
         this.setVisible(false);
-
     }
 
     public TrainingProfile getProfile() {
         if (this.profile == null) {
-            this.profile = this.buildProfile();
+            this.profile = this.buildProfileFromPanels();
         }
         return this.profileProxy;
     }
@@ -146,8 +178,8 @@ public class TrainingDialog extends JDialog {
 
         phaseList = new JList(listModel);
         phaseList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
     }
+
     /**
      * Method generated by IntelliJ IDEA GUI Designer
      * >>> IMPORTANT!! <<<
@@ -171,7 +203,7 @@ public class TrainingDialog extends JDialog {
         okBtn = new JButton();
         okBtn.setText("OK");
         gbc = new GridBagConstraints();
-        gbc.gridx = 1;
+        gbc.gridx = 3;
         gbc.gridy = 0;
         gbc.weighty = 1.0;
         gbc.anchor = GridBagConstraints.EAST;
@@ -182,11 +214,25 @@ public class TrainingDialog extends JDialog {
         evalBtn.setHorizontalTextPosition(11);
         evalBtn.setText("Evaluate");
         gbc = new GridBagConstraints();
-        gbc.gridx = 0;
+        gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         panel1.add(evalBtn, gbc);
+        saveProfileBtn = new JButton();
+        saveProfileBtn.setText("Save");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel1.add(saveProfileBtn, gbc);
+        loadProfileBtn = new JButton();
+        loadProfileBtn.setText("Load");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        panel1.add(loadProfileBtn, gbc);
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();

@@ -2,6 +2,9 @@ package model;
 
 import model.datasource.*;
 import model.filter.ButterworthFilter;
+import net.razorvine.pyro.PyroProxy;
+import oracle.PyOracle;
+import view.component.trainingview.TrainingDialog;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -19,6 +22,7 @@ import java.util.List;
 public class DataFileUtils {
     private static final int OPENBCI_COMMENTS_LINE_NUM = 5;
     private static final String IMAGE_TYPE = "png";
+    private final PyroProxy jsonFileOracle;
     private File workingFile;
     private File workingDirectory;
     private Map<String, Integer> sliceRecord;
@@ -30,6 +34,8 @@ public class DataFileUtils {
 
     private DataFileUtils() {
         this.sliceRecord = new HashMap<String, Integer>();
+
+        this.jsonFileOracle = PyOracle.getInstance().getOracle("json-file");
     }
 
     public File loadFileDialog(Component frame, String fileExtension) {
@@ -43,7 +49,7 @@ public class DataFileUtils {
             fileChooser.setFileFilter(filter);
         }
         fileChooser.setMultiSelectionEnabled(false);
-        fileChooser.setCurrentDirectory(workingDirectory);
+        fileChooser.setCurrentDirectory(this.workingDirectory);
         if (fileChooser.showDialog(frame, "Load") == JFileChooser.APPROVE_OPTION) {
             return fileChooser.getSelectedFile();
         }
@@ -71,9 +77,11 @@ public class DataFileUtils {
         this.workingDirectory = this.workingFile.getParentFile();
     }
 
-    public void saveFragmentDataSources(String dirName, Collection<FragmentDataSource> data) {
+    public String saveFragmentDataSources(String dirName, Collection<FragmentDataSource> data) {
         this.goIntoDirectory(dirName);
+
         File rootDir = this.workingDirectory;
+        String rootDirPath = null;
         List<String[]> fragmentHeaders = new LinkedList<>();
         Map<String, Integer> ids = new HashMap<>();
         String tag;
@@ -89,8 +97,8 @@ public class DataFileUtils {
             header[2] = String.valueOf(fragment.getStartingPosition());
             fragmentHeaders.add(header);
 
-            makeSureInSubDir(dirName, tag);
-            this.save(tag + "_" + header[1] + ".csv", fragment);
+            makeSureInSpecSubDir(dirName, tag);
+            this.saveDataSource(tag + "_" + header[1] + ".csv", fragment);
         }
 
         this.workingDirectory = rootDir;
@@ -108,17 +116,18 @@ public class DataFileUtils {
                 writer.newLine();
             }
             writer.close();
-
+            rootDirPath = rootDir.getCanonicalPath();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        this.workingDirectory = this.workingDirectory.getParentFile();
+        this.goOutDirectory();
+        return rootDirPath;
     }
 
-    private void makeSureInSubDir(String parentDirName, String subDirName) {
-        if (!this.workingDirectory.getName().equals(subDirName)) {
-            if (!this.workingDirectory.getName().equals(parentDirName)) {
+    private void makeSureInSpecSubDir(String parentDirName, String subDirName) {
+        if (!this.workingDirectory.getName().equals(subDirName)) { // may in parent
+            if (!this.workingDirectory.getName().equals(parentDirName)) { // in another sub of parent
                 this.goOutDirectory();
             }
             this.goIntoDirectory(subDirName);
@@ -141,7 +150,7 @@ public class DataFileUtils {
                 if (!result.containsKey(tag)) {
                     result.put(tag, new LinkedList<>());
                 }
-                this.makeSureInSubDir(dirName, tag);
+                this.makeSureInSpecSubDir(dirName, tag);
                 fragmentFile = new File(this.workingDirectory, tag + "_" + entries[1] + ".csv");
                 result.get(tag).add(new ReconstructedFragmentDataSource(tag, Long.parseLong(entries[2]), loadGeneralCSVFile(fragmentFile)));
             }
@@ -238,7 +247,7 @@ public class DataFileUtils {
         }
     }
 
-    public String save(String name, FiniteLengthDataSource data) {
+    public String saveDataSource(String name, FiniteLengthDataSource data) {
         name = name.trim();
         if (name.isEmpty()) {
             return null;
@@ -256,7 +265,7 @@ public class DataFileUtils {
         this.sliceRecord.put(sliceTag, recordNum);
 
         String filename = sliceTag + "_" + recordNum + ".csv";
-        return this.save(filename, data);
+        return this.saveDataSource(filename, data);
     }
 
     private String saveDataSource(String filename, FiniteLengthDataSource data, int start, int end) {
@@ -300,14 +309,50 @@ public class DataFileUtils {
         return null;
     }
 
-    public void saveImage(BufferedImage buffer, String image) {
-        this.goIntoDirectory("image");
+    public String saveImage(BufferedImage imageBuffer, String imageName) {
+        this.goIntoDirectory("images");
+        String path = null;
+        File imageFile = new File(this.workingDirectory, imageName + "." + IMAGE_TYPE);
         try {
-            ImageIO.write(buffer, IMAGE_TYPE, new File(this.workingDirectory, image + "." + IMAGE_TYPE));
+            ImageIO.write(imageBuffer, IMAGE_TYPE, imageFile);
+            path = imageFile.getCanonicalPath();
         } catch (IOException e) {
             e.printStackTrace();
         }
         this.goOutDirectory();
 
+        return path;
+    }
+
+    public String saveStructureAsJson(Map<String, Object> structure, String organizingFolderName, String fileName) {
+        boolean hasOrganizingFolder = organizingFolderName != null;
+        if (hasOrganizingFolder) {
+            this.goIntoDirectory(organizingFolderName);
+        }
+        String path = null;
+        try {
+            path = new File(this.workingDirectory, fileName + ".json").getCanonicalPath();
+            jsonFileOracle.call_oneway("save", structure, path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (hasOrganizingFolder) {
+            this.goOutDirectory();
+        }
+
+        return path;
+    }
+
+    public Map<String, Object> loadJsonAsStructure(File jsonFile) {
+        try {
+            return (Map<String, Object>) jsonFileOracle.call("load", jsonFile.getCanonicalPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void showSavedDialog(Component parentComponent, String filePath) {
+        JOptionPane.showConfirmDialog(parentComponent, "Saved as \"" + filePath + "\"", "Info", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
     }
 }
